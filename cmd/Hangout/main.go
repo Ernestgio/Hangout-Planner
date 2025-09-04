@@ -23,5 +23,10 @@ func main() {
 	if port == "" {
 		port = "9000"
 	}
+
+	server.GET("/", func(c echo.Context) error {
+		return c.String(200, "Hangout Planner API is running!")
+	})
+
 	server.Logger.Fatal(server.Start(":" + port))
 }

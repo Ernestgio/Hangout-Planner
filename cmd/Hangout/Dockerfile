@@ -1,28 +1,25 @@
-# Start from the official Golang image for building
-FROM golang:alpine
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
-# Copy go mod and sum files
+RUN apk add --no-cache git
+
 COPY go.mod go.sum ./
 RUN go mod download
 
-# Copy the source code
 COPY . .
 
-# Build the Go app
-RUN go build -o hangout-planner .
+RUN go build -o bin/Hangout .
 
-# Use a minimal image for running
 FROM alpine:latest
 
 WORKDIR /app
 
-# Copy the binary from builder
-COPY --from=builder /app/hangout-planner .
+COPY --from=builder /app/bin/Hangout ./bin/Hangout
 
-# Expose port (change if your app uses a different port)
-EXPOSE 8080
+EXPOSE 9000
 
-# Run the binary
-CMD ["./hangout-planner"]
+RUN adduser -D appuser
+USER appuser
+
+CMD ["./bin/Hangout"]
