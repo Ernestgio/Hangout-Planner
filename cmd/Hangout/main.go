@@ -1,7 +1,6 @@
 package main
 
 import (
-	"Hangout/logging"
 	"log"
 	"os"
 
@@ -19,12 +18,12 @@ func init() {
 
 func main() {
 	server := echo.New()
+	InitializeServer(server)
+
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "9000"
 	}
 
-	logging.SetupLogger(server)
-	RegisterEndpoints(server)
 	server.Logger.Fatal(server.Start(":" + port))
 }
