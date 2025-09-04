@@ -7,6 +7,8 @@ require (
 	github.com/labstack/echo/v4 v4.13.4
 )
 
+require golang.org/x/time v0.11.0 // indirect
+
 require (
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"Hangout/logging"
 	"log"
 	"os"
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func init() {
@@ -18,14 +20,15 @@ func init() {
 
 func main() {
 	server := echo.New()
-
 	port := os.Getenv("APP_PORT")
 	if port == "" {
 		port = "9000"
 	}
 
+	server.Use(middleware.LoggerWithConfig(logging.LoggerConfig()))
+
 	server.GET("/", func(c echo.Context) error {
-		return c.String(200, "Hangout Planner API is running!")
+		return c.String(200, "Hello world! Hangout Planner API is running!")
 	})
 
 	server.Logger.Fatal(server.Start(":" + port))

@@ -12,8 +12,10 @@ Hangout Planner
 
 ## Run Local Development
 
+### Hangout Service
+
 Execute
 
 ```
-cd cmd/Hangout && docker build -t hangout . && docker run --rm --env-file .env -p 9000:9000 hangout
+docker build -t hangout . && docker run --rm --env-file .env -p 9000:9000 hangout && docker rmi hangout
 ```
