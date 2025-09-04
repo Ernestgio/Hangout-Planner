@@ -7,7 +7,6 @@ import (
 
 	"github.com/joho/godotenv"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
 )
 
 func init() {
@@ -25,11 +24,7 @@ func main() {
 		port = "9000"
 	}
 
-	server.Use(middleware.LoggerWithConfig(logging.LoggerConfig()))
-
-	server.GET("/", func(c echo.Context) error {
-		return c.String(200, "Hello world! Hangout Planner API is running!")
-	})
-
+	logging.SetupLogger(server)
+	RegisterEndpoints(server)
 	server.Logger.Fatal(server.Start(":" + port))
 }
