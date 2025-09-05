@@ -2,6 +2,7 @@
 *.env
 
 
-
+# vs code
+.vscode/*
 
 
