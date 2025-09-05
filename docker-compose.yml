@@ -1,0 +1,37 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hangout-mysql
+    restart: on-failure
+    env_file:
+      - ./services/Hangout/.env
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./services/Hangout/internal/db/init.sql:/data/application/init.sql
+    command: --init-file /data/application/init.sql
+    networks:
+      - default
+  hangout:
+    build:
+      context: ./services/Hangout
+      dockerfile: Dockerfile
+    restart: on-failure
+    container_name: hangout
+    env_file:
+      - ./services/Hangout/.env
+    ports:
+      - "9000:9000"
+    depends_on:
+      - mysql
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+networks:
+  default:
+    driver: bridge
