@@ -8,14 +8,15 @@ import (
 )
 
 type Config struct {
-	Env        string
-	AppName    string
-	AppPort    string
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
+	Env               string
+	AppName           string
+	AppPort           string
+	DBHost            string
+	DBPort            string
+	DBUser            string
+	DBPassword        string
+	DBName            string
+	MySQLRootPassword string
 }
 
 func Load() (*Config, error) {
