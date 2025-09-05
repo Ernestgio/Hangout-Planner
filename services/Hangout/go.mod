@@ -1,4 +1,4 @@
-module Hangout
+module github.com/Ernestgio/Hangout-Planner/services/Hangout
 
 go 1.23.2
 

@@ -2,28 +2,17 @@ package main
 
 import (
 	"log"
-	"os"
 
-	"github.com/joho/godotenv"
-	"github.com/labstack/echo/v4"
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
 )
 
-func init() {
-	if os.Getenv("ENV") != "PROD" {
-		if err := godotenv.Load(); err != nil {
-			log.Printf("Warning: .env file not loaded: %v", err)
-		}
-	}
-}
-
 func main() {
-	server := echo.New()
-	InitializeServer(server)
-
-	port := os.Getenv("APP_PORT")
-	if port == "" {
-		port = "9000"
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatalf("Error loading config: %v", err)
 	}
 
-	server.Logger.Fatal(server.Start(":" + port))
+	server := InitializeServer(cfg)
+
+	server.Logger.Fatal(server.Start(":" + cfg.AppPort))
 }
