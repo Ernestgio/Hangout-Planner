@@ -16,15 +16,11 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 ### Prerequisites
 
 - Go 1.23+
-- Docker
+- Docker & Docker Compose
 - MySQL (local or Dockerized)
 
-### Run Hangout Service
-
 ```sh
-docker build -t hangout . \
-  && docker run --rm --env-file .env -p 9000:9000 hangout \
-  && docker rmi hangout
+docker-compose up --build
 ```
 
 ### Environment Variables
