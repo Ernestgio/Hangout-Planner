@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server"
 )
 
 func main() {
@@ -12,7 +13,7 @@ func main() {
 		log.Fatalf("Error loading config: %v", err)
 	}
 
-	server := InitializeServer(cfg)
+	e := server.InitializeServer(cfg)
 
-	server.Logger.Fatal(server.Start(":" + cfg.AppPort))
+	e.Logger.Fatal(e.Start(":" + cfg.AppPort))
 }

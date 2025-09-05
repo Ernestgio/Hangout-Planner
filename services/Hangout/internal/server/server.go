@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
@@ -13,14 +13,4 @@ func InitializeServer(cfg *config.Config) *echo.Echo {
 	RegisterEndpoints(server)
 
 	return server
-}
-
-func RegisterEndpoints(server *echo.Echo) {
-	server.GET("/", func(c echo.Context) error {
-		return c.String(200, "Hello world! Hangout Planner API is running!")
-	})
-
-	server.GET("/healthz", func(c echo.Context) error {
-		return c.String(200, "OK")
-	})
 }
