@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/mappings"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services"
@@ -39,5 +40,5 @@ func (uc *UserController) CreateUser(c echo.Context) error {
 	}
 
 	res := mappings.UserToResponseDTO(user)
-	return c.JSON(http.StatusCreated, uc.responseBuilder.NewSuccessResponse("User created successfully.", res))
+	return c.JSON(http.StatusCreated, uc.responseBuilder.NewSuccessResponse(constants.UserCreatedSuccessfully, res))
 }

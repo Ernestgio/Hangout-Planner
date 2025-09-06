@@ -1,8 +1,6 @@
 package dto
 
-const (
-	ProductionEnv = "PROD"
-)
+import "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
 
 type StandardResponse struct {
 	Status  string      `json:"status"`
@@ -22,22 +20,22 @@ func NewStandardResponseBuilder(env string) *StandardResponseBuilder {
 
 func (b *StandardResponseBuilder) NewSuccessResponse(message string, data interface{}) *StandardResponse {
 	return &StandardResponse{
-		Status:  "success",
+		Status:  constants.SuccessStatus,
 		Message: message,
 		Data:    data,
 	}
 }
 
 func (b *StandardResponseBuilder) NewErrorResponse(err error) *StandardResponse {
-	if b.env == ProductionEnv {
+	if b.env == constants.ProductionEnv {
 		return &StandardResponse{
-			Status:  "error",
+			Status:  constants.ErrorStatus,
 			Message: "An unexpected error occurred. Please try again later.",
 		}
 	}
 
 	return &StandardResponse{
-		Status:  "error",
+		Status:  constants.ErrorStatus,
 		Message: err.Error(),
 	}
 }

@@ -45,7 +45,7 @@ func Run(cfg *config.Config) error {
 		}
 	}()
 
-	// Wait for OS signals (Ctrl+C, Docker stop, etc.)
+	// Wait for OS signals
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit

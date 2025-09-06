@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/logging"
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
 	"gorm.io/gorm"
 
 	"github.com/labstack/echo/v4"
@@ -20,7 +20,9 @@ func InitializeServer(cfg *config.Config, db *gorm.DB) *echo.Echo {
 	server := echo.New()
 
 	// 3. Use middleware
-	server.Use(middleware.LoggerWithConfig(logging.LoggerConfig()))
+	server.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
+		Format: constants.LoggerFormat,
+	}))
 
 	// 4. Register all endpoints using the router
 	router.RegisterEndpoints(server)

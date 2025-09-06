@@ -1,8 +1,6 @@
 package services
 
 import (
-	"errors"
-
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/mappings"
@@ -19,8 +17,6 @@ type UserService interface {
 type userService struct {
 	userRepo repository.UserRepository
 }
-
-var ErrUserAlreadyExists = errors.New("user already exists with this email")
 
 func NewUserService(userRepo repository.UserRepository) UserService {
 	return &userService{userRepo: userRepo}
