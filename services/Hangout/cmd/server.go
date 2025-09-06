@@ -22,7 +22,7 @@ func InitializeServer(cfg *config.Config, db *gorm.DB) *echo.Echo {
 	// 3. Use middleware
 	server.Use(middleware.LoggerWithConfig(logging.LoggerConfig()))
 
-	// Register all endpoints using the router
+	// 4. Register all endpoints using the router
 	router.RegisterEndpoints(server)
 
 	return server

@@ -15,22 +15,19 @@ import (
 )
 
 func main() {
-	if err := Run(); err != nil {
-		log.Fatalf("Fatal error: %v", err)
-	}
-}
-
-func Run() error {
-	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
 	}
 
+	if err := Run(cfg); err != nil {
+		log.Fatalf("Fatal error: %v", err)
+	}
+}
+
+func Run(cfg *config.Config) error {
 	// Connect to the database
-	ctxDB, cancelDB := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancelDB()
-	dbConn, dbCloser, err := db.Connect(ctxDB, cfg)
+	dbConn, dbCloser, err := db.Connect(cfg)
 	if err != nil {
 		return err
 	}
@@ -48,16 +45,17 @@ func Run() error {
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shut down the server
+	// Wait for OS signals (Ctrl+C, Docker stop, etc.)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	//Perform a graceful server shutdown with a timeout
-	ctxServer, cancelServer := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancelServer()
+	// Graceful shutdown with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	if err := e.Shutdown(ctxServer); err != nil {
+	// Shutdown server
+	if err := e.Shutdown(ctx); err != nil {
 		return err
 	}
 
