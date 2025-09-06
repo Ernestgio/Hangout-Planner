@@ -1,4 +1,4 @@
-package server
+package cmd
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"

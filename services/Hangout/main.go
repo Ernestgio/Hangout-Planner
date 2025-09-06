@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/cmd"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/db"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server"
 )
 
 func main() {
@@ -41,7 +41,7 @@ func Run() error {
 	}()
 
 	// Initialize and start the server
-	e := server.InitializeServer(cfg, dbConn)
+	e := cmd.InitializeServer(cfg, dbConn)
 	go func() {
 		if err := e.Start(":" + cfg.AppPort); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal("shutting down the server")

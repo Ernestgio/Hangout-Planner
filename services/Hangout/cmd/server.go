@@ -1,8 +1,8 @@
-package server
+package cmd
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/logging"
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/logging"
 	"gorm.io/gorm"
 
 	"github.com/labstack/echo/v4"
