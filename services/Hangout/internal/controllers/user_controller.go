@@ -23,6 +23,15 @@ func NewUserController(userService services.UserService, responseBuilder *dto.St
 	}
 }
 
+// @Summary      Create user
+// @Description  Create a new user account
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        user  body      dto.UserCreateRequest  true  "User data"
+// @Success      201   {object}  dto.StandardResponseBuilder
+// @Failure      400   {object}  dto.StandardResponseBuilder
+// @Router       /users [post]
 func (uc *UserController) CreateUser(c echo.Context) error {
 	var req dto.UserCreateRequest
 	if err := c.Bind(&req); err != nil {
