@@ -3,21 +3,21 @@ package server
 import (
 	"net/http"
 
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/controllers"
 	"github.com/labstack/echo/v4"
 )
 
 type Router struct {
-	userController *controllers.UserController
+	dependencies *AppDependencies
 }
 
-func NewRouter(userController *controllers.UserController) *Router {
+func NewRouter(dependencies *AppDependencies) *Router {
 	return &Router{
-		userController: userController,
+		dependencies: dependencies,
 	}
 }
 
 func (r *Router) RegisterEndpoints(server *echo.Echo) {
+
 	server.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "Hello world! Hangout Planner API is running!")
 	})
@@ -26,6 +26,7 @@ func (r *Router) RegisterEndpoints(server *echo.Echo) {
 		return c.String(http.StatusOK, "OK")
 	})
 
-	// User-related endpoints
-	server.POST("/users", r.userController.CreateUser)
+	// User routes
+	usersRoute := server.Group("/users")
+	usersRoute.POST("", r.dependencies.userController.CreateUser)
 }

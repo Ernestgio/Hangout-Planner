@@ -2,35 +2,25 @@ package server
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/controllers"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/repository"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/logging"
 	"gorm.io/gorm"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func InitializeServer(cfg *config.Config, db *gorm.DB) *echo.Echo {
-	// 1. Repository Layer
-	userRepo := repository.NewUserRepository(db)
+	// 1. Initialize Dependencies / controller layer
+	dependencies := InitializeDependencies(cfg, db)
 
-	// 2. Service Layer
-	userService := services.NewUserService(userRepo)
-
-	// 3. Controller Layer
-	responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
-	userController := controllers.NewUserController(userService, responseBuilder)
-
-	// 4. Router Layer
-	router := NewRouter(userController)
+	// 2. Router Layer
+	router := NewRouter(dependencies)
 
 	// Create a new Echo server instance
 	server := echo.New()
 
-	// 5. Initialize Logging
-	logging.SetupLogger(server)
+	// 3. Use middleware
+	server.Use(middleware.LoggerWithConfig(logging.LoggerConfig()))
 
 	// Register all endpoints using the router
 	router.RegisterEndpoints(server)
