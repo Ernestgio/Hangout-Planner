@@ -28,7 +28,7 @@ services:
       - default
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9000/health"]
-      interval: 30s
+      interval: 10s
       timeout: 5s
       retries: 3
 

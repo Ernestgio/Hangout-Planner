@@ -17,16 +17,17 @@ type UserService interface {
 }
 
 type userService struct {
-	repo repository.UserRepository
+	userRepo repository.UserRepository
 }
 
 var ErrUserAlreadyExists = errors.New("user already exists with this email")
 
-func NewUserService(repo repository.UserRepository) UserService {
-	return &userService{repo: repo}
+func NewUserService(userRepo repository.UserRepository) UserService {
+	return &userService{userRepo: userRepo}
 }
+
 func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, error) {
-	existingUser, err := s.repo.GetUserByEmail(request.Email)
+	existingUser, err := s.userRepo.GetUserByEmail(request.Email)
 	if err == nil && existingUser != nil {
 		return nil, apperrors.ErrUserAlreadyExists
 	}
@@ -39,7 +40,7 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, e
 	}
 	user.Password = string(hashedPassword)
 
-	if err := s.repo.CreateUser(&user); err != nil {
+	if err := s.userRepo.CreateUser(&user); err != nil {
 		return nil, err
 	}
 
