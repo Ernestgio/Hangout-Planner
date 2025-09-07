@@ -29,6 +29,38 @@ Copy `.env.example` to `.env` and fill in your configuration.
 
 ---
 
+## Short Term Plan
+
+### Controller, Services, and repository
+
+- Transaction wrapper
+- Sign up func
+
+### Dev Dependencies
+
+- Linter
+- go fmt
+- Unit tests (coverage, mocking, out files)
+- Code quality analysis
+- air for pre-commit actions
+
+### DB
+
+- Graceful shutdown
+- retry connections
+- migration scripts (up and down)
+
+### Code quality
+
+- refactor and clean up internal/server package
+- main cleanup
+
+### Server settings
+
+- cors middleware
+- jwt middleware
+- redis initializations
+
 ## Long Term Plan
 
 - Multiple microservices
