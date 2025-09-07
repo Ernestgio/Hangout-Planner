@@ -11,26 +11,28 @@ import (
 
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/db"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server"
+	cmd "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server"
 )
 
+// @title 			Hangout Planner API
+// @version 		1.0
+// @description 	API documentation for the Hangout Planner service
+// @host 			localhost:9000
+// @BasePath 		/
 func main() {
-	if err := Run(); err != nil {
-		log.Fatalf("Fatal error: %v", err)
-	}
-}
-
-func Run() error {
-	// Load configuration
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Error loading config: %v", err)
 	}
 
+	if err := Run(cfg); err != nil {
+		log.Fatalf("Fatal error: %v", err)
+	}
+}
+
+func Run(cfg *config.Config) error {
 	// Connect to the database
-	ctxDB, cancelDB := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancelDB()
-	dbConn, dbCloser, err := db.Connect(ctxDB, cfg)
+	dbConn, dbCloser, err := db.Connect(cfg)
 	if err != nil {
 		return err
 	}
@@ -40,24 +42,30 @@ func Run() error {
 		}
 	}()
 
+	// Run database migrations -> TODO: Move to be outside the service
+	if err := db.Migrate(dbConn); err != nil {
+		return err
+	}
+
 	// Initialize and start the server
-	e := server.InitializeServer(cfg, dbConn)
+	e := cmd.InitializeServer(cfg, dbConn)
 	go func() {
 		if err := e.Start(":" + cfg.AppPort); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal("shutting down the server")
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shut down the server
+	// Wait for OS signals
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	//Perform a graceful server shutdown with a timeout
-	ctxServer, cancelServer := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancelServer()
+	// Graceful shutdown with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
-	if err := e.Shutdown(ctxServer); err != nil {
+	// Shutdown server
+	if err := e.Shutdown(ctx); err != nil {
 		return err
 	}
 

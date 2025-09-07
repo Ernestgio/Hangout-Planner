@@ -16,15 +16,12 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 ### Prerequisites
 
 - Go 1.23+
-- Docker
+- Docker & Docker Compose
 - MySQL (local or Dockerized)
-
-### Run Hangout Service
+- Swag tool
 
 ```sh
-docker build -t hangout . \
-  && docker run --rm --env-file .env -p 9000:9000 hangout \
-  && docker rmi hangout
+docker-compose up --build
 ```
 
 ### Environment Variables
@@ -32,6 +29,62 @@ docker build -t hangout . \
 Copy `.env.example` to `.env` and fill in your configuration.
 
 ---
+
+## Existing Feature
+
+### Project
+
+- Documentation (with echoswagger)
+- Orchestration with docker compose
+  - Network
+  - regular health checks
+  - fault tolerance (`restart : on-failure`)
+  - Dockerfile (multi services setup)
+
+### DB Connectivity
+
+- minified graceful shutdown
+- Auto migrate (code-embedded)
+
+### Server
+
+- standard response
+- constants
+- sentinel errors
+- Clean architecture dependency Injection with interface segregation
+
+## Short Term Plan
+
+### Controller, Services, and repository
+
+- Transaction wrapper
+- Sign up func
+
+### Dev Dependencies
+
+- Linter
+- go fmt
+- Unit tests (coverage, mocking, out files)
+- Code quality analysis
+- air for pre-commit actions
+
+### DB
+
+- Graceful shutdown
+- retry connections
+- migration scripts (up and down)
+
+### Code quality
+
+- refactor and clean up internal/server package
+- main cleanup
+- separate AppConfig, DbConfig, RedisConfig
+
+### Server settings
+
+- cors middleware
+- jwt middleware
+- redis initializations
 
 ## Long Term Plan
 

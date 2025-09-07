@@ -1,9 +1,10 @@
 package config
 
 import (
-	"errors"
 	"os"
 
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
 	"github.com/joho/godotenv"
 )
 
@@ -20,12 +21,12 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	if os.Getenv("ENV") != "production" {
+	if os.Getenv("ENV") != constants.ProductionEnv {
 		_ = godotenv.Load()
 	}
 
 	cfg := &Config{
-		Env:        getEnv("ENV", "dev"),
+		Env:        getEnv("ENV", "DEV"),
 		AppName:    getEnv("APP_NAME", "Hangout"),
 		AppPort:    getEnv("APP_PORT", "9000"),
 		DBHost:     getEnv("DB_HOST", "localhost"),
@@ -36,10 +37,10 @@ func Load() (*Config, error) {
 	}
 
 	if cfg.AppPort == "" {
-		return nil, errors.New("APP_PORT is required")
+		return nil, apperrors.ErrAppPortRequired
 	}
-	if cfg.Env == "production" && cfg.DBPassword == "" {
-		return nil, errors.New("DB_PASSWORD required in production")
+	if cfg.Env == constants.ProductionEnv && cfg.DBPassword == "" {
+		return nil, apperrors.ErrDbPasswordRequired
 	}
 	return cfg, nil
 }

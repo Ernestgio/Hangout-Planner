@@ -1,15 +1,14 @@
 package db
 
 import (
-	"context"
 	"fmt"
-	"time"
 
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
 	"gorm.io/gorm"
 )
 
-func Connect(ctx context.Context, cfg *config.Config) (*gorm.DB, func() error, error) {
+func Connect(cfg *config.Config) (*gorm.DB, func() error, error) {
 	dsn := buildDSN(cfg)
 
 	gormDB, err := OpenGORM(dsn)
@@ -22,9 +21,7 @@ func Connect(ctx context.Context, cfg *config.Config) (*gorm.DB, func() error, e
 		return nil, nil, fmt.Errorf("get sql.DB: %w", err)
 	}
 
-	pingCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-	defer cancel()
-	if err := db.PingContext(pingCtx); err != nil {
+	if err := db.Ping(); err != nil {
 		_ = db.Close()
 		return nil, nil, fmt.Errorf("ping db: %w", err)
 	}
@@ -34,4 +31,8 @@ func Connect(ctx context.Context, cfg *config.Config) (*gorm.DB, func() error, e
 	}
 
 	return gormDB, closer, nil
+}
+
+func Migrate(db *gorm.DB) error {
+	return db.AutoMigrate(&models.User{})
 }
