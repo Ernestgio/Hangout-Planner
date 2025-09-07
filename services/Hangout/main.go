@@ -9,11 +9,16 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/cmd"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/db"
+	cmd "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server"
 )
 
+// @title 			Hangout Planner API
+// @version 		1.0
+// @description 	API documentation for the Hangout Planner service
+// @host 			localhost:9000
+// @BasePath 		/
 func main() {
 	cfg, err := config.Load()
 	if err != nil {
