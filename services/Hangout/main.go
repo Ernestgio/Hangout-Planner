@@ -42,6 +42,11 @@ func Run(cfg *config.Config) error {
 		}
 	}()
 
+	// Run database migrations -> TODO: Move to be outside the service
+	if err := db.Migrate(dbConn); err != nil {
+		return err
+	}
+
 	// Initialize and start the server
 	e := cmd.InitializeServer(cfg, dbConn)
 	go func() {

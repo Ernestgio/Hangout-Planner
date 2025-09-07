@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
 	"gorm.io/gorm"
 )
 
@@ -30,4 +31,8 @@ func Connect(cfg *config.Config) (*gorm.DB, func() error, error) {
 	}
 
 	return gormDB, closer, nil
+}
+
+func Migrate(db *gorm.DB) error {
+	return db.AutoMigrate(&models.User{})
 }
