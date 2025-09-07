@@ -18,6 +18,7 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - Go 1.23+
 - Docker & Docker Compose
 - MySQL (local or Dockerized)
+- Swag tool
 
 ```sh
 docker-compose up --build
@@ -28,6 +29,29 @@ docker-compose up --build
 Copy `.env.example` to `.env` and fill in your configuration.
 
 ---
+
+## Existing Feature
+
+### Project
+
+- Documentation (with echoswagger)
+- Orchestration with docker compose
+  - Network
+  - regular health checks
+  - fault tolerance (`restart : on-failure`)
+  - Dockerfile (multi services setup)
+
+### DB Connectivity
+
+- minified graceful shutdown
+- Auto migrate (code-embedded)
+
+### Server
+
+- standard response
+- constants
+- sentinel errors
+- Clean architecture dependency Injection with interface segregation
 
 ## Short Term Plan
 
@@ -54,6 +78,7 @@ Copy `.env.example` to `.env` and fill in your configuration.
 
 - refactor and clean up internal/server package
 - main cleanup
+- separate AppConfig, DbConfig, RedisConfig
 
 ### Server settings
 
