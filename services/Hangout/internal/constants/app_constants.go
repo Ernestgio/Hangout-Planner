@@ -2,7 +2,7 @@ package constants
 
 const (
 
-	// Environment constants
+	// Appliation Environment constants
 	ProductionEnv  = "PROD"
 	DevEnv         = "DEV"
 	DefaultAppName = "Hangout"
@@ -12,15 +12,19 @@ const (
 	DefaultDBUser  = "root"
 	DefaultDBName  = "hangout"
 
+	// DB Environment constants
+	DefaultDBCharset = "utf8mb4"
+
 	// Application constants
 	LoggerFormat = "[${time_rfc3339}] ${method} ${host}${uri} ${status} ${latency_human}\n"
 
 	//Status constants
-	SuccessStatus    = "success"
-	ErrorStatus      = "error"
-	ProdErrorMessage = "An unexpected error occurred. Please try again later."
+	SuccessStatus = "success"
+	ErrorStatus   = "error"
+	HealthCheckOK = "OK"
 
 	// message constants
+	ProdErrorMessage        = "An unexpected error occurred. Please try again later."
 	UserCreatedSuccessfully = "User created successfully."
 
 	// Error message constants

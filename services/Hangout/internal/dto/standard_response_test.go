@@ -11,12 +11,12 @@ import (
 
 func TestNewSuccessResponse(t *testing.T) {
 	builder := dto.NewStandardResponseBuilder(constants.DevEnv)
-
-	resp := builder.NewSuccessResponse("ok", 123)
+	message, data := "ok", "sample data"
+	resp := builder.NewSuccessResponse(message, data)
 
 	require.Equal(t, constants.SuccessStatus, resp.Status)
-	require.Equal(t, "ok", resp.Message)
-	require.Equal(t, 123, resp.Data)
+	require.Equal(t, message, resp.Message)
+	require.Equal(t, data, resp.Data)
 }
 
 func TestNewErrorResponse(t *testing.T) {

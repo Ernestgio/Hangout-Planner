@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	_ "github.com/Ernestgio/Hangout-Planner/services/Hangout/docs"
+	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
@@ -21,7 +22,7 @@ func NewRouter(dependencies *AppDependencies) *Router {
 func (r *Router) RegisterEndpoints(server *echo.Echo) {
 
 	server.GET("/healthz", func(c echo.Context) error {
-		return c.String(http.StatusOK, "OK")
+		return c.String(http.StatusOK, constants.HealthCheckOK)
 	})
 
 	// Swagger endpoint

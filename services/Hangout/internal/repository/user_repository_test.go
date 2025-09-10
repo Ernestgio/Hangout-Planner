@@ -7,20 +7,11 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/repository"
 )
-
-func setupDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
-	sqlDB, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherEqual))
-	require.NoError(t, err)
-	db, err := gorm.Open(mysql.New(mysql.Config{Conn: sqlDB, SkipInitializeWithVersion: true}), &gorm.Config{})
-	require.NoError(t, err)
-	return db, mock
-}
 
 func TestCreateUser(t *testing.T) {
 	db, mock := setupDB(t)

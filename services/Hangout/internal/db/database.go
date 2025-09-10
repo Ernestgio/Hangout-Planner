@@ -1,8 +1,6 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
 	gormmysql "gorm.io/driver/mysql"
@@ -14,17 +12,17 @@ func Connect(cfg *config.Config) (*gorm.DB, func() error, error) {
 
 	gormDB, err := gorm.Open(gormmysql.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil, nil, fmt.Errorf("open gorm: %w", err)
+		return nil, nil, err
 	}
 
 	db, err := gormDB.DB()
 	if err != nil {
-		return nil, nil, fmt.Errorf("get sql.DB: %w", err)
+		return nil, nil, err
 	}
 
 	if err := db.Ping(); err != nil {
 		_ = db.Close()
-		return nil, nil, fmt.Errorf("ping db: %w", err)
+		return nil, nil, err
 	}
 
 	closer := func() error {
