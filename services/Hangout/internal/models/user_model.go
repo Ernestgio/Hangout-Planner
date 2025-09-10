@@ -14,5 +14,5 @@ type User struct {
 	Password  string `gorm:"type:varchar(255);not null"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
-	DeletedAt gorm.DeletedAt
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
