@@ -5,7 +5,7 @@ const (
 	// Appliation Environment constants
 	ProductionEnv  = "PROD"
 	DevEnv         = "DEV"
-	DefaultAppName = "Hangout"
+	DefaultAppName = "hangout"
 	DefaultAppPort = "9000"
 	DefaultDBHost  = "localhost"
 	DefaultDBPort  = "3306"

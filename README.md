@@ -20,13 +20,23 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - MySQL (local or Dockerized)
 - Go Swag CLI tool
 
-```sh
-docker-compose up --build
-```
-
 ### Environment Variables
 
 Copy `.env.example` to `.env` and fill in your configuration.
+
+Local deployment with mysql from docker compose and go run
+
+```sh
+make mysql-run
+make run
+```
+
+Local deployment fully with docker compose
+-- Set DB_HOST to mysql -- utlizing docker network
+
+```sh
+make up
+```
 
 ---
 
