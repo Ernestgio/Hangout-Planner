@@ -77,7 +77,7 @@
 				
 				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server/server.go (0.0%)</option>
 				
-				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services/user_service.go (0.0%)</option>
+				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services/user_service.go (100.0%)</option>
 				
 				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/Hangout/main.go (0.0%)</option>
 				
@@ -308,8 +308,6 @@ func (uc *UserController) CreateUser(c echo.Context) error <span class="cov0" ti
 		<pre class="file" id="file3" style="display: none">package db
 
 import (
-        "fmt"
-
         "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
         "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
         gormmysql "gorm.io/driver/mysql"
@@ -321,17 +319,17 @@ func Connect(cfg *config.Config) (*gorm.DB, func() error, error) <span class="co
 
         gormDB, err := gorm.Open(gormmysql.Open(dsn), &amp;gorm.Config{})
         if err != nil </span><span class="cov0" title="0">{
-                return nil, nil, fmt.Errorf("open gorm: %w", err)
+                return nil, nil, err
         }</span>
 
         <span class="cov0" title="0">db, err := gormDB.DB()
         if err != nil </span><span class="cov0" title="0">{
-                return nil, nil, fmt.Errorf("get sql.DB: %w", err)
+                return nil, nil, err
         }</span>
 
         <span class="cov0" title="0">if err := db.Ping(); err != nil </span><span class="cov0" title="0">{
                 _ = db.Close()
-                return nil, nil, fmt.Errorf("ping db: %w", err)
+                return nil, nil, err
         }</span>
 
         <span class="cov0" title="0">closer := func() error </span><span class="cov0" title="0">{
@@ -353,6 +351,7 @@ import (
         "time"
 
         "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
+        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
         mysqlDriver "github.com/go-sql-driver/mysql"
 )
 
@@ -360,13 +359,12 @@ func buildDSN(cfg *config.Config) string <span class="cov0" title="0">{
         mdcfg := mysqlDriver.Config{
                 User:      cfg.DBUser,
                 Passwd:    cfg.DBPassword,
-                Net:       "tcp",
                 Addr:      fmt.Sprintf("%s:%s", cfg.DBHost, cfg.DBPort),
                 DBName:    cfg.DBName,
                 ParseTime: true,
                 Loc:       time.UTC,
                 Params: map[string]string{
-                        "charset": "utf8mb4",
+                        "charset": constants.DefaultDBCharset,
                 },
         }
         return mdcfg.FormatDSN()
@@ -483,6 +481,7 @@ import (
         "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
         "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/repository"
         "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services"
+        "golang.org/x/crypto/bcrypt"
         "gorm.io/gorm"
 )
 
@@ -495,7 +494,7 @@ func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies <s
         userRepo := repository.NewUserRepository(db)
 
         // 2. Service Layer
-        userService := services.NewUserService(userRepo)
+        userService := services.NewUserService(userRepo, bcrypt.DefaultCost)
 
         // 3. Controller Layer
         responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
@@ -513,6 +512,7 @@ import (
         "net/http"
 
         _ "github.com/Ernestgio/Hangout-Planner/services/Hangout/docs"
+        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
         "github.com/labstack/echo/v4"
         echoSwagger "github.com/swaggo/echo-swagger"
 )
@@ -529,16 +529,16 @@ func NewRouter(dependencies *AppDependencies) *Router <span class="cov0" title="
 
 func (r *Router) RegisterEndpoints(server *echo.Echo) <span class="cov0" title="0">{
 
-        server.GET("/healthz", func(c echo.Context)</span><span class="cov0" title="0"> error {
-                return c.String(http.StatusOK, "OK")
+        server.GET("/healthz", func(c echo.Context) error </span><span class="cov0" title="0">{
+                return c.String(http.StatusOK, constants.HealthCheckOK)
         }</span>)
 
-        <span class="cov0" title="0">// Swagger endpoint
-</span>        server.GET("/swagger/*", echoSwagger.WrapHandler)
+        // Swagger endpoint
+        <span class="cov0" title="0">server.GET("/swagger/*", echoSwagger.WrapHandler)
 
-</span>        // User routes
+        // User routes
         usersRoute := server.Group("/users")
-        <span class="cov0" title="0">usersRoute.POST("", r.dependencies.userController.CreateUser)
+        usersRoute.POST("", r.dependencies.userController.CreateUser)</span>
 }
 </pre>
 		
@@ -592,32 +592,33 @@ type UserService interface {
 }
 
 type userService struct {
-        userRepo repository.UserRepository
+        userRepo   repository.UserRepository
+        bcryptCost int
 }
 
-func NewUserService(userRepo repository.UserRepository) UserService <span class="cov0" title="0">{
-        return &amp;userService{userRepo: userRepo}
+func NewUserService(userRepo repository.UserRepository, bcryptCost int) UserService <span class="cov8" title="1">{
+        return &amp;userService{userRepo: userRepo, bcryptCost: bcryptCost}
 }</span>
 
-func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, error) <span class="cov0" title="0">{
+func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, error) <span class="cov8" title="1">{
         existingUser, err := s.userRepo.GetUserByEmail(request.Email)
-        if err == nil &amp;&amp; existingUser != nil </span><span class="cov0" title="0">{
+        if err == nil &amp;&amp; existingUser != nil </span><span class="cov8" title="1">{
                 return nil, apperrors.ErrUserAlreadyExists
         }</span>
 
-        <span class="cov0" title="0">user := mappings.UserCreateRequestToModel(request)
+        <span class="cov8" title="1">user := mappings.UserCreateRequestToModel(request)
         user.ID = uuid.New()
-        hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
-        if err != nil </span><span class="cov0" title="0">{
+        hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), s.bcryptCost)
+        if err != nil </span><span class="cov8" title="1">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">user.Password = string(hashedPassword)
+        <span class="cov8" title="1">user.Password = string(hashedPassword)
 
-        if err := s.userRepo.CreateUser(&amp;user); err != nil </span><span class="cov0" title="0">{
+        if err := s.userRepo.CreateUser(&amp;user); err != nil </span><span class="cov8" title="1">{
                 return nil, err
         }</span>
 
-        <span class="cov0" title="0">return &amp;user, nil</span>
+        <span class="cov8" title="1">return &amp;user, nil</span>
 }
 </pre>
 		

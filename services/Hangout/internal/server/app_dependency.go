@@ -6,6 +6,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -18,7 +19,7 @@ func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies {
 	userRepo := repository.NewUserRepository(db)
 
 	// 2. Service Layer
-	userService := services.NewUserService(userRepo)
+	userService := services.NewUserService(userRepo, bcrypt.DefaultCost)
 
 	// 3. Controller Layer
 	responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)

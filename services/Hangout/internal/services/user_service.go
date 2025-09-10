@@ -15,11 +15,12 @@ type UserService interface {
 }
 
 type userService struct {
-	userRepo repository.UserRepository
+	userRepo   repository.UserRepository
+	bcryptCost int
 }
 
-func NewUserService(userRepo repository.UserRepository) UserService {
-	return &userService{userRepo: userRepo}
+func NewUserService(userRepo repository.UserRepository, bcryptCost int) UserService {
+	return &userService{userRepo: userRepo, bcryptCost: bcryptCost}
 }
 
 func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, error) {
@@ -30,7 +31,7 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, e
 
 	user := mappings.UserCreateRequestToModel(request)
 	user.ID = uuid.New()
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), s.bcryptCost)
 	if err != nil {
 		return nil, err
 	}

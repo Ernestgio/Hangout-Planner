@@ -40,6 +40,9 @@ Copy `.env.example` to `.env` and fill in your configuration.
   - regular health checks
   - fault tolerance (`restart : on-failure`)
   - Dockerfile (multi services setup)
+- Unit Tests
+  - with mocking and table driven test whenever applicable
+  - tests folder containing unit test coverage file in HTML
 
 ### DB Connectivity
 
@@ -72,7 +75,7 @@ Copy `.env.example` to `.env` and fill in your configuration.
 
 - Graceful shutdown
 - retry connections
-- migration scripts (up and down)
+- Atlas versioned migration scripts (up and down)
 
 ### Code quality
 
@@ -94,4 +97,4 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - Multiple microservices
 - Github Actions CI/CD
 - Cloud Deployments
-- Oauth / multiple login method
+- OAth / multiple login method
