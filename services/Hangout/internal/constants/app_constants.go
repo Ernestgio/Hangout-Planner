@@ -14,6 +14,7 @@ const (
 
 	// DB Environment constants
 	DefaultDBCharset = "utf8mb4"
+	DefaultDBNetwork = "tcp"
 
 	// Application constants
 	LoggerFormat = "[${time_rfc3339}] ${method} ${host}${uri} ${status} ${latency_human}\n"

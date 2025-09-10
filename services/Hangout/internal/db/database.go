@@ -9,7 +9,6 @@ import (
 
 func Connect(cfg *config.Config) (*gorm.DB, func() error, error) {
 	dsn := buildDSN(cfg)
-
 	gormDB, err := gorm.Open(gormmysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, nil, err

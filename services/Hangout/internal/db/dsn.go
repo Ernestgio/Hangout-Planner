@@ -12,9 +12,10 @@ import (
 func buildDSN(cfg *config.Config) string {
 	mdcfg := mysqlDriver.Config{
 		User:      cfg.DBUser,
-		Passwd:    cfg.DBPassword,
+		Passwd:    cfg.MySQLRootPassword,
 		Addr:      fmt.Sprintf("%s:%s", cfg.DBHost, cfg.DBPort),
 		DBName:    cfg.DBName,
+		Net:       constants.DefaultDBNetwork,
 		ParseTime: true,
 		Loc:       time.UTC,
 		Params: map[string]string{

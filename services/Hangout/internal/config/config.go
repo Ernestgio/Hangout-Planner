@@ -26,14 +26,15 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Env:        getEnv("ENV", constants.DevEnv),
-		AppName:    getEnv("APP_NAME", constants.DefaultAppName),
-		AppPort:    getEnv("APP_PORT", constants.DefaultAppPort),
-		DBHost:     getEnv("DB_HOST", constants.DefaultDBHost),
-		DBPort:     getEnv("DB_PORT", constants.DefaultDBPort),
-		DBUser:     getEnv("DB_USER", constants.DefaultDBUser),
-		DBPassword: getEnv("DB_PASSWORD", ""),
-		DBName:     getEnv("DB_NAME", constants.DefaultDBName),
+		Env:               getEnv("ENV", constants.DevEnv),
+		AppName:           getEnv("APP_NAME", constants.DefaultAppName),
+		AppPort:           getEnv("APP_PORT", constants.DefaultAppPort),
+		DBHost:            getEnv("DB_HOST", constants.DefaultDBHost),
+		DBPort:            getEnv("DB_PORT", constants.DefaultDBPort),
+		DBUser:            getEnv("DB_USER", constants.DefaultDBUser),
+		DBPassword:        getEnv("DB_PASSWORD", ""),
+		DBName:            getEnv("DB_NAME", constants.DefaultDBName),
+		MySQLRootPassword: getEnv("MYSQL_ROOT_PASSWORD", ""),
 	}
 
 	if cfg.AppPort == "" {
