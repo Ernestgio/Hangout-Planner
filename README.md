@@ -18,7 +18,7 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - Go 1.23+
 - Docker & Docker Compose
 - MySQL (local or Dockerized)
-- Swag tool
+- Go Swag CLI tool
 
 ```sh
 docker-compose up --build
