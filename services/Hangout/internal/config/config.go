@@ -26,7 +26,7 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Env:        getEnv("ENV", "DEV"),
+		Env:        getEnv("ENV", constants.DevEnv),
 		AppName:    getEnv("APP_NAME", "Hangout"),
 		AppPort:    getEnv("APP_PORT", "9000"),
 		DBHost:     getEnv("DB_HOST", "localhost"),

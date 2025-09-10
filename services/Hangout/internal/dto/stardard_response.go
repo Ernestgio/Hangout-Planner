@@ -30,7 +30,7 @@ func (b *StandardResponseBuilder) NewErrorResponse(err error) *StandardResponse 
 	if b.env == constants.ProductionEnv {
 		return &StandardResponse{
 			Status:  constants.ErrorStatus,
-			Message: "An unexpected error occurred. Please try again later.",
+			Message: constants.ProdErrorMessage,
 		}
 	}
 
