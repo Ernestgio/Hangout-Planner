@@ -19,6 +19,7 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - Docker & Docker Compose
 - MySQL (local or Dockerized)
 - Go Swag CLI tool
+- Golangci-Lint tool
 
 ### Environment Variables
 
