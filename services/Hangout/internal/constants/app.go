@@ -13,4 +13,6 @@ const (
 
 	// message constants
 	UserCreatedSuccessfully = "User created successfully."
+
+	// Error message constants
 )

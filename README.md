@@ -88,6 +88,10 @@ Copy `.env.example` to `.env` and fill in your configuration.
 
 ## Long Term Plan
 
+- Features for hangouts, budgets, locations, activities, excel export, sharing
+- HTTPS
+- Nginx API Gateway
 - Multiple microservices
 - Github Actions CI/CD
 - Cloud Deployments
+- Oauth / multiple login method
