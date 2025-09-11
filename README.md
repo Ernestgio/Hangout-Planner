@@ -5,11 +5,11 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 
 ## 🚀 Tech Stack
 
-- Go
-- Echo
-- GORM
-- MySQL
-- Docker
+- Language: Go 1.23+
+- Framework: Echo (HTTP)
+- ORM: GORM (MySQL)
+- Relational Database: MySQL 8.0
+- Infra & Tooling: Docker, Docker Compose, Makefile, Air, Golangci-Lint, Swag
 
 ## 🏃‍♂️ Local Development
 
@@ -17,22 +17,24 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 
 - Go 1.23+
 - Docker & Docker Compose
-- MySQL (local or Dockerized)
-- Go Swag CLI tool
-- Golangci-Lint tool
+- MySQL (local or via Docker)
+- Swag CLI for API docs
+- golangci-lint
+- Make (Makefile)
 
 ### Environment Variables
 
-Copy `.env.example` to `.env` and fill in your configuration.
+Copy `services/hangout/.env.example` to `services/hangout/.env` and fill in your configuration.
 
-Local deployment with mysql from docker compose and go run
+### Local deployment with mysql from docker compose and go run
 
 ```sh
 make mysql-run
 make run
 ```
 
-Local deployment fully with docker compose
+### Local deployment fully with docker compose
+
 -- Set DB_HOST to mysql -- utlizing docker network
 
 ```sh
@@ -45,22 +47,29 @@ make up
 
 ### Project
 
-- Documentation (with echoswagger)
-- Orchestration with docker compose
+- Orchestration with docker-compose
   - Network
   - regular health checks
   - fault tolerance (`restart : on-failure`)
   - Dockerfile (multi services setup)
+
+### hangout service
+
+#### Module
+
+- Documentation (with echoswagger)
 - Unit Tests
   - with mocking and table driven test whenever applicable
   - tests folder containing unit test coverage file in HTML
+- Code quality analysis, formatting, and linting with golangci-lint
+- Makefile scripts
 
-### DB Connectivity
+#### DB Connectivity
 
 - minified graceful shutdown
-- Auto migrate (code-embedded)
+- Auto migrate (code-based migration)
 
-### Server
+#### Server
 
 - standard response
 - constants
@@ -71,16 +80,12 @@ make up
 
 ### Controller, Services, and repository
 
-- Transaction wrapper
-- Sign up func
+- Sign up func and auth service
 
 ### Dev Dependencies
 
-- Linter
-- go fmt
-- Unit tests (coverage, mocking, out files)
-- Code quality analysis
-- air for pre-commit actions
+- air for dev hot reload
+- pre-commit actions
 
 ### DB
 
@@ -90,7 +95,7 @@ make up
 
 ### Code quality
 
-- refactor and clean up internal/server package
+- refactor and clean up services/hangout/internal/server package
 - main cleanup
 - separate AppConfig, DbConfig, RedisConfig
 
@@ -106,6 +111,11 @@ make up
 - HTTPS
 - Nginx API Gateway
 - Multiple microservices
+- Shared Module for microservices
+- Multi db for microservices
 - Github Actions CI/CD
 - Cloud Deployments
-- OAth / multiple login method
+- OAuth / multiple login method
+- Excel service export
+- Scheduled Notification service
+- AWS S3 connectivity for excel file storage
