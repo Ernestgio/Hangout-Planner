@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/repository"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 )
 
 func TestCreateUser(t *testing.T) {

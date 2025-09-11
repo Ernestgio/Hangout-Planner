@@ -1,11 +1,11 @@
 package cmd
 
 import (
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/controllers"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/repository"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )

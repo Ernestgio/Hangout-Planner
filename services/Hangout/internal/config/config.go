@@ -3,8 +3,8 @@ package config
 import (
 	"os"
 
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/apperrors"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/joho/godotenv"
 )
 

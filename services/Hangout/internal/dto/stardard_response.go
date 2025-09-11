@@ -1,6 +1,6 @@
 package dto
 
-import "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
+import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 
 type StandardResponse struct {
 	Status  string      `json:"status"`

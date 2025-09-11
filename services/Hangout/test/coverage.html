@@ -1,99 +1,162 @@
-
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>docs: Go Coverage Report</title>
-		<style>
-			body {
-				background: black;
-				color: rgb(80, 80, 80);
-			}
-			body, pre, #legend span {
-				font-family: Menlo, monospace;
-				font-weight: bold;
-			}
-			#topbar {
-				background: black;
-				position: fixed;
-				top: 0; left: 0; right: 0;
-				height: 42px;
-				border-bottom: 1px solid rgb(80, 80, 80);
-			}
-			#content {
-				margin-top: 50px;
-			}
-			#nav, #legend {
-				float: left;
-				margin-left: 10px;
-			}
-			#legend {
-				margin-top: 12px;
-			}
-			#nav {
-				margin-top: 10px;
-			}
-			#legend span {
-				margin: 0 5px;
-			}
-			.cov0 { color: rgb(192, 0, 0) }
-.cov1 { color: rgb(128, 128, 128) }
-.cov2 { color: rgb(116, 140, 131) }
-.cov3 { color: rgb(104, 152, 134) }
-.cov4 { color: rgb(92, 164, 137) }
-.cov5 { color: rgb(80, 176, 140) }
-.cov6 { color: rgb(68, 188, 143) }
-.cov7 { color: rgb(56, 200, 146) }
-.cov8 { color: rgb(44, 212, 149) }
-.cov9 { color: rgb(32, 224, 152) }
-.cov10 { color: rgb(20, 236, 155) }
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>docs: Go Coverage Report</title>
+    <style>
+      body {
+        background: black;
+        color: rgb(80, 80, 80);
+      }
+      body,
+      pre,
+      #legend span {
+        font-family: Menlo, monospace;
+        font-weight: bold;
+      }
+      #topbar {
+        background: black;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 42px;
+        border-bottom: 1px solid rgb(80, 80, 80);
+      }
+      #content {
+        margin-top: 50px;
+      }
+      #nav,
+      #legend {
+        float: left;
+        margin-left: 10px;
+      }
+      #legend {
+        margin-top: 12px;
+      }
+      #nav {
+        margin-top: 10px;
+      }
+      #legend span {
+        margin: 0 5px;
+      }
+      .cov0 {
+        color: rgb(192, 0, 0);
+      }
+      .cov1 {
+        color: rgb(128, 128, 128);
+      }
+      .cov2 {
+        color: rgb(116, 140, 131);
+      }
+      .cov3 {
+        color: rgb(104, 152, 134);
+      }
+      .cov4 {
+        color: rgb(92, 164, 137);
+      }
+      .cov5 {
+        color: rgb(80, 176, 140);
+      }
+      .cov6 {
+        color: rgb(68, 188, 143);
+      }
+      .cov7 {
+        color: rgb(56, 200, 146);
+      }
+      .cov8 {
+        color: rgb(44, 212, 149);
+      }
+      .cov9 {
+        color: rgb(32, 224, 152);
+      }
+      .cov10 {
+        color: rgb(20, 236, 155);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="topbar">
+      <div id="nav">
+        <select id="files">
+          <option value="file0">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/docs/docs.go
+            (0.0%)
+          </option>
 
-		</style>
-	</head>
-	<body>
-		<div id="topbar">
-			<div id="nav">
-				<select id="files">
-				
-				<option value="file0">github.com/Ernestgio/Hangout-Planner/services/Hangout/docs/docs.go (0.0%)</option>
-				
-				<option value="file1">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config/config.go (0.0%)</option>
-				
-				<option value="file2">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/controllers/user_controller.go (0.0%)</option>
-				
-				<option value="file3">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/db/database.go (0.0%)</option>
-				
-				<option value="file4">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/db/dsn.go (0.0%)</option>
-				
-				<option value="file5">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto/stardard_response.go (100.0%)</option>
-				
-				<option value="file6">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/mappings/user_mapping.go (100.0%)</option>
-				
-				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/repository/user_repository.go (100.0%)</option>
-				
-				<option value="file8">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server/app_dependency.go (0.0%)</option>
-				
-				<option value="file9">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server/router.go (0.0%)</option>
-				
-				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server/server.go (0.0%)</option>
-				
-				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services/user_service.go (100.0%)</option>
-				
-				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/Hangout/main.go (0.0%)</option>
-				
-				</select>
-			</div>
-			<div id="legend">
-				<span>not tracked</span>
-			
-				<span class="cov0">not covered</span>
-				<span class="cov8">covered</span>
-			
-			</div>
-		</div>
-		<div id="content">
-		
-		<pre class="file" id="file0" style="display: none">// Package docs Code generated by swaggo/swag. DO NOT EDIT
+          <option value="file1">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/config.go
+            (0.0%)
+          </option>
+
+          <option value="file2">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers/user_controller.go
+            (0.0%)
+          </option>
+
+          <option value="file3">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/database.go
+            (0.0%)
+          </option>
+
+          <option value="file4">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/dsn.go
+            (0.0%)
+          </option>
+
+          <option value="file5">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto/stardard_response.go
+            (100.0%)
+          </option>
+
+          <option value="file6">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go
+            (100.0%)
+          </option>
+
+          <option value="file7">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user_repository.go
+            (100.0%)
+          </option>
+
+          <option value="file8">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server/app_dependency.go
+            (0.0%)
+          </option>
+
+          <option value="file9">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server/router.go
+            (0.0%)
+          </option>
+
+          <option value="file10">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server/server.go
+            (0.0%)
+          </option>
+
+          <option value="file11">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user_service.go
+            (100.0%)
+          </option>
+
+          <option value="file12">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/main.go (0.0%)
+          </option>
+        </select>
+      </div>
+      <div id="legend">
+        <span>not tracked</span>
+
+        <span class="cov0">not covered</span>
+        <span class="cov8">covered</span>
+      </div>
+    </div>
+    <div id="content">
+      <pre
+        class="file"
+        id="file0"
+        style="display: none"
+      >// Package docs Code generated by swaggo/swag. DO NOT EDIT
 package docs
 
 import "github.com/swaggo/swag"
@@ -194,14 +257,14 @@ func init() <span class="cov0" title="0">{
         swag.Register(SwaggerInfo.InstanceName(), SwaggerInfo)
 }</span>
 </pre>
-		
-		<pre class="file" id="file1" style="display: none">package config
+
+      <pre class="file" id="file1" style="display: none">package config
 
 import (
         "os"
 
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/apperrors"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         "github.com/joho/godotenv"
 )
 
@@ -249,17 +312,17 @@ func getEnv(key, def string) string <span class="cov0" title="0">{
         <span class="cov0" title="0">return def</span>
 }
 </pre>
-		
-		<pre class="file" id="file2" style="display: none">package controllers
+
+      <pre class="file" id="file2" style="display: none">package controllers
 
 import (
         "net/http"
 
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/apperrors"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/mappings"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
         "github.com/labstack/echo/v4"
 )
 
@@ -304,12 +367,12 @@ func (uc *UserController) CreateUser(c echo.Context) error <span class="cov0" ti
         return c.JSON(http.StatusCreated, uc.responseBuilder.NewSuccessResponse(constants.UserCreatedSuccessfully, res))</span>
 }
 </pre>
-		
-		<pre class="file" id="file3" style="display: none">package db
+
+      <pre class="file" id="file3" style="display: none">package db
 
 import (
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
         gormmysql "gorm.io/driver/mysql"
         "gorm.io/gorm"
 )
@@ -343,15 +406,15 @@ func Migrate(db *gorm.DB) error <span class="cov0" title="0">{
         return db.AutoMigrate(&amp;models.User{})
 }</span>
 </pre>
-		
-		<pre class="file" id="file4" style="display: none">package db
+
+      <pre class="file" id="file4" style="display: none">package db
 
 import (
         "fmt"
         "time"
 
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         mysqlDriver "github.com/go-sql-driver/mysql"
 )
 
@@ -370,10 +433,10 @@ func buildDSN(cfg *config.Config) string <span class="cov0" title="0">{
         return mdcfg.FormatDSN()
 }</span>
 </pre>
-		
-		<pre class="file" id="file5" style="display: none">package dto
 
-import "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
+      <pre class="file" id="file5" style="display: none">package dto
+
+import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 
 type StandardResponse struct {
         Status  string      `json:"status"`
@@ -413,12 +476,12 @@ func (b *StandardResponseBuilder) NewErrorResponse(err error) *StandardResponse 
         }</span>
 }
 </pre>
-		
-		<pre class="file" id="file6" style="display: none">package mappings
+
+      <pre class="file" id="file6" style="display: none">package mappings
 
 import (
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 )
 
 func UserCreateRequestToModel(request dto.UserCreateRequest) models.User <span class="cov8" title="1">{
@@ -436,11 +499,11 @@ func UserToResponseDTO(user *models.User) *dto.UserResponse <span class="cov8" t
         }
 }</span>
 </pre>
-		
-		<pre class="file" id="file7" style="display: none">package repository
+
+      <pre class="file" id="file7" style="display: none">package repository
 
 import (
-        models "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
+        models "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
         "gorm.io/gorm"
 )
 
@@ -472,15 +535,15 @@ func (r *userRepository) GetUserByEmail(email string) (*models.User, error) <spa
         <span class="cov8" title="1">return &amp;user, nil</span>
 }
 </pre>
-		
-		<pre class="file" id="file8" style="display: none">package cmd
+
+      <pre class="file" id="file8" style="display: none">package cmd
 
 import (
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/controllers"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/repository"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
         "golang.org/x/crypto/bcrypt"
         "gorm.io/gorm"
 )
@@ -505,14 +568,14 @@ func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies <s
         }
 }</span>
 </pre>
-		
-		<pre class="file" id="file9" style="display: none">package cmd
+
+      <pre class="file" id="file9" style="display: none">package cmd
 
 import (
         "net/http"
 
-        _ "github.com/Ernestgio/Hangout-Planner/services/Hangout/docs"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
+        _ "github.com/Ernestgio/Hangout-Planner/services/hangout/docs"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         "github.com/labstack/echo/v4"
         echoSwagger "github.com/swaggo/echo-swagger"
 )
@@ -541,12 +604,12 @@ func (r *Router) RegisterEndpoints(server *echo.Echo) <span class="cov0" title="
         usersRoute.POST("", r.dependencies.userController.CreateUser)</span>
 }
 </pre>
-		
-		<pre class="file" id="file10" style="display: none">package cmd
+
+      <pre class="file" id="file10" style="display: none">package cmd
 
 import (
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         "gorm.io/gorm"
 
         "github.com/labstack/echo/v4"
@@ -574,15 +637,15 @@ func InitializeServer(cfg *config.Config, db *gorm.DB) *echo.Echo <span class="c
         return server
 }</span>
 </pre>
-		
-		<pre class="file" id="file11" style="display: none">package services
+
+      <pre class="file" id="file11" style="display: none">package services
 
 import (
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/apperrors"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/mappings"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/repository"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
         "github.com/google/uuid"
         "golang.org/x/crypto/bcrypt"
 )
@@ -621,8 +684,8 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, e
         <span class="cov8" title="1">return &amp;user, nil</span>
 }
 </pre>
-		
-		<pre class="file" id="file12" style="display: none">package main
+
+      <pre class="file" id="file12" style="display: none">package main
 
 import (
         "context"
@@ -633,9 +696,9 @@ import (
         "syscall"
         "time"
 
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-        "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/db"
-        cmd "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db"
+        cmd "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server"
 )
 
 // @title                         Hangout Planner API
@@ -696,34 +759,31 @@ func Run(cfg *config.Config) error <span class="cov0" title="0">{
         <span class="cov0" title="0">return nil</span>
 }
 </pre>
-		
-		</div>
-	</body>
-	<script>
-	(function() {
-		var files = document.getElementById('files');
-		var visible;
-		files.addEventListener('change', onChange, false);
-		function select(part) {
-			if (visible)
-				visible.style.display = 'none';
-			visible = document.getElementById(part);
-			if (!visible)
-				return;
-			files.value = part;
-			visible.style.display = 'block';
-			location.hash = part;
-		}
-		function onChange() {
-			select(files.value);
-			window.scrollTo(0, 0);
-		}
-		if (location.hash != "") {
-			select(location.hash.substr(1));
-		}
-		if (!visible) {
-			select("file0");
-		}
-	})();
-	</script>
+    </div>
+  </body>
+  <script>
+    (function () {
+      var files = document.getElementById("files");
+      var visible;
+      files.addEventListener("change", onChange, false);
+      function select(part) {
+        if (visible) visible.style.display = "none";
+        visible = document.getElementById(part);
+        if (!visible) return;
+        files.value = part;
+        visible.style.display = "block";
+        location.hash = part;
+      }
+      function onChange() {
+        select(files.value);
+        window.scrollTo(0, 0);
+      }
+      if (location.hash != "") {
+        select(location.hash.substr(1));
+      }
+      if (!visible) {
+        select("file0");
+      }
+    })();
+  </script>
 </html>

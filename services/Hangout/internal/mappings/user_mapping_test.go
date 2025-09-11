@@ -6,9 +6,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/mappings"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 )
 
 func TestUserCreateRequestToModel(t *testing.T) {

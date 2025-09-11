@@ -4,22 +4,22 @@ services:
     container_name: hangout-mysql
     restart: on-failure
     env_file:
-      - ./services/Hangout/.env
+      - ./services/hangout/.env
     ports:
       - "3306:3306"
     volumes:
-      - ./services/Hangout/internal/db/init.sql:/data/application/init.sql
+      - ./services/hangout/internal/db/init.sql:/data/application/init.sql
     command: --init-file /data/application/init.sql
     networks:
       - default
   hangout:
     build:
-      context: ./services/Hangout
+      context: ./services/hangout
       dockerfile: Dockerfile
     restart: on-failure
     container_name: hangout
     env_file:
-      - ./services/Hangout/.env
+      - ./services/hangout/.env
     ports:
       - "9000:9000"
     depends_on:

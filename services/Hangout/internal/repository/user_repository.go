@@ -1,7 +1,7 @@
 package repository
 
 import (
-	models "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
+	models "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 	"gorm.io/gorm"
 )
 

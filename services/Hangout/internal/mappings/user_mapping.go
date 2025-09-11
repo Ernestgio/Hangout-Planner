@@ -1,8 +1,8 @@
 package mappings
 
 import (
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 )
 
 func UserCreateRequestToModel(request dto.UserCreateRequest) models.User {

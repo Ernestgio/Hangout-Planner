@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"gorm.io/gorm"
 
 	"github.com/labstack/echo/v4"

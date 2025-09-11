@@ -4,10 +4,10 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/apperrors"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )

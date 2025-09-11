@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/stretchr/testify/require"
 )
 
