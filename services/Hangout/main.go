@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/db"
-	cmd "github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/server"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db"
+	cmd "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server"
 )
 
 // @title 			Hangout Planner API

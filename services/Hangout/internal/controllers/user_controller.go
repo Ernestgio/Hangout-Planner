@@ -3,11 +3,11 @@ package controllers
 import (
 	"net/http"
 
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/apperrors"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/mappings"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/services"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"github.com/labstack/echo/v4"
 )
 

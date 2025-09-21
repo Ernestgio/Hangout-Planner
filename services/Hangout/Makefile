@@ -4,7 +4,7 @@ APP_NAME=hangout
 COVERAGE_FILE=test/coverage
 COVERAGE_HTML_FILE=test/coverage.html
 
-.PHONY: all test lint swag build run clean docker-build docker-run up down
+.PHONY: all test lint swag build run clean docker-build docker-run up down air
 
 all: lint test build
 
@@ -47,3 +47,6 @@ up:
 ## Stop docker-compose services
 down:
 	docker-compose down -v
+
+air:
+	air -c .air.toml

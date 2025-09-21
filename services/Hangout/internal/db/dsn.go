@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	mysqlDriver "github.com/go-sql-driver/mysql"
 )
 

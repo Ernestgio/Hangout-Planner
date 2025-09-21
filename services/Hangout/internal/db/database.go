@@ -1,8 +1,8 @@
 package db
 
 import (
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 	gormmysql "gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )

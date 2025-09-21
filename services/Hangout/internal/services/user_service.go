@@ -1,11 +1,11 @@
 package services
 
 import (
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/apperrors"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/mappings"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/models"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/repository"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )

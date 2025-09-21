@@ -3,8 +3,8 @@ package cmd
 import (
 	"net/http"
 
-	_ "github.com/Ernestgio/Hangout-Planner/services/Hangout/api"
-	"github.com/Ernestgio/Hangout-Planner/services/Hangout/internal/constants"
+	_ "github.com/Ernestgio/Hangout-Planner/services/hangout/api"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
