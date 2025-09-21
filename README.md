@@ -25,7 +25,11 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - ☁️ Air - Live reload for Go apps
 - Lefthook - git hooks for pre-commit / pre-push actions
 
-### Environment Variables
+### Mysql Environment Variables
+
+Copy `components/database/.env.example` to `components/database/.env.example` and fill in your configuration
+
+### Application Environment Variables
 
 Copy `services/hangout/.env.example` to `services/hangout/.env` and fill in your configuration.
 

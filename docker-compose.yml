@@ -4,7 +4,7 @@ services:
     container_name: hangout-mysql
     restart: on-failure
     env_file:
-      - ./services/hangout/.env
+      - ./components/database/.env
     ports:
       - "3306:3306"
     volumes:

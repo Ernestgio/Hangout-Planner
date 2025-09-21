@@ -25,8 +25,8 @@ const (
 	HealthCheckOK = "OK"
 
 	// message constants
-	ProdErrorMessage        = "An unexpected error occurred. Please try again later."
 	UserCreatedSuccessfully = "User created successfully."
 
 	// Error message constants
+	ProdErrorMessage = "An unexpected error occurred. Please try again later."
 )
