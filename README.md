@@ -10,6 +10,7 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - ORM: GORM (MySQL)
 - Relational Database: MySQL 8.0
 - Infra & Tooling: Docker, Docker Compose, Makefile, Air, Golangci-Lint, Swag
+- Github Actions for CI/CD
 
 ## 🏃‍♂️ Local Development
 
@@ -114,9 +115,10 @@ make up
 - Multiple microservices
 - Shared Module for microservices
 - Multi db for microservices
-- Github Actions CI/CD
 - Cloud Deployments
 - OAuth / multiple login method
 - Excel service export
 - Scheduled Notification service
 - AWS S3 connectivity for excel file storage
+- RabbitMQ Docker setup for connection between hangout service and report service
+- shared module in pkg/shared
