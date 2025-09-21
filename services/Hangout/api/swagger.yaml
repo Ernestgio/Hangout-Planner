@@ -1,5 +1,17 @@
 basePath: /
 definitions:
+  dto.SignUpRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - name
+    type: object
   dto.StandardResponseBuilder:
     type: object
   dto.UserCreateRequest:
@@ -21,6 +33,32 @@ info:
   title: Hangout Planner API
   version: "1.0"
 paths:
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user
+      parameters:
+      - description: User sign up data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.StandardResponseBuilder'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.StandardResponseBuilder'
+      summary: Sign up
+      tags:
+      - auth
   /users:
     post:
       consumes:
