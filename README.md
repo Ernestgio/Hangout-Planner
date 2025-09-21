@@ -9,7 +9,7 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - Framework: Echo (HTTP)
 - ORM: GORM (MySQL)
 - Relational Database: MySQL 8.0
-- Infra & Tooling: Docker, Docker Compose, Makefile, Air, Golangci-Lint, Swag
+- Infra & Tooling: Docker, Docker Compose, Makefile, Air, Golangci-Lint, Swag, Lefthook
 - Github Actions for CI/CD
 
 ## 🏃‍♂️ Local Development
@@ -23,6 +23,7 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - golangci-lint
 - Make (Makefile)
 - ☁️ Air - Live reload for Go apps
+- Lefthook - git hooks for pre-commit / pre-push actions
 
 ### Environment Variables
 
@@ -54,6 +55,8 @@ make up
   - regular health checks
   - fault tolerance (`restart : on-failure`)
   - Dockerfile (multi services setup)
+- Github Actions CI/CD
+- Lefthook for pre-commit and pre-push actions
 
 ### hangout service
 
@@ -65,6 +68,7 @@ make up
   - tests folder containing unit test coverage file in HTML
 - Code quality analysis, formatting, and linting with golangci-lint
 - Makefile scripts
+- Air for project auto reload
 
 #### DB Connectivity
 
@@ -83,11 +87,6 @@ make up
 ### Controller, Services, and repository
 
 - Sign up func and auth service
-
-### Dev Dependencies
-
-- air for dev hot reload
-- pre-commit actions
 
 ### DB
 
@@ -110,7 +109,7 @@ make up
 ## Long Term Plan
 
 - Features for hangouts, budgets, locations, activities, excel export, sharing
-- HTTPS
+- HTTPS with lets encrypt open source certs
 - Nginx API Gateway
 - Multiple microservices
 - Shared Module for microservices
@@ -119,6 +118,7 @@ make up
 - OAuth / multiple login method
 - Excel service export
 - Scheduled Notification service
-- AWS S3 connectivity for excel file storage
+- AWS S3 connectivity for excel file storage (localstack for local development)
 - RabbitMQ Docker setup for connection between hangout service and report service
 - shared module in pkg/shared
+- open source static code analysis (sonarsource / codeQL)
