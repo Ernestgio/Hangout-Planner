@@ -12,6 +12,7 @@ import (
 
 type AppDependencies struct {
 	userController *controllers.UserController
+	authController *controllers.AuthController
 }
 
 func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies {
@@ -20,12 +21,15 @@ func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies {
 
 	// 2. Service Layer
 	userService := services.NewUserService(userRepo, bcrypt.DefaultCost)
+	authService := services.NewAuthService(userService)
 
 	// 3. Controller Layer
 	responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
 	userController := controllers.NewUserController(userService, responseBuilder)
+	authController := controllers.NewAuthController(authService, responseBuilder)
 
 	return &AppDependencies{
 		userController: userController,
+		authController: authController,
 	}
 }

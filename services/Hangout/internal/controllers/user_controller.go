@@ -48,6 +48,5 @@ func (uc *UserController) CreateUser(c echo.Context) error {
 		}
 	}
 
-	res := mappings.UserToResponseDTO(user)
-	return c.JSON(http.StatusCreated, uc.responseBuilder.NewSuccessResponse(constants.UserCreatedSuccessfully, res))
+	return c.JSON(http.StatusCreated, uc.responseBuilder.NewSuccessResponse(constants.UserCreatedSuccessfully, mappings.UserToResponseDTO(user)))
 }

@@ -31,4 +31,8 @@ func (r *Router) RegisterEndpoints(server *echo.Echo) {
 	// User routes
 	usersRoute := server.Group("/users")
 	usersRoute.POST("", r.dependencies.userController.CreateUser)
+
+	// Auth routes
+	authRoute := server.Group("/auth")
+	authRoute.POST("/signup", r.dependencies.authController.SignUp)
 }
