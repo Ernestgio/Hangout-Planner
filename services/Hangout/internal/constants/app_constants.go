@@ -29,4 +29,7 @@ const (
 
 	// Error message constants
 	ProdErrorMessage = "An unexpected error occurred. Please try again later."
+
+	// jwt claims
+	JwtUserIDClaim = "user_id"
 )
