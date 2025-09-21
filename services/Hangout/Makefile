@@ -14,7 +14,7 @@ test:
 
 ## Export coverage to html and Open coverage report in browser
 coverage: test
-	go tool cover -html=$(COVERAGE_FILE) -o {COVERAGE_HTML_FILE}
+	go tool cover -html=$(COVERAGE_FILE) -o $(COVERAGE_HTML_FILE)
 	go tool cover -html=$(COVERAGE_FILE)
 
 ## Run golangci-lint
