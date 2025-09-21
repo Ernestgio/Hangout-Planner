@@ -28,8 +28,8 @@ func NewAuthController(authService services.AuthService, responseBuilder *dto.St
 // @Accept       json
 // @Produce      json
 // @Param        user  body      dto.SignUpRequest  true  "User sign up data"
-// @Success      201   {object}  dto.StandardResponseBuilder
-// @Failure      400   {object}  dto.StandardResponseBuilder
+// @Success      201   {object}  dto.StandardResponse
+// @Failure      400   {object}  dto.StandardResponse
 // @Router       /auth/signup [post]
 func (ac *AuthController) SignUp(c echo.Context) error {
 	var req dto.SignUpRequest

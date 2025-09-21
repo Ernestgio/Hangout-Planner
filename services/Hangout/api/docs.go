@@ -43,13 +43,13 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.StandardResponseBuilder"
+                            "$ref": "#/definitions/dto.StandardResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.StandardResponseBuilder"
+                            "$ref": "#/definitions/dto.StandardResponse"
                         }
                     }
                 }
@@ -83,13 +83,13 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/dto.StandardResponseBuilder"
+                            "$ref": "#/definitions/dto.StandardResponse"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/dto.StandardResponseBuilder"
+                            "$ref": "#/definitions/dto.StandardResponse"
                         }
                     }
                 }
@@ -115,8 +115,17 @@ const docTemplate = `{
                 }
             }
         },
-        "dto.StandardResponseBuilder": {
-            "type": "object"
+        "dto.StandardResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
         },
         "dto.UserCreateRequest": {
             "type": "object",

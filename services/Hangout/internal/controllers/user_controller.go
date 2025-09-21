@@ -29,8 +29,8 @@ func NewUserController(userService services.UserService, responseBuilder *dto.St
 // @Accept       json
 // @Produce      json
 // @Param        user  body      dto.UserCreateRequest  true  "User data"
-// @Success      201   {object}  dto.StandardResponseBuilder
-// @Failure      400   {object}  dto.StandardResponseBuilder
+// @Success      201   {object}  dto.StandardResponse
+// @Failure      400   {object}  dto.StandardResponse
 // @Router       /users [post]
 func (uc *UserController) CreateUser(c echo.Context) error {
 	var req dto.UserCreateRequest
