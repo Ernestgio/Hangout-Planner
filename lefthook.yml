@@ -2,8 +2,10 @@ pre-commit:
   parallel: true
   commands:
     hangout-service-go-mod-tidy:
-      run: go mod tidy -v ./services/hangout/...
+      run: cd services/hangout && go mod tidy
+
     hangout-service-go-test:
-      run: go test ./services/hangout/...
+      run: cd services/hangout && go test ./... -cover
+
     hangout-service-golangci-lint:
-      run: golangci-lint run ./services/hangout/...
+      run: cd services/hangout && golangci-lint run ./...
