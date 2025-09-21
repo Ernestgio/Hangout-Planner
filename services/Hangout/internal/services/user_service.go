@@ -12,6 +12,7 @@ import (
 
 type UserService interface {
 	CreateUser(request dto.UserCreateRequest) (*models.User, error)
+	GetUserByEmail(email string) (*models.User, error)
 }
 
 type userService struct {
@@ -42,4 +43,8 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, e
 	}
 
 	return &user, nil
+}
+
+func (s *userService) GetUserByEmail(email string) (*models.User, error) {
+	return s.userRepo.GetUserByEmail(email)
 }

@@ -113,3 +113,55 @@ func TestCreateUser(t *testing.T) {
 		})
 	}
 }
+
+func TestGetUserByEmail(t *testing.T) {
+	tests := map[string]struct {
+		setupRepo func(m *MockUserRepository)
+		email     string
+		wantUser  *models.User
+		wantErr   string
+	}{
+		"success": {
+			setupRepo: func(m *MockUserRepository) {
+				expected := &models.User{Email: "test@example.com"}
+				m.On("GetUserByEmail", "test@example.com").
+					Return(expected, nil)
+			},
+			email:    "test@example.com",
+			wantUser: &models.User{Email: "test@example.com"},
+			wantErr:  "",
+		},
+		"repo error": {
+			setupRepo: func(m *MockUserRepository) {
+				m.On("GetUserByEmail", "fail@example.com").
+					Return(nil, errors.New("db error"))
+			},
+			email:    "fail@example.com",
+			wantUser: nil,
+			wantErr:  "db error",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			mockRepo := new(MockUserRepository)
+			tt.setupRepo(mockRepo)
+
+			svc := services.NewUserService(mockRepo, 1)
+
+			user, err := svc.GetUserByEmail(tt.email)
+
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.wantErr)
+				require.Nil(t, user)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, user)
+				require.Equal(t, tt.wantUser.Email, user.Email)
+			}
+
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}

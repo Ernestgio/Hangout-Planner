@@ -24,6 +24,14 @@ func (m *MockUserService) CreateUser(request dto.UserCreateRequest) (*models.Use
 	return nil, args.Error(1)
 }
 
+func (m *MockUserService) GetUserByEmail(email string) (*models.User, error) {
+	args := m.Called(email)
+	if u, ok := args.Get(0).(*models.User); ok {
+		return u, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 func TestAuthService_SignUser(t *testing.T) {
 	tests := map[string]struct {
 		setupMock func(m *MockUserService)
