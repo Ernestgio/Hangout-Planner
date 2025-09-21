@@ -4,6 +4,12 @@ on:
   pull_request:
     paths:
       - "services/hangout/**"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manually triggering the CI"
+        required: true
+        default: "Manual test"
 
 jobs:
   hangout-service-ci:
