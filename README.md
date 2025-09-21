@@ -21,6 +21,7 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - Swag CLI for API docs
 - golangci-lint
 - Make (Makefile)
+- ☁️ Air - Live reload for Go apps
 
 ### Environment Variables
 
