@@ -32,7 +32,7 @@ func main() {
 
 func Run(cfg *config.Config) error {
 	// Connect to the database
-	dbConn, dbCloser, err := db.Connect(cfg)
+	dbConn, dbCloser, err := db.Connect(cfg.DBConfig)
 	if err != nil {
 		return err
 	}

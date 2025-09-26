@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/auth"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -13,16 +14,16 @@ type JWTUtils interface {
 }
 
 type jwtUtils struct {
-	jwtSecret string
-	jwtExpiry int
+	jwtSecret          string
+	jWTExpirationHours int
 }
 
-func NewJWTUtils(jwtSecret string, jwtExpiry int) JWTUtils {
-	return &jwtUtils{jwtSecret: jwtSecret, jwtExpiry: jwtExpiry}
+func NewJWTUtils(jWtConfig *config.JwtConfig) JWTUtils {
+	return &jwtUtils{jwtSecret: jWtConfig.JWTSecret, jWTExpirationHours: jWtConfig.JWTExpirationHours}
 }
 
 func (j *jwtUtils) Generate(user *models.User) (string, error) {
-	expirationTime := time.Now().Add(time.Duration(j.jwtExpiry) * time.Hour)
+	expirationTime := time.Now().Add(time.Duration(j.jWTExpirationHours) * time.Hour)
 	claims := &auth.TokenCustomClaims{
 		UserID: user.ID,
 		RegisteredClaims: jwt.RegisteredClaims{

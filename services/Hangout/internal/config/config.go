@@ -7,19 +7,21 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/joho/godotenv"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Config struct {
-	Env                string
-	AppName            string
-	AppPort            string
-	DBHost             string
-	DBPort             string
-	DBUser             string
-	DBPassword         string
-	DBName             string
-	JWTSecret          string
-	JWTExpirationHours int
+	Env        string
+	AppName    string
+	AppPort    string
+	DBHost     string
+	DBPort     string
+	DBUser     string
+	DBPassword string
+	DBName     string
+	DBConfig   *DBConfig
+	JwtConfig  *JwtConfig
+	BcryptCost int
 }
 
 func Load() (*Config, error) {
@@ -28,16 +30,12 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Env:                getEnv("ENV", constants.DevEnv),
-		AppName:            getEnv("APP_NAME", constants.DefaultAppName),
-		AppPort:            getEnv("APP_PORT", constants.DefaultAppPort),
-		DBHost:             getEnv("DB_HOST", constants.DefaultDBHost),
-		DBPort:             getEnv("DB_PORT", constants.DefaultDBPort),
-		DBUser:             getEnv("DB_USER", constants.DefaultDBUser),
-		DBPassword:         getEnv("DB_PASSWORD", ""),
-		DBName:             getEnv("DB_NAME", constants.DefaultDBName),
-		JWTSecret:          getEnv("JWT_SECRET", ""),
-		JWTExpirationHours: getEnvInt("JWT_EXPIRATION_HOURS", constants.DefaultJWTExpirationHours),
+		Env:        getEnv("ENV", constants.DevEnv),
+		AppName:    getEnv("APP_NAME", constants.DefaultAppName),
+		AppPort:    getEnv("APP_PORT", constants.DefaultAppPort),
+		DBConfig:   NewDBConfig(),
+		JwtConfig:  NewJwtConfig(),
+		BcryptCost: bcrypt.DefaultCost,
 	}
 
 	if cfg.AppPort == "" {

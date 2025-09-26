@@ -18,7 +18,7 @@ type AppDependencies struct {
 func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies {
 	// Initialize utils
 	responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
-	jwtUtils := utils.NewJWTUtils(cfg.JWTSecret, cfg.JWTExpirationHours)
+	jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
 	bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
 
 	// 1. Repository Layer

@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func Connect(cfg *config.Config) (*gorm.DB, func() error, error) {
+func Connect(cfg *config.DBConfig) (*gorm.DB, func() error, error) {
 	dsn := buildDSN(cfg)
 	gormDB, err := gorm.Open(gormmysql.Open(dsn), &gorm.Config{})
 	if err != nil {

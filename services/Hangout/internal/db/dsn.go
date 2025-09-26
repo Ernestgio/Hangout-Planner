@@ -9,7 +9,7 @@ import (
 	mysqlDriver "github.com/go-sql-driver/mysql"
 )
 
-func buildDSN(cfg *config.Config) string {
+func buildDSN(cfg *config.DBConfig) string {
 	mdcfg := mysqlDriver.Config{
 		User:      cfg.DBUser,
 		Passwd:    cfg.DBPassword,

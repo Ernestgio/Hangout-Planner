@@ -55,33 +55,37 @@
 			<div id="nav">
 				<select id="files">
 				
-				<option value="file0">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/config.go (0.0%)</option>
+				<option value="file0">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/config.go (46.7%)</option>
 				
-				<option value="file1">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers/auth_controller.go (0.0%)</option>
+				<option value="file1">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/db_config.go (100.0%)</option>
 				
-				<option value="file2">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/database.go (0.0%)</option>
+				<option value="file2">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/jwt_config.go (100.0%)</option>
 				
-				<option value="file3">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/dsn.go (0.0%)</option>
+				<option value="file3">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers/auth_controller.go (0.0%)</option>
 				
-				<option value="file4">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto/stardard_response.go (100.0%)</option>
+				<option value="file4">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/database.go (0.0%)</option>
 				
-				<option value="file5">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go (100.0%)</option>
+				<option value="file5">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/dsn.go (0.0%)</option>
 				
-				<option value="file6">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user_repository.go (100.0%)</option>
+				<option value="file6">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto/stardard_response.go (100.0%)</option>
 				
-				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server/app_dependency.go (0.0%)</option>
+				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go (100.0%)</option>
 				
-				<option value="file8">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server/router.go (0.0%)</option>
+				<option value="file8">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user_repository.go (100.0%)</option>
 				
-				<option value="file9">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server/server.go (0.0%)</option>
+				<option value="file9">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server/app_dependency.go (0.0%)</option>
 				
-				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth_service.go (100.0%)</option>
+				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server/router.go (0.0%)</option>
 				
-				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user_service.go (100.0%)</option>
+				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server/server.go (0.0%)</option>
 				
-				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt_utils.go (100.0%)</option>
+				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth_service.go (100.0%)</option>
 				
-				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt_utils.go (100.0%)</option>
+				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user_service.go (100.0%)</option>
+				
+				<option value="file14">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt_utils.go (100.0%)</option>
+				
+				<option value="file15">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt_utils.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -104,19 +108,21 @@ import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         "github.com/joho/godotenv"
+        "golang.org/x/crypto/bcrypt"
 )
 
 type Config struct {
-        Env                string
-        AppName            string
-        AppPort            string
-        DBHost             string
-        DBPort             string
-        DBUser             string
-        DBPassword         string
-        DBName             string
-        JWTSecret          string
-        JWTExpirationHours int
+        Env        string
+        AppName    string
+        AppPort    string
+        DBHost     string
+        DBPort     string
+        DBUser     string
+        DBPassword string
+        DBName     string
+        DBConfig   *DBConfig
+        JwtConfig  *JwtConfig
+        BcryptCost int
 }
 
 func Load() (*Config, error) <span class="cov0" title="0">{
@@ -125,16 +131,12 @@ func Load() (*Config, error) <span class="cov0" title="0">{
         }</span>
 
         <span class="cov0" title="0">cfg := &amp;Config{
-                Env:                getEnv("ENV", constants.DevEnv),
-                AppName:            getEnv("APP_NAME", constants.DefaultAppName),
-                AppPort:            getEnv("APP_PORT", constants.DefaultAppPort),
-                DBHost:             getEnv("DB_HOST", constants.DefaultDBHost),
-                DBPort:             getEnv("DB_PORT", constants.DefaultDBPort),
-                DBUser:             getEnv("DB_USER", constants.DefaultDBUser),
-                DBPassword:         getEnv("DB_PASSWORD", ""),
-                DBName:             getEnv("DB_NAME", constants.DefaultDBName),
-                JWTSecret:          getEnv("JWT_SECRET", ""),
-                JWTExpirationHours: getEnvInt("JWT_EXPIRATION_HOURS", constants.DefaultJWTExpirationHours),
+                Env:        getEnv("ENV", constants.DevEnv),
+                AppName:    getEnv("APP_NAME", constants.DefaultAppName),
+                AppPort:    getEnv("APP_PORT", constants.DefaultAppPort),
+                DBConfig:   NewDBConfig(),
+                JwtConfig:  NewJwtConfig(),
+                BcryptCost: bcrypt.DefaultCost,
         }
 
         if cfg.AppPort == "" </span><span class="cov0" title="0">{
@@ -146,24 +148,64 @@ func Load() (*Config, error) <span class="cov0" title="0">{
         <span class="cov0" title="0">return cfg, nil</span>
 }
 
-func getEnv(key, def string) string <span class="cov0" title="0">{
-        if v := os.Getenv(key); v != "" </span><span class="cov0" title="0">{
+func getEnv(key, def string) string <span class="cov8" title="1">{
+        if v := os.Getenv(key); v != "" </span><span class="cov8" title="1">{
                 return v
         }</span>
-        <span class="cov0" title="0">return def</span>
+        <span class="cov8" title="1">return def</span>
 }
 
-func getEnvInt(key string, def int) int <span class="cov0" title="0">{
-        if v := os.Getenv(key); v != "" </span><span class="cov0" title="0">{
-                if i, err := strconv.Atoi(v); err == nil </span><span class="cov0" title="0">{
+func getEnvInt(key string, def int) int <span class="cov8" title="1">{
+        if v := os.Getenv(key); v != "" </span><span class="cov8" title="1">{
+                if i, err := strconv.Atoi(v); err == nil </span><span class="cov8" title="1">{
                         return i
                 }</span>
         }
-        <span class="cov0" title="0">return def</span>
+        <span class="cov8" title="1">return def</span>
 }
 </pre>
 		
-		<pre class="file" id="file1" style="display: none">package controllers
+		<pre class="file" id="file1" style="display: none">package config
+
+import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+
+type DBConfig struct {
+        DBHost     string
+        DBPort     string
+        DBUser     string
+        DBPassword string
+        DBName     string
+}
+
+func NewDBConfig() *DBConfig <span class="cov8" title="1">{
+        return &amp;DBConfig{
+                DBHost:     getEnv("DB_HOST", constants.DefaultDBHost),
+                DBPort:     getEnv("DB_PORT", constants.DefaultDBPort),
+                DBUser:     getEnv("DB_USER", constants.DefaultDBUser),
+                DBPassword: getEnv("DB_PASSWORD", ""),
+                DBName:     getEnv("DB_NAME", constants.DefaultDBName),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package config
+
+import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+
+type JwtConfig struct {
+        JWTSecret          string
+        JWTExpirationHours int
+}
+
+func NewJwtConfig() *JwtConfig <span class="cov8" title="1">{
+        return &amp;JwtConfig{
+                JWTSecret:          getEnv("JWT_SECRET", ""),
+                JWTExpirationHours: getEnvInt("JWT_EXPIRATION_HOURS", constants.DefaultJWTExpirationHours),
+        }
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package controllers
 
 import (
         "net/http"
@@ -215,7 +257,7 @@ func (ac *AuthController) SignUp(c echo.Context) error <span class="cov0" title=
 }
 </pre>
 		
-		<pre class="file" id="file2" style="display: none">package db
+		<pre class="file" id="file4" style="display: none">package db
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
@@ -224,7 +266,7 @@ import (
         "gorm.io/gorm"
 )
 
-func Connect(cfg *config.Config) (*gorm.DB, func() error, error) <span class="cov0" title="0">{
+func Connect(cfg *config.DBConfig) (*gorm.DB, func() error, error) <span class="cov0" title="0">{
         dsn := buildDSN(cfg)
         gormDB, err := gorm.Open(gormmysql.Open(dsn), &amp;gorm.Config{})
         if err != nil </span><span class="cov0" title="0">{
@@ -253,7 +295,7 @@ func Migrate(db *gorm.DB) error <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file3" style="display: none">package db
+		<pre class="file" id="file5" style="display: none">package db
 
 import (
         "fmt"
@@ -264,7 +306,7 @@ import (
         mysqlDriver "github.com/go-sql-driver/mysql"
 )
 
-func buildDSN(cfg *config.Config) string <span class="cov0" title="0">{
+func buildDSN(cfg *config.DBConfig) string <span class="cov0" title="0">{
         mdcfg := mysqlDriver.Config{
                 User:      cfg.DBUser,
                 Passwd:    cfg.DBPassword,
@@ -281,7 +323,7 @@ func buildDSN(cfg *config.Config) string <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file4" style="display: none">package dto
+		<pre class="file" id="file6" style="display: none">package dto
 
 import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 
@@ -324,7 +366,7 @@ func (b *StandardResponseBuilder) NewErrorResponse(err error) *StandardResponse 
 }
 </pre>
 		
-		<pre class="file" id="file5" style="display: none">package mappings
+		<pre class="file" id="file7" style="display: none">package mappings
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
@@ -347,7 +389,7 @@ func UserToResponseDTO(user *models.User) *dto.UserResponse <span class="cov8" t
 }</span>
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">package repository
+		<pre class="file" id="file8" style="display: none">package repository
 
 import (
         models "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
@@ -383,7 +425,7 @@ func (r *userRepository) GetUserByEmail(email string) (*models.User, error) <spa
 }
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package cmd
+		<pre class="file" id="file9" style="display: none">package cmd
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
@@ -403,7 +445,7 @@ type AppDependencies struct {
 func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies <span class="cov0" title="0">{
         // Initialize utils
         responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
-        jwtUtils := utils.NewJWTUtils(cfg.JWTSecret, cfg.JWTExpirationHours)
+        jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
         bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
 
         // 1. Repository Layer
@@ -423,7 +465,7 @@ func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies <s
 }</span>
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package cmd
+		<pre class="file" id="file10" style="display: none">package cmd
 
 import (
         "net/http"
@@ -459,7 +501,7 @@ func (r *Router) RegisterEndpoints(server *echo.Echo) <span class="cov0" title="
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package cmd
+		<pre class="file" id="file11" style="display: none">package cmd
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
@@ -492,7 +534,7 @@ func InitializeServer(cfg *config.Config, db *gorm.DB) *echo.Echo <span class="c
 }</span>
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">package services
+		<pre class="file" id="file12" style="display: none">package services
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -558,7 +600,7 @@ func (s *authService) SignInUser(request *dto.SignInRequest) (*dto.SignInRespons
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package services
+		<pre class="file" id="file13" style="display: none">package services
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -610,7 +652,7 @@ func (s *userService) GetUserByEmail(email string) (*models.User, error) <span c
 }</span>
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">package utils
+		<pre class="file" id="file14" style="display: none">package utils
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -652,12 +694,13 @@ func (b *bcryptUtils) GenerateFromPassword(password string) (string, error) <spa
 }
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package utils
+		<pre class="file" id="file15" style="display: none">package utils
 
 import (
         "time"
 
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/auth"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
         "github.com/golang-jwt/jwt/v5"
 )
@@ -667,16 +710,16 @@ type JWTUtils interface {
 }
 
 type jwtUtils struct {
-        jwtSecret string
-        jwtExpiry int
+        jwtSecret          string
+        jWTExpirationHours int
 }
 
-func NewJWTUtils(jwtSecret string, jwtExpiry int) JWTUtils <span class="cov8" title="1">{
-        return &amp;jwtUtils{jwtSecret: jwtSecret, jwtExpiry: jwtExpiry}
+func NewJWTUtils(jWtConfig *config.JwtConfig) JWTUtils <span class="cov8" title="1">{
+        return &amp;jwtUtils{jwtSecret: jWtConfig.JWTSecret, jWTExpirationHours: jWtConfig.JWTExpirationHours}
 }</span>
 
 func (j *jwtUtils) Generate(user *models.User) (string, error) <span class="cov8" title="1">{
-        expirationTime := time.Now().Add(time.Duration(j.jwtExpiry) * time.Hour)
+        expirationTime := time.Now().Add(time.Duration(j.jWTExpirationHours) * time.Hour)
         claims := &amp;auth.TokenCustomClaims{
                 UserID: user.ID,
                 RegisteredClaims: jwt.RegisteredClaims{
