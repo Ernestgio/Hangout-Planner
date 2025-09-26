@@ -19,13 +19,14 @@ func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies {
 	// Initialize utils
 	responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
 	jwtUtils := utils.NewJWTUtils(cfg.JWTSecret, cfg.JWTExpirationHours)
+	bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
 
 	// 1. Repository Layer
 	userRepo := repository.NewUserRepository(db)
 
 	// 2. Service Layer
-	userService := services.NewUserService(userRepo, bcrypt.DefaultCost)
-	authService := services.NewAuthService(userService, jwtUtils)
+	userService := services.NewUserService(userRepo, bcryptUtils)
+	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
 
 	// 3. Controller Layer
 

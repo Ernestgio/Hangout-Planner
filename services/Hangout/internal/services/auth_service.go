@@ -15,12 +15,14 @@ type AuthService interface {
 type authService struct {
 	userService UserService
 	jwtUtils    utils.JWTUtils
+	bcrytpUtils utils.BcryptUtils
 }
 
-func NewAuthService(userService UserService, jwtUtils utils.JWTUtils) AuthService {
+func NewAuthService(userService UserService, jwtUtils utils.JWTUtils, bcrytpUtils utils.BcryptUtils) AuthService {
 	return &authService{
 		userService: userService,
 		jwtUtils:    jwtUtils,
+		bcrytpUtils: bcrytpUtils,
 	}
 }
 
@@ -46,7 +48,7 @@ func (s *authService) SignInUser(request *dto.SignInRequest) (*dto.SignInRespons
 		return nil, apperrors.ErrInvalidCredentials
 	}
 
-	err = utils.CompareHashAndPassword(user.Password, request.Password)
+	err = s.bcrytpUtils.CompareHashAndPassword(user.Password, request.Password)
 	if err != nil {
 		return nil, err
 	}

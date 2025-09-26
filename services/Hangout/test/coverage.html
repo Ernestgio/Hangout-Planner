@@ -404,13 +404,14 @@ func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies <s
         // Initialize utils
         responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
         jwtUtils := utils.NewJWTUtils(cfg.JWTSecret, cfg.JWTExpirationHours)
+        bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
 
         // 1. Repository Layer
         userRepo := repository.NewUserRepository(db)
 
         // 2. Service Layer
-        userService := services.NewUserService(userRepo, bcrypt.DefaultCost)
-        authService := services.NewAuthService(userService, jwtUtils)
+        userService := services.NewUserService(userRepo, bcryptUtils)
+        authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
 
         // 3. Controller Layer
 
@@ -508,12 +509,14 @@ type AuthService interface {
 type authService struct {
         userService UserService
         jwtUtils    utils.JWTUtils
+        bcrytpUtils utils.BcryptUtils
 }
 
-func NewAuthService(userService UserService, jwtUtils utils.JWTUtils) AuthService <span class="cov8" title="1">{
+func NewAuthService(userService UserService, jwtUtils utils.JWTUtils, bcrytpUtils utils.BcryptUtils) AuthService <span class="cov8" title="1">{
         return &amp;authService{
                 userService: userService,
                 jwtUtils:    jwtUtils,
+                bcrytpUtils: bcrytpUtils,
         }
 }</span>
 
@@ -539,7 +542,7 @@ func (s *authService) SignInUser(request *dto.SignInRequest) (*dto.SignInRespons
                 return nil, apperrors.ErrInvalidCredentials
         }</span>
 
-        <span class="cov8" title="1">err = utils.CompareHashAndPassword(user.Password, request.Password)
+        <span class="cov8" title="1">err = s.bcrytpUtils.CompareHashAndPassword(user.Password, request.Password)
         if err != nil </span><span class="cov8" title="1">{
                 return nil, err
         }</span>
@@ -563,8 +566,8 @@ import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
         "github.com/google/uuid"
-        "golang.org/x/crypto/bcrypt"
 )
 
 type UserService interface {
@@ -573,12 +576,12 @@ type UserService interface {
 }
 
 type userService struct {
-        userRepo   repository.UserRepository
-        bcryptCost int
+        userRepo    repository.UserRepository
+        bcryptUtils utils.BcryptUtils
 }
 
-func NewUserService(userRepo repository.UserRepository, bcryptCost int) UserService <span class="cov8" title="1">{
-        return &amp;userService{userRepo: userRepo, bcryptCost: bcryptCost}
+func NewUserService(userRepo repository.UserRepository, bcryptUtils utils.BcryptUtils) UserService <span class="cov8" title="1">{
+        return &amp;userService{userRepo: userRepo, bcryptUtils: bcryptUtils}
 }</span>
 
 func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, error) <span class="cov8" title="1">{
@@ -589,7 +592,7 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, e
 
         <span class="cov8" title="1">user := mappings.UserCreateRequestToModel(request)
         user.ID = uuid.New()
-        hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), s.bcryptCost)
+        hashedPassword, err := s.bcryptUtils.GenerateFromPassword(request.Password)
         if err != nil </span><span class="cov8" title="1">{
                 return nil, err
         }</span>
@@ -614,7 +617,22 @@ import (
         "golang.org/x/crypto/bcrypt"
 )
 
-func CompareHashAndPassword(hashedPassword, password string) error <span class="cov8" title="1">{
+type BcryptUtils interface {
+        CompareHashAndPassword(hashedPassword, password string) error
+        GenerateFromPassword(password string) (string, error)
+}
+
+type bcryptUtils struct {
+        cost int
+}
+
+func NewBcryptUtils(cost int) BcryptUtils <span class="cov8" title="1">{
+        return &amp;bcryptUtils{
+                cost: cost,
+        }
+}</span>
+
+func (b *bcryptUtils) CompareHashAndPassword(hashedPassword, password string) error <span class="cov8" title="1">{
         err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
         if err != nil </span><span class="cov8" title="1">{
                 if err == bcrypt.ErrMismatchedHashAndPassword </span><span class="cov8" title="1">{
@@ -623,6 +641,14 @@ func CompareHashAndPassword(hashedPassword, password string) error <span class="
                 <span class="cov8" title="1">return err</span>
         }
         <span class="cov8" title="1">return nil</span>
+}
+
+func (b *bcryptUtils) GenerateFromPassword(password string) (string, error) <span class="cov8" title="1">{
+        hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), b.cost)
+        if err != nil </span><span class="cov8" title="1">{
+                return "", err
+        }</span>
+        <span class="cov8" title="1">return string(hashedPassword), nil</span>
 }
 </pre>
 		
