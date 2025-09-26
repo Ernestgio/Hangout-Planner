@@ -20,18 +20,6 @@ definitions:
       status:
         type: string
     type: object
-  dto.UserCreateRequest:
-    properties:
-      email:
-        type: string
-      name:
-        type: string
-      password:
-        type: string
-    required:
-    - email
-    - name
-    type: object
 host: localhost:9000
 info:
   contact: {}
@@ -65,30 +53,4 @@ paths:
       summary: Sign up
       tags:
       - auth
-  /users:
-    post:
-      consumes:
-      - application/json
-      description: Create a new user account
-      parameters:
-      - description: User data
-        in: body
-        name: user
-        required: true
-        schema:
-          $ref: '#/definitions/dto.UserCreateRequest'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/dto.StandardResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/dto.StandardResponse'
-      summary: Create user
-      tags:
-      - users
 swagger: "2.0"
