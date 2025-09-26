@@ -28,6 +28,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug repo layout
+        run: |
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          ls -la
+          ls -la services || true
+          ls -la services/hangout || true
+
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
@@ -53,10 +60,10 @@ jobs:
           args: --timeout=5m ./...
 
       - name: Run Tests with Coverage
-        run: go test -v -coverprofile=coverage.out ./internal/...
+        run: go test -v -coverprofile=test/coverage.out ./internal/...
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
-          path: services/hangout/coverage.out
+          path: services/hangout/test/coverage.out
