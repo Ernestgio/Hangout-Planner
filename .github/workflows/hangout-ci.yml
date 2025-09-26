@@ -31,9 +31,6 @@ jobs:
       - name: Debug repo layout
         run: |
           echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
-          ls -la
-          ls -la services || true
-          ls -la services/hangout || true
 
       - name: Set up Go
         uses: actions/setup-go@v4
