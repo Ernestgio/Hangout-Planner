@@ -1,4 +1,4 @@
-package cmd
+package server
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
@@ -18,8 +18,7 @@ type AppDependencies struct {
 func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies {
 	// Initialize utils
 	responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
-	jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
-	bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
+	jwtUtils, bcryptUtils := InitializeUtils(cfg)
 
 	// 1. Repository Layer
 	userRepo := repository.NewUserRepository(db)
@@ -35,4 +34,10 @@ func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies {
 	return &AppDependencies{
 		authController: authController,
 	}
+}
+
+func InitializeUtils(cfg *config.Config) (utils.JWTUtils, utils.BcryptUtils) {
+	jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
+	bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
+	return jwtUtils, bcryptUtils
 }

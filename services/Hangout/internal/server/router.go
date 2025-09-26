@@ -1,4 +1,4 @@
-package cmd
+package server
 
 import (
 	"net/http"
@@ -31,4 +31,5 @@ func (r *Router) RegisterEndpoints(server *echo.Echo) {
 	// Auth routes
 	authRoute := server.Group("/auth")
 	authRoute.POST("/signup", r.dependencies.authController.SignUp)
+	authRoute.POST("/signin", r.dependencies.authController.SignIn)
 }

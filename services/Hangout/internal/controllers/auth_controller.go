@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
@@ -46,5 +47,33 @@ func (ac *AuthController) SignUp(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusCreated, ac.responseBuilder.NewSuccessResponse("User signed up successfully", mappings.UserToResponseDTO(user)))
+	return c.JSON(http.StatusCreated, ac.responseBuilder.NewSuccessResponse(constants.UserSignedUpSuccessfully, mappings.UserToResponseDTO(user)))
+}
+
+// @Summary      Sign in
+// @Description  Authenticate a user and return a JWT token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        credentials  body      dto.SignInRequest  true  "User sign in data"
+// @Success      200          {object}  dto.StandardResponse
+// @Failure      400          {object}  dto.StandardResponse
+// @Failure      401          {object}  dto.StandardResponse
+// @Router       /auth/signin [post]
+func (ac *AuthController) SignIn(c echo.Context) error {
+	var req dto.SignInRequest
+	if err := c.Bind(&req); err != nil {
+		return c.JSON(http.StatusBadRequest, ac.responseBuilder.NewErrorResponse(apperrors.ErrInvalidPayload))
+	}
+
+	token, err := ac.authService.SignInUser(&req)
+	if err != nil {
+		switch err {
+		case apperrors.ErrInvalidCredentials:
+			return c.JSON(http.StatusUnauthorized, ac.responseBuilder.NewErrorResponse(err))
+		default:
+			return c.JSON(http.StatusInternalServerError, ac.responseBuilder.NewErrorResponse(err))
+		}
+	}
+	return c.JSON(http.StatusOK, ac.responseBuilder.NewSuccessResponse(constants.UserSignedInSuccessfully, token))
 }

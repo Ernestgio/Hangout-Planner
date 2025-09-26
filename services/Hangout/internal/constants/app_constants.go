@@ -30,8 +30,10 @@ const (
 	HealthCheckOK = "OK"
 
 	// message constants
-	UserCreatedSuccessfully = "User created successfully."
+	UserSignedUpSuccessfully = "User created successfully."
+	UserSignedInSuccessfully = "User signed in successfully."
 
 	// Error message constants
 	ProdErrorMessage = "An unexpected error occurred. Please try again later."
+	ErrBadRequest    = "Bad request"
 )

@@ -1,5 +1,15 @@
 basePath: /
 definitions:
+  dto.SignInRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
   dto.SignUpRequest:
     properties:
       email:
@@ -27,6 +37,36 @@ info:
   title: Hangout Planner API
   version: "1.0"
 paths:
+  /auth/signin:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate a user and return a JWT token
+      parameters:
+      - description: User sign in data
+        in: body
+        name: credentials
+        required: true
+        schema:
+          $ref: '#/definitions/dto.SignInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.StandardResponse'
+      summary: Sign in
+      tags:
+      - auth
   /auth/signup:
     post:
       consumes:

@@ -14,11 +14,6 @@ type Config struct {
 	Env        string
 	AppName    string
 	AppPort    string
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
 	DBConfig   *DBConfig
 	JwtConfig  *JwtConfig
 	BcryptCost int
@@ -41,7 +36,7 @@ func Load() (*Config, error) {
 	if cfg.AppPort == "" {
 		return nil, apperrors.ErrAppPortRequired
 	}
-	if cfg.Env == constants.ProductionEnv && cfg.DBPassword == "" {
+	if cfg.Env == constants.ProductionEnv && cfg.DBConfig.DBPassword == "" {
 		return nil, apperrors.ErrDbPasswordRequired
 	}
 	return cfg, nil
