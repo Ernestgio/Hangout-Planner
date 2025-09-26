@@ -1,9 +1,14 @@
 name: Hangout Service CI
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
     paths:
       - "services/hangout/**"
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       reason:
