@@ -57,7 +57,7 @@
 				
 				<option value="file0">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/config.go (0.0%)</option>
 				
-				<option value="file1">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers/user_controller.go (0.0%)</option>
+				<option value="file1">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers/auth_controller.go (0.0%)</option>
 				
 				<option value="file2">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/database.go (0.0%)</option>
 				
@@ -75,7 +75,13 @@
 				
 				<option value="file9">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server/server.go (0.0%)</option>
 				
-				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user_service.go (100.0%)</option>
+				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth_service.go (100.0%)</option>
+				
+				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user_service.go (100.0%)</option>
+				
+				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt_utils.go (100.0%)</option>
+				
+				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt_utils.go (100.0%)</option>
 				
 				</select>
 			</div>
@@ -93,6 +99,7 @@
 
 import (
         "os"
+        "strconv"
 
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
@@ -100,15 +107,16 @@ import (
 )
 
 type Config struct {
-        Env               string
-        AppName           string
-        AppPort           string
-        DBHost            string
-        DBPort            string
-        DBUser            string
-        DBPassword        string
-        DBName            string
-        MySQLRootPassword string
+        Env                string
+        AppName            string
+        AppPort            string
+        DBHost             string
+        DBPort             string
+        DBUser             string
+        DBPassword         string
+        DBName             string
+        JWTSecret          string
+        JWTExpirationHours int
 }
 
 func Load() (*Config, error) <span class="cov0" title="0">{
@@ -117,15 +125,16 @@ func Load() (*Config, error) <span class="cov0" title="0">{
         }</span>
 
         <span class="cov0" title="0">cfg := &amp;Config{
-                Env:               getEnv("ENV", constants.DevEnv),
-                AppName:           getEnv("APP_NAME", constants.DefaultAppName),
-                AppPort:           getEnv("APP_PORT", constants.DefaultAppPort),
-                DBHost:            getEnv("DB_HOST", constants.DefaultDBHost),
-                DBPort:            getEnv("DB_PORT", constants.DefaultDBPort),
-                DBUser:            getEnv("DB_USER", constants.DefaultDBUser),
-                DBPassword:        getEnv("DB_PASSWORD", ""),
-                DBName:            getEnv("DB_NAME", constants.DefaultDBName),
-                MySQLRootPassword: getEnv("MYSQL_ROOT_PASSWORD", ""),
+                Env:                getEnv("ENV", constants.DevEnv),
+                AppName:            getEnv("APP_NAME", constants.DefaultAppName),
+                AppPort:            getEnv("APP_PORT", constants.DefaultAppPort),
+                DBHost:             getEnv("DB_HOST", constants.DefaultDBHost),
+                DBPort:             getEnv("DB_PORT", constants.DefaultDBPort),
+                DBUser:             getEnv("DB_USER", constants.DefaultDBUser),
+                DBPassword:         getEnv("DB_PASSWORD", ""),
+                DBName:             getEnv("DB_NAME", constants.DefaultDBName),
+                JWTSecret:          getEnv("JWT_SECRET", ""),
+                JWTExpirationHours: getEnvInt("JWT_EXPIRATION_HOURS", constants.DefaultJWTExpirationHours),
         }
 
         if cfg.AppPort == "" </span><span class="cov0" title="0">{
@@ -143,6 +152,15 @@ func getEnv(key, def string) string <span class="cov0" title="0">{
         }</span>
         <span class="cov0" title="0">return def</span>
 }
+
+func getEnvInt(key string, def int) int <span class="cov0" title="0">{
+        if v := os.Getenv(key); v != "" </span><span class="cov0" title="0">{
+                if i, err := strconv.Atoi(v); err == nil </span><span class="cov0" title="0">{
+                        return i
+                }</span>
+        }
+        <span class="cov0" title="0">return def</span>
+}
 </pre>
 		
 		<pre class="file" id="file1" style="display: none">package controllers
@@ -151,52 +169,49 @@ import (
         "net/http"
 
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
-        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
         "github.com/labstack/echo/v4"
 )
 
-type UserController struct {
-        userService     services.UserService
+type AuthController struct {
+        authService     services.AuthService
         responseBuilder *dto.StandardResponseBuilder
 }
 
-func NewUserController(userService services.UserService, responseBuilder *dto.StandardResponseBuilder) *UserController <span class="cov0" title="0">{
-        return &amp;UserController{
-                userService:     userService,
+func NewAuthController(authService services.AuthService, responseBuilder *dto.StandardResponseBuilder) *AuthController <span class="cov0" title="0">{
+        return &amp;AuthController{
+                authService:     authService,
                 responseBuilder: responseBuilder,
         }
 }</span>
 
-// @Summary      Create user
-// @Description  Create a new user account
-// @Tags         users
+// @Summary      Sign up
+// @Description  Register a new user
+// @Tags         auth
 // @Accept       json
 // @Produce      json
-// @Param        user  body      dto.UserCreateRequest  true  "User data"
-// @Success      201   {object}  dto.StandardResponseBuilder
-// @Failure      400   {object}  dto.StandardResponseBuilder
-// @Router       /users [post]
-func (uc *UserController) CreateUser(c echo.Context) error <span class="cov0" title="0">{
-        var req dto.UserCreateRequest
+// @Param        user  body      dto.SignUpRequest  true  "User sign up data"
+// @Success      201   {object}  dto.StandardResponse
+// @Failure      400   {object}  dto.StandardResponse
+// @Router       /auth/signup [post]
+func (ac *AuthController) SignUp(c echo.Context) error <span class="cov0" title="0">{
+        var req dto.SignUpRequest
         if err := c.Bind(&amp;req); err != nil </span><span class="cov0" title="0">{
-                return c.JSON(http.StatusBadRequest, uc.responseBuilder.NewErrorResponse(apperrors.ErrInvalidPayload))
+                return c.JSON(http.StatusBadRequest, ac.responseBuilder.NewErrorResponse(apperrors.ErrInvalidPayload))
         }</span>
-
-        <span class="cov0" title="0">user, err := uc.userService.CreateUser(req)
+        <span class="cov0" title="0">user, err := ac.authService.SignUser(&amp;req)
         if err != nil </span><span class="cov0" title="0">{
                 switch err </span>{
                 case apperrors.ErrUserAlreadyExists:<span class="cov0" title="0">
-                        return c.JSON(http.StatusConflict, uc.responseBuilder.NewErrorResponse(err))</span>
+                        return c.JSON(http.StatusConflict, ac.responseBuilder.NewErrorResponse(err))</span>
                 default:<span class="cov0" title="0">
-                        return c.JSON(http.StatusInternalServerError, uc.responseBuilder.NewErrorResponse(err))</span>
+                        return c.JSON(http.StatusInternalServerError, ac.responseBuilder.NewErrorResponse(err))</span>
                 }
         }
 
-        <span class="cov0" title="0">res := mappings.UserToResponseDTO(user)
-        return c.JSON(http.StatusCreated, uc.responseBuilder.NewSuccessResponse(constants.UserCreatedSuccessfully, res))</span>
+        <span class="cov0" title="0">return c.JSON(http.StatusCreated, ac.responseBuilder.NewSuccessResponse("User signed up successfully", mappings.UserToResponseDTO(user)))</span>
 }
 </pre>
 		
@@ -252,7 +267,7 @@ import (
 func buildDSN(cfg *config.Config) string <span class="cov0" title="0">{
         mdcfg := mysqlDriver.Config{
                 User:      cfg.DBUser,
-                Passwd:    cfg.MySQLRootPassword,
+                Passwd:    cfg.DBPassword,
                 Addr:      fmt.Sprintf("%s:%s", cfg.DBHost, cfg.DBPort),
                 DBName:    cfg.DBName,
                 Net:       constants.DefaultDBNetwork,
@@ -376,27 +391,33 @@ import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
         "golang.org/x/crypto/bcrypt"
         "gorm.io/gorm"
 )
 
 type AppDependencies struct {
-        userController *controllers.UserController
+        authController *controllers.AuthController
 }
 
 func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies <span class="cov0" title="0">{
+        // Initialize utils
+        responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
+        jwtUtils := utils.NewJWTUtils(cfg.JWTSecret, cfg.JWTExpirationHours)
+
         // 1. Repository Layer
         userRepo := repository.NewUserRepository(db)
 
         // 2. Service Layer
         userService := services.NewUserService(userRepo, bcrypt.DefaultCost)
+        authService := services.NewAuthService(userService, jwtUtils)
 
         // 3. Controller Layer
-        responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
-        userController := controllers.NewUserController(userService, responseBuilder)
+
+        authController := controllers.NewAuthController(authService, responseBuilder)
 
         return &amp;AppDependencies{
-                userController: userController,
+                authController: authController,
         }
 }</span>
 </pre>
@@ -431,9 +452,9 @@ func (r *Router) RegisterEndpoints(server *echo.Echo) <span class="cov0" title="
         // Swagger endpoint
         <span class="cov0" title="0">server.GET("/swagger/*", echoSwagger.WrapHandler)
 
-        // User routes
-        usersRoute := server.Group("/users")
-        usersRoute.POST("", r.dependencies.userController.CreateUser)</span>
+        // Auth routes
+        authRoute := server.Group("/auth")
+        authRoute.POST("/signup", r.dependencies.authController.SignUp)</span>
 }
 </pre>
 		
@@ -475,6 +496,70 @@ func InitializeServer(cfg *config.Config, db *gorm.DB) *echo.Echo <span class="c
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
+)
+
+type AuthService interface {
+        SignUser(request *dto.SignUpRequest) (*models.User, error)
+        SignInUser(request *dto.SignInRequest) (*dto.SignInResponse, error)
+}
+
+type authService struct {
+        userService UserService
+        jwtUtils    utils.JWTUtils
+}
+
+func NewAuthService(userService UserService, jwtUtils utils.JWTUtils) AuthService <span class="cov8" title="1">{
+        return &amp;authService{
+                userService: userService,
+                jwtUtils:    jwtUtils,
+        }
+}</span>
+
+func (s *authService) SignUser(request *dto.SignUpRequest) (*models.User, error) <span class="cov8" title="1">{
+        user, err := s.userService.CreateUser(dto.UserCreateRequest{
+                Name:     request.Name,
+                Email:    request.Email,
+                Password: request.Password,
+        })
+
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return user, nil</span>
+}
+
+func (s *authService) SignInUser(request *dto.SignInRequest) (*dto.SignInResponse, error) <span class="cov8" title="1">{
+        user, err := s.userService.GetUserByEmail(request.Email)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">if user == nil </span><span class="cov8" title="1">{
+                return nil, apperrors.ErrInvalidCredentials
+        }</span>
+
+        <span class="cov8" title="1">err = utils.CompareHashAndPassword(user.Password, request.Password)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">token, err := s.jwtUtils.Generate(user)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;dto.SignInResponse{
+                Token: token,
+        }, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package services
+
+import (
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
@@ -484,6 +569,7 @@ import (
 
 type UserService interface {
         CreateUser(request dto.UserCreateRequest) (*models.User, error)
+        GetUserByEmail(email string) (*models.User, error)
 }
 
 type userService struct {
@@ -515,6 +601,71 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, e
 
         <span class="cov8" title="1">return &amp;user, nil</span>
 }
+
+func (s *userService) GetUserByEmail(email string) (*models.User, error) <span class="cov8" title="1">{
+        return s.userRepo.GetUserByEmail(email)
+}</span>
+</pre>
+		
+		<pre class="file" id="file12" style="display: none">package utils
+
+import (
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+        "golang.org/x/crypto/bcrypt"
+)
+
+func CompareHashAndPassword(hashedPassword, password string) error <span class="cov8" title="1">{
+        err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+        if err != nil </span><span class="cov8" title="1">{
+                if err == bcrypt.ErrMismatchedHashAndPassword </span><span class="cov8" title="1">{
+                        return apperrors.ErrInvalidCredentials
+                }</span>
+                <span class="cov8" title="1">return err</span>
+        }
+        <span class="cov8" title="1">return nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file13" style="display: none">package utils
+
+import (
+        "time"
+
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/auth"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+        "github.com/golang-jwt/jwt/v5"
+)
+
+type JWTUtils interface {
+        Generate(user *models.User) (string, error)
+}
+
+type jwtUtils struct {
+        jwtSecret string
+        jwtExpiry int
+}
+
+func NewJWTUtils(jwtSecret string, jwtExpiry int) JWTUtils <span class="cov8" title="1">{
+        return &amp;jwtUtils{jwtSecret: jwtSecret, jwtExpiry: jwtExpiry}
+}</span>
+
+func (j *jwtUtils) Generate(user *models.User) (string, error) <span class="cov8" title="1">{
+        expirationTime := time.Now().Add(time.Duration(j.jwtExpiry) * time.Hour)
+        claims := &amp;auth.TokenCustomClaims{
+                UserID: user.ID,
+                RegisteredClaims: jwt.RegisteredClaims{
+                        ExpiresAt: jwt.NewNumericDate(expirationTime),
+                        IssuedAt:  jwt.NewNumericDate(time.Now()),
+                        Subject:   user.Email,
+                },
+        }
+
+        token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+        tokenString, _ := token.SignedString([]byte(j.jwtSecret))
+
+        return tokenString, nil
+}</span>
 </pre>
 		
 		</div>

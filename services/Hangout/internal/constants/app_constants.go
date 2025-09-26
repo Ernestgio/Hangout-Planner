@@ -3,14 +3,15 @@ package constants
 const (
 
 	// Appliation Environment constants
-	ProductionEnv  = "PROD"
-	DevEnv         = "DEV"
-	DefaultAppName = "hangout"
-	DefaultAppPort = "9000"
-	DefaultDBHost  = "localhost"
-	DefaultDBPort  = "3306"
-	DefaultDBUser  = "root"
-	DefaultDBName  = "hangout"
+	ProductionEnv             = "PROD"
+	DevEnv                    = "DEV"
+	DefaultAppName            = "hangout"
+	DefaultAppPort            = "9000"
+	DefaultDBHost             = "localhost"
+	DefaultDBPort             = "3306"
+	DefaultDBUser             = "root"
+	DefaultDBName             = "hangout"
+	DefaultJWTExpirationHours = 1
 
 	// DB Environment constants
 	DefaultDBCharset = "utf8mb4"

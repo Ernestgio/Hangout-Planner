@@ -4,14 +4,21 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/crypto/bcrypt"
 )
 
-// Simple testify-based mock
+type UserService interface {
+	CreateUser(request dto.UserCreateRequest) (*models.User, error)
+	GetUserByEmail(email string) (*models.User, error)
+}
+
 type MockUserService struct {
 	mock.Mock
 }
@@ -32,38 +39,50 @@ func (m *MockUserService) GetUserByEmail(email string) (*models.User, error) {
 	return nil, args.Error(1)
 }
 
+type MockJWTUtils struct {
+	mock.Mock
+}
+
+func (m *MockJWTUtils) Generate(user *models.User) (string, error) {
+	args := m.Called(user)
+	return args.String(0), args.Error(1)
+}
+
+func generateHash(t *testing.T, password string) string {
+	t.Helper()
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	require.NoError(t, err)
+	return string(hash)
+}
+
 func TestAuthService_SignUser(t *testing.T) {
+	mockJwtSvc := new(MockJWTUtils)
+
+	newUserID := uuid.New()
+
 	tests := map[string]struct {
 		setupMock func(m *MockUserService)
 		input     *dto.SignUpRequest
 		wantErr   string
 		wantUser  *models.User
 	}{
-		"user creation fails": {
+		"User creation fails: should return DB error": {
 			setupMock: func(m *MockUserService) {
 				m.On("CreateUser", mock.Anything).
 					Return(nil, errors.New("db error"))
 			},
-			input: &dto.SignUpRequest{
-				Name:     "Alice",
-				Email:    "alice@example.com",
-				Password: "secret",
-			},
+			input:    &dto.SignUpRequest{Name: "Alice", Email: "alice@example.com", Password: "secret"},
 			wantErr:  "db error",
 			wantUser: nil,
 		},
-		"user creation succeeds": {
+		"User creation succeeds: should return the new user": {
 			setupMock: func(m *MockUserService) {
 				m.On("CreateUser", mock.Anything).
-					Return(&models.User{Email: "bob@example.com"}, nil)
+					Return(&models.User{ID: newUserID, Email: "bob@example.com"}, nil)
 			},
-			input: &dto.SignUpRequest{
-				Name:     "Bob",
-				Email:    "bob@example.com",
-				Password: "password",
-			},
+			input:    &dto.SignUpRequest{Name: "Bob", Email: "bob@example.com", Password: "password"},
 			wantErr:  "",
-			wantUser: &models.User{Email: "bob@example.com"},
+			wantUser: &models.User{ID: newUserID, Email: "bob@example.com"},
 		},
 	}
 
@@ -72,7 +91,7 @@ func TestAuthService_SignUser(t *testing.T) {
 			mockUserSvc := new(MockUserService)
 			tt.setupMock(mockUserSvc)
 
-			authSvc := services.NewAuthService(mockUserSvc)
+			authSvc := services.NewAuthService(mockUserSvc, mockJwtSvc)
 			user, err := authSvc.SignUser(tt.input)
 
 			if tt.wantErr != "" {
@@ -83,9 +102,135 @@ func TestAuthService_SignUser(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, user)
 				require.Equal(t, tt.wantUser.Email, user.Email)
+				require.Equal(t, tt.wantUser.ID, user.ID)
 			}
 
 			mockUserSvc.AssertExpectations(t)
+		})
+	}
+}
+
+func TestAuthService_SignInUser(t *testing.T) {
+	const correctPassword = "StrongPassword123"
+	const correctEmail = "user@valid.com"
+	const mockToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9"
+
+	validUserID := uuid.New()
+	invalidHashUserID := uuid.New()
+
+	hashedPassword := generateHash(t, correctPassword)
+
+	validUser := &models.User{
+		ID:       validUserID,
+		Email:    correctEmail,
+		Password: hashedPassword,
+	}
+
+	invalidHashUser := &models.User{
+		ID:       invalidHashUserID,
+		Email:    "invalid@hash.com",
+		Password: "a",
+	}
+
+	tests := map[string]struct {
+		setupUserMock func(m *MockUserService)
+		setupJWTMock  func(m *MockJWTUtils)
+		input         *dto.SignInRequest
+		wantErr       error
+		wantToken     string
+	}{
+		"Failure_UserNotFound": {
+			setupUserMock: func(m *MockUserService) {
+				m.On("GetUserByEmail", "notfound@email.com").Return(nil, nil)
+			},
+			setupJWTMock: func(m *MockJWTUtils) {},
+			input:        &dto.SignInRequest{Email: "notfound@email.com", Password: "any"},
+			wantErr:      apperrors.ErrInvalidCredentials,
+			wantToken:    "",
+		},
+		"Failure_UserServiceError": {
+			setupUserMock: func(m *MockUserService) {
+				m.On("GetUserByEmail", correctEmail).Return(nil, errors.New("db connection error"))
+			},
+			setupJWTMock: func(m *MockJWTUtils) {},
+			input:        &dto.SignInRequest{Email: correctEmail, Password: "any"},
+			wantErr:      errors.New("db connection error"),
+			wantToken:    "",
+		},
+		"Failure_PasswordMismatch": {
+			setupUserMock: func(m *MockUserService) {
+				m.On("GetUserByEmail", correctEmail).Return(validUser, nil)
+			},
+			setupJWTMock: func(m *MockJWTUtils) {},
+			input:        &dto.SignInRequest{Email: correctEmail, Password: "WrongPassword"},
+			wantErr:      apperrors.ErrInvalidCredentials,
+			wantToken:    "",
+		},
+		"Failure_InvalidHashFormat": {
+			setupUserMock: func(m *MockUserService) {
+				m.On("GetUserByEmail", invalidHashUser.Email).Return(invalidHashUser, nil)
+			},
+			setupJWTMock: func(m *MockJWTUtils) {},
+			input:        &dto.SignInRequest{Email: invalidHashUser.Email, Password: correctPassword},
+			wantErr:      errors.New("bcrypt:"),
+			wantToken:    "",
+		},
+		"Failure_JWTGenerationError": {
+			setupUserMock: func(m *MockUserService) {
+				m.On("GetUserByEmail", correctEmail).Return(validUser, nil)
+			},
+			setupJWTMock: func(m *MockJWTUtils) {
+				m.On("Generate", validUser).Return("", errors.New("jwt signing failed"))
+			},
+			input:     &dto.SignInRequest{Email: correctEmail, Password: correctPassword},
+			wantErr:   errors.New("jwt signing failed"),
+			wantToken: "",
+		},
+		"Success_ValidCredentials": {
+			setupUserMock: func(m *MockUserService) {
+				m.On("GetUserByEmail", correctEmail).Return(validUser, nil)
+			},
+			setupJWTMock: func(m *MockJWTUtils) {
+				m.On("Generate", validUser).Return(mockToken, nil)
+			},
+			input:     &dto.SignInRequest{Email: correctEmail, Password: correctPassword},
+			wantErr:   nil,
+			wantToken: mockToken,
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			mockUserSvc := new(MockUserService)
+			mockJwtSvc := new(MockJWTUtils)
+
+			tt.setupUserMock(mockUserSvc)
+			tt.setupJWTMock(mockJwtSvc)
+
+			authSvc := services.NewAuthService(mockUserSvc, mockJwtSvc)
+			response, err := authSvc.SignInUser(tt.input)
+
+			if tt.wantErr != nil {
+				require.Error(t, err)
+
+				if errors.Is(tt.wantErr, apperrors.ErrInvalidCredentials) {
+					require.True(t, errors.Is(err, tt.wantErr), "Expected application error %v, got %v", tt.wantErr, err)
+				} else if tt.wantErr.Error() == "bcrypt:" {
+					require.Contains(t, err.Error(), "bcrypt:", "Expected general bcrypt error, got %v", err)
+				} else {
+					// FIX: Use EqualError for errors created with errors.New()
+					require.EqualError(t, err, tt.wantErr.Error(), "Error message mismatch")
+				}
+
+				require.Nil(t, response)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, response)
+				require.Equal(t, tt.wantToken, response.Token)
+			}
+
+			mockUserSvc.AssertExpectations(t)
+			mockJwtSvc.AssertExpectations(t)
 		})
 	}
 }
