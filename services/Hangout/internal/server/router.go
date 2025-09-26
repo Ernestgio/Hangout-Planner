@@ -1,4 +1,4 @@
-package cmd
+package server
 
 import (
 	"net/http"
@@ -28,7 +28,8 @@ func (r *Router) RegisterEndpoints(server *echo.Echo) {
 	// Swagger endpoint
 	server.GET("/swagger/*", echoSwagger.WrapHandler)
 
-	// User routes
-	usersRoute := server.Group("/users")
-	usersRoute.POST("", r.dependencies.userController.CreateUser)
+	// Auth routes
+	authRoute := server.Group("/auth")
+	authRoute.POST("/signup", r.dependencies.authController.SignUp)
+	authRoute.POST("/signin", r.dependencies.authController.SignIn)
 }

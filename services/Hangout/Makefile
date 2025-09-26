@@ -10,11 +10,11 @@ all: lint test build
 
 ## Run tests with coverage
 test:
-	go test ./... -coverprofile=$(COVERAGE_FILE)
+	go test ./internal/... -coverprofile=$(COVERAGE_FILE)
 
 ## Export coverage to html and Open coverage report in browser
 coverage: test
-	go tool cover -html=$(COVERAGE_FILE) -o {COVERAGE_HTML_FILE}
+	go tool cover -html=$(COVERAGE_FILE) -o $(COVERAGE_HTML_FILE)
 	go tool cover -html=$(COVERAGE_FILE)
 
 ## Run golangci-lint

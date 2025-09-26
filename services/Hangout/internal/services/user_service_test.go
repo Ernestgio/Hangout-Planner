@@ -8,6 +8,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -29,11 +30,11 @@ func (m *MockUserRepository) GetUserByEmail(email string) (*models.User, error) 
 	return nil, args.Error(1)
 }
 
-func TestCreateUser(t *testing.T) {
+func TestUserService_CreateUser(t *testing.T) {
 	tests := map[string]struct {
 		setupRepo func(m *MockUserRepository)
 		request   dto.UserCreateRequest
-		wantErr   error
+		wantErr   string
 	}{
 		"user already exists": {
 			setupRepo: func(m *MockUserRepository) {
@@ -45,11 +46,10 @@ func TestCreateUser(t *testing.T) {
 				Email:    "exists@example.com",
 				Password: "password",
 			},
-			wantErr: apperrors.ErrUserAlreadyExists,
+			wantErr: apperrors.ErrUserAlreadyExists.Error(),
 		},
 		"password hashing fails": {
 			setupRepo: func(m *MockUserRepository) {
-				// no call to CreateUser expected
 				m.On("GetUserByEmail", "hashfail@example.com").
 					Return(nil, errors.New("not found"))
 			},
@@ -58,7 +58,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "hashfail@example.com",
 				Password: string(make([]byte, 1000000000)),
 			},
-			wantErr: errors.New("bcrypt"),
+			wantErr: "bcrypt",
 		},
 		"repo create fails": {
 			setupRepo: func(m *MockUserRepository) {
@@ -72,7 +72,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "fail@example.com",
 				Password: "password",
 			},
-			wantErr: errors.New("db error"),
+			wantErr: "db error",
 		},
 		"success": {
 			setupRepo: func(m *MockUserRepository) {
@@ -86,7 +86,7 @@ func TestCreateUser(t *testing.T) {
 				Email:    "ok@example.com",
 				Password: "password",
 			},
-			wantErr: nil,
+			wantErr: "",
 		},
 	}
 
@@ -95,18 +95,72 @@ func TestCreateUser(t *testing.T) {
 			mockRepo := new(MockUserRepository)
 			tt.setupRepo(mockRepo)
 
-			svc := services.NewUserService(mockRepo, 1) // using low bcrypt cost for faster tests
+			svc := services.NewUserService(mockRepo, utils.NewBcryptUtils(4))
 
 			user, err := svc.CreateUser(tt.request)
 
-			if tt.wantErr != nil {
+			if tt.wantErr != "" {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.wantErr.Error())
+				require.Contains(t, err.Error(), tt.wantErr)
 				require.Nil(t, user)
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, user)
 				require.Equal(t, tt.request.Email, user.Email)
+				require.NotEmpty(t, user.Password)
+				require.NotEmpty(t, user.ID)
+			}
+
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestUserService_GetUserByEmail(t *testing.T) {
+	tests := map[string]struct {
+		setupRepo func(m *MockUserRepository)
+		email     string
+		wantUser  *models.User
+		wantErr   string
+	}{
+		"success": {
+			setupRepo: func(m *MockUserRepository) {
+				expected := &models.User{Email: "test@example.com"}
+				m.On("GetUserByEmail", "test@example.com").
+					Return(expected, nil)
+			},
+			email:    "test@example.com",
+			wantUser: &models.User{Email: "test@example.com"},
+			wantErr:  "",
+		},
+		"repo error": {
+			setupRepo: func(m *MockUserRepository) {
+				m.On("GetUserByEmail", "fail@example.com").
+					Return(nil, errors.New("db error"))
+			},
+			email:    "fail@example.com",
+			wantUser: nil,
+			wantErr:  "db error",
+		},
+	}
+
+	for name, tt := range tests {
+		t.Run(name, func(t *testing.T) {
+			mockRepo := new(MockUserRepository)
+			tt.setupRepo(mockRepo)
+
+			svc := services.NewUserService(mockRepo, utils.NewBcryptUtils(4))
+
+			user, err := svc.GetUserByEmail(tt.email)
+
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tt.wantErr)
+				require.Nil(t, user)
+			} else {
+				require.NoError(t, err)
+				require.NotNil(t, user)
+				require.Equal(t, tt.wantUser.Email, user.Email)
 			}
 
 			mockRepo.AssertExpectations(t)

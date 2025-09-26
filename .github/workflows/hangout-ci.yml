@@ -4,10 +4,20 @@ on:
   pull_request:
     paths:
       - "services/hangout/**"
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manually triggering the CI"
+        required: true
+        default: "Manual test"
 
 jobs:
   hangout-service-ci:
     runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: services/hangout
 
     steps:
       - name: Checkout code
@@ -24,7 +34,7 @@ jobs:
           path: |
             ~/go/pkg/mod
             ~/.cache/go-build
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          key: ${{ runner.os }}-go-${{ hashFiles('services/hangout/go.sum') }}
           restore-keys: |
             ${{ runner.os }}-go-
 
@@ -35,13 +45,13 @@ jobs:
         uses: golangci/golangci-lint-action@v3
         with:
           working-directory: services/hangout
-          args: --timeout=5m
+          args: --timeout=5m ./...
 
       - name: Run Tests with Coverage
-        run: go test -v -coverprofile=coverage.out ./services/hangout/...
+        run: go test -v -coverprofile=coverage.out ./internal/...
 
       - name: Upload coverage
         uses: actions/upload-artifact@v3
         with:
           name: coverage-report
-          path: coverage.out
+          path: services/hangout/coverage.out

@@ -2,17 +2,22 @@ package constants
 
 const (
 
-	// Appliation Environment constants
+	// Application Config - Devault environment variable values constants
 	ProductionEnv  = "PROD"
 	DevEnv         = "DEV"
 	DefaultAppName = "hangout"
 	DefaultAppPort = "9000"
-	DefaultDBHost  = "localhost"
-	DefaultDBPort  = "3306"
-	DefaultDBUser  = "root"
-	DefaultDBName  = "hangout"
 
-	// DB Environment constants
+	// Database Config - Default environment variable values constants
+	DefaultDBHost = "localhost"
+	DefaultDBPort = "3306"
+	DefaultDBUser = "root"
+	DefaultDBName = "hangout"
+
+	// JWT Config - Default environment variable values constants
+	DefaultJWTExpirationHours = 1
+
+	// DB Config - Default values constants
 	DefaultDBCharset = "utf8mb4"
 	DefaultDBNetwork = "tcp"
 
@@ -25,8 +30,10 @@ const (
 	HealthCheckOK = "OK"
 
 	// message constants
-	ProdErrorMessage        = "An unexpected error occurred. Please try again later."
-	UserCreatedSuccessfully = "User created successfully."
+	UserSignedUpSuccessfully = "User created successfully."
+	UserSignedInSuccessfully = "User signed in successfully."
 
 	// Error message constants
+	ProdErrorMessage = "An unexpected error occurred. Please try again later."
+	ErrBadRequest    = "Bad request"
 )

@@ -4,11 +4,11 @@ services:
     container_name: hangout-mysql
     restart: on-failure
     env_file:
-      - ./services/hangout/.env
+      - ./components/database/.env
     ports:
       - "3306:3306"
     volumes:
-      - ./services/hangout/internal/db/init.sql:/data/application/init.sql
+      - ./components/database/init.sql:/data/application/init.sql
     command: --init-file /data/application/init.sql
     networks:
       - default

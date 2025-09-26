@@ -5,7 +5,7 @@ pre-commit:
       run: cd services/hangout && go mod tidy
 
     hangout-service-go-test:
-      run: cd services/hangout && go test ./... -cover
+      run: cd services/hangout && go test ./internal/... -cover
 
     hangout-service-golangci-lint:
       run: cd services/hangout && golangci-lint run ./...

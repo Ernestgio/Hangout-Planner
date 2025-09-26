@@ -1,6 +1,6 @@
 # Hangout-Planner
 
-A scalable backend service for planning and managing hangouts, built with Go, Echo, GORM, and MySQL.  
+A scalable backend project for planning and managing hangouts, built with Go, Echo, GORM, and MySQL.  
 Designed with clean architecture, best practices, and future-proofing in mind.
 
 ## 🚀 Tech Stack
@@ -9,7 +9,7 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - Framework: Echo (HTTP)
 - ORM: GORM (MySQL)
 - Relational Database: MySQL 8.0
-- Infra & Tooling: Docker, Docker Compose, Makefile, Air, Golangci-Lint, Swag, Lefthook
+- Infra & Tooling: Docker, Docker Compose, Makefile, Air, Golangci-Lint, Swag, Lefthook, Code QL
 - Github Actions for CI/CD
 
 ## 🏃‍♂️ Local Development
@@ -25,7 +25,11 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - ☁️ Air - Live reload for Go apps
 - Lefthook - git hooks for pre-commit / pre-push actions
 
-### Environment Variables
+### Mysql Environment Variables
+
+Copy `components/database/.env.example` to `components/database/.env.example` and fill in your configuration
+
+### Application Environment Variables
 
 Copy `services/hangout/.env.example` to `services/hangout/.env` and fill in your configuration.
 
@@ -121,4 +125,7 @@ make up
 - AWS S3 connectivity for excel file storage (localstack for local development)
 - RabbitMQ Docker setup for connection between hangout service and report service
 - shared module in pkg/shared
-- open source static code analysis (sonarsource / codeQL)
+- open source static code analysis (sonarsource)
+- Memcached cluster for caching
+- File upload feature (photos attachment for hangout memories!)
+- Fil service

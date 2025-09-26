@@ -11,7 +11,7 @@ import (
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db"
-	cmd "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/server"
 )
 
 // @title 			Hangout Planner API
@@ -32,7 +32,7 @@ func main() {
 
 func Run(cfg *config.Config) error {
 	// Connect to the database
-	dbConn, dbCloser, err := db.Connect(cfg)
+	dbConn, dbCloser, err := db.Connect(cfg.DBConfig)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func Run(cfg *config.Config) error {
 	}
 
 	// Initialize and start the server
-	e := cmd.InitializeServer(cfg, dbConn)
+	e := server.InitializeServer(cfg, dbConn)
 	go func() {
 		if err := e.Start(":" + cfg.AppPort); err != nil && err != http.ErrServerClosed {
 			e.Logger.Fatal("shutting down the server")

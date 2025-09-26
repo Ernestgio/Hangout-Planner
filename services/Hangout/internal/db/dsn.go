@@ -9,10 +9,10 @@ import (
 	mysqlDriver "github.com/go-sql-driver/mysql"
 )
 
-func buildDSN(cfg *config.Config) string {
+func buildDSN(cfg *config.DBConfig) string {
 	mdcfg := mysqlDriver.Config{
 		User:      cfg.DBUser,
-		Passwd:    cfg.MySQLRootPassword,
+		Passwd:    cfg.DBPassword,
 		Addr:      fmt.Sprintf("%s:%s", cfg.DBHost, cfg.DBPort),
 		DBName:    cfg.DBName,
 		Net:       constants.DefaultDBNetwork,

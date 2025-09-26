@@ -6,21 +6,22 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService interface {
 	CreateUser(request dto.UserCreateRequest) (*models.User, error)
+	GetUserByEmail(email string) (*models.User, error)
 }
 
 type userService struct {
-	userRepo   repository.UserRepository
-	bcryptCost int
+	userRepo    repository.UserRepository
+	bcryptUtils utils.BcryptUtils
 }
 
-func NewUserService(userRepo repository.UserRepository, bcryptCost int) UserService {
-	return &userService{userRepo: userRepo, bcryptCost: bcryptCost}
+func NewUserService(userRepo repository.UserRepository, bcryptUtils utils.BcryptUtils) UserService {
+	return &userService{userRepo: userRepo, bcryptUtils: bcryptUtils}
 }
 
 func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, error) {
@@ -31,7 +32,7 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, e
 
 	user := mappings.UserCreateRequestToModel(request)
 	user.ID = uuid.New()
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(request.Password), s.bcryptCost)
+	hashedPassword, err := s.bcryptUtils.GenerateFromPassword(request.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -42,4 +43,8 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, e
 	}
 
 	return &user, nil
+}
+
+func (s *userService) GetUserByEmail(email string) (*models.User, error) {
+	return s.userRepo.GetUserByEmail(email)
 }
