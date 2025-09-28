@@ -49,10 +49,9 @@ func Run(cfg *config.Config) error {
 
 	// Initialize and start the server
 	e := server.InitializeServer(cfg, dbConn)
+	errChan := make(chan error, 1)
 	go func() {
-		if err := e.Start(":" + cfg.AppPort); err != nil && err != http.ErrServerClosed {
-			e.Logger.Fatal("shutting down the server")
-		}
+		errChan <- e.Start(":" + cfg.AppPort)
 	}()
 
 	// Wait for OS signals
@@ -60,14 +59,18 @@ func Run(cfg *config.Config) error {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	<-quit
 
-	// Graceful shutdown with timeout
+	// Gracefully shutdown the server with a timeout of 10 seconds
+	select {
+	case <-quit:
+		log.Println("Received interrupt signal, shutting down...")
+	case err := <-errChan:
+		if err != nil && err != http.ErrServerClosed {
+			log.Printf("Server failed to start: %v", err)
+		}
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	// Shutdown server
-	if err := e.Shutdown(ctx); err != nil {
-		return err
-	}
-
-	return nil
+	return e.Shutdown(ctx)
 }
