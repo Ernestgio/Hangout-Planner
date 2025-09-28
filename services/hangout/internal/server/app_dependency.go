@@ -2,8 +2,9 @@ package server
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
@@ -17,7 +18,7 @@ type AppDependencies struct {
 
 func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies {
 	// Initialize utils
-	responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
+	responseBuilder := response.NewBuilder(cfg.Env == constants.ProductionEnv)
 	jwtUtils, bcryptUtils := InitializeUtils(cfg)
 
 	// 1. Repository Layer

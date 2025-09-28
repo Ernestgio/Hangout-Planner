@@ -67,7 +67,7 @@
 				
 				<option value="file5">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/dsn.go (0.0%)</option>
 				
-				<option value="file6">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto/stardard_response.go (100.0%)</option>
+				<option value="file6">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response/response.go (100.0%)</option>
 				
 				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go (100.0%)</option>
 				
@@ -115,11 +115,6 @@ type Config struct {
         Env        string
         AppName    string
         AppPort    string
-        DBHost     string
-        DBPort     string
-        DBUser     string
-        DBPassword string
-        DBName     string
         DBConfig   *DBConfig
         JwtConfig  *JwtConfig
         BcryptCost int
@@ -142,7 +137,7 @@ func Load() (*Config, error) <span class="cov0" title="0">{
         if cfg.AppPort == "" </span><span class="cov0" title="0">{
                 return nil, apperrors.ErrAppPortRequired
         }</span>
-        <span class="cov0" title="0">if cfg.Env == constants.ProductionEnv &amp;&amp; cfg.DBPassword == "" </span><span class="cov0" title="0">{
+        <span class="cov0" title="0">if cfg.Env == constants.ProductionEnv &amp;&amp; cfg.DBConfig.DBPassword == "" </span><span class="cov0" title="0">{
                 return nil, apperrors.ErrDbPasswordRequired
         }</span>
         <span class="cov0" title="0">return cfg, nil</span>
@@ -211,7 +206,9 @@ import (
         "net/http"
 
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
         "github.com/labstack/echo/v4"
@@ -219,10 +216,10 @@ import (
 
 type AuthController struct {
         authService     services.AuthService
-        responseBuilder *dto.StandardResponseBuilder
+        responseBuilder *response.Builder
 }
 
-func NewAuthController(authService services.AuthService, responseBuilder *dto.StandardResponseBuilder) *AuthController <span class="cov0" title="0">{
+func NewAuthController(authService services.AuthService, responseBuilder *response.Builder) *AuthController <span class="cov0" title="0">{
         return &amp;AuthController{
                 authService:     authService,
                 responseBuilder: responseBuilder,
@@ -241,19 +238,47 @@ func NewAuthController(authService services.AuthService, responseBuilder *dto.St
 func (ac *AuthController) SignUp(c echo.Context) error <span class="cov0" title="0">{
         var req dto.SignUpRequest
         if err := c.Bind(&amp;req); err != nil </span><span class="cov0" title="0">{
-                return c.JSON(http.StatusBadRequest, ac.responseBuilder.NewErrorResponse(apperrors.ErrInvalidPayload))
+                return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
         }</span>
         <span class="cov0" title="0">user, err := ac.authService.SignUser(&amp;req)
         if err != nil </span><span class="cov0" title="0">{
                 switch err </span>{
                 case apperrors.ErrUserAlreadyExists:<span class="cov0" title="0">
-                        return c.JSON(http.StatusConflict, ac.responseBuilder.NewErrorResponse(err))</span>
+                        return c.JSON(http.StatusConflict, ac.responseBuilder.Error(err))</span>
                 default:<span class="cov0" title="0">
-                        return c.JSON(http.StatusInternalServerError, ac.responseBuilder.NewErrorResponse(err))</span>
+                        return c.JSON(http.StatusInternalServerError, ac.responseBuilder.Error(err))</span>
                 }
         }
 
-        <span class="cov0" title="0">return c.JSON(http.StatusCreated, ac.responseBuilder.NewSuccessResponse("User signed up successfully", mappings.UserToResponseDTO(user)))</span>
+        <span class="cov0" title="0">return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mappings.UserToResponseDTO(user)))</span>
+}
+
+// @Summary      Sign in
+// @Description  Authenticate a user and return a JWT token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        credentials  body      dto.SignInRequest  true  "User sign in data"
+// @Success      200          {object}  dto.StandardResponse
+// @Failure      400          {object}  dto.StandardResponse
+// @Failure      401          {object}  dto.StandardResponse
+// @Router       /auth/signin [post]
+func (ac *AuthController) SignIn(c echo.Context) error <span class="cov0" title="0">{
+        var req dto.SignInRequest
+        if err := c.Bind(&amp;req); err != nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
+        }</span>
+
+        <span class="cov0" title="0">token, err := ac.authService.SignInUser(&amp;req)
+        if err != nil </span><span class="cov0" title="0">{
+                switch err </span>{
+                case apperrors.ErrInvalidCredentials:<span class="cov0" title="0">
+                        return c.JSON(http.StatusUnauthorized, ac.responseBuilder.Error(err))</span>
+                default:<span class="cov0" title="0">
+                        return c.JSON(http.StatusInternalServerError, ac.responseBuilder.Error(err))</span>
+                }
+        }
+        <span class="cov0" title="0">return c.JSON(http.StatusOK, ac.responseBuilder.Success(constants.UserSignedInSuccessfully, token))</span>
 }
 </pre>
 		
@@ -323,27 +348,27 @@ func buildDSN(cfg *config.DBConfig) string <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file6" style="display: none">package dto
+		<pre class="file" id="file6" style="display: none">package response
 
 import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 
 type StandardResponse struct {
-        Status  string      `json:"status"`
-        Message string      `json:"message"`
-        Data    interface{} `json:"data,omitempty"`
+        Status  string `json:"status"`
+        Message string `json:"message"`
+        Data    any    `json:"data,omitempty"`
 }
 
-type StandardResponseBuilder struct {
-        env string
+type Builder struct {
+        isProduction bool
 }
 
-func NewStandardResponseBuilder(env string) *StandardResponseBuilder <span class="cov8" title="1">{
-        return &amp;StandardResponseBuilder{
-                env: env,
+func NewBuilder(isProduction bool) *Builder <span class="cov8" title="1">{
+        return &amp;Builder{
+                isProduction: isProduction,
         }
 }</span>
 
-func (b *StandardResponseBuilder) NewSuccessResponse(message string, data interface{}) *StandardResponse <span class="cov8" title="1">{
+func (b *Builder) Success(message string, data any) *StandardResponse <span class="cov8" title="1">{
         return &amp;StandardResponse{
                 Status:  constants.SuccessStatus,
                 Message: message,
@@ -351,8 +376,8 @@ func (b *StandardResponseBuilder) NewSuccessResponse(message string, data interf
         }
 }</span>
 
-func (b *StandardResponseBuilder) NewErrorResponse(err error) *StandardResponse <span class="cov8" title="1">{
-        if b.env == constants.ProductionEnv </span><span class="cov8" title="1">{
+func (b *Builder) Error(err error) *StandardResponse <span class="cov8" title="1">{
+        if b.isProduction </span><span class="cov8" title="1">{
                 return &amp;StandardResponse{
                         Status:  constants.ErrorStatus,
                         Message: constants.ProdErrorMessage,
@@ -425,12 +450,13 @@ func (r *userRepository) GetUserByEmail(email string) (*models.User, error) <spa
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package cmd
+		<pre class="file" id="file9" style="display: none">package server
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers"
-        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
@@ -444,9 +470,8 @@ type AppDependencies struct {
 
 func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies <span class="cov0" title="0">{
         // Initialize utils
-        responseBuilder := dto.NewStandardResponseBuilder(cfg.Env)
-        jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
-        bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
+        responseBuilder := response.NewBuilder(cfg.Env == constants.ProductionEnv)
+        jwtUtils, bcryptUtils := InitializeUtils(cfg)
 
         // 1. Repository Layer
         userRepo := repository.NewUserRepository(db)
@@ -463,9 +488,15 @@ func InitializeDependencies(cfg *config.Config, db *gorm.DB) *AppDependencies <s
                 authController: authController,
         }
 }</span>
+
+func InitializeUtils(cfg *config.Config) (utils.JWTUtils, utils.BcryptUtils) <span class="cov0" title="0">{
+        jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
+        bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
+        return jwtUtils, bcryptUtils
+}</span>
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">package cmd
+		<pre class="file" id="file10" style="display: none">package server
 
 import (
         "net/http"
@@ -497,11 +528,12 @@ func (r *Router) RegisterEndpoints(server *echo.Echo) <span class="cov0" title="
 
         // Auth routes
         authRoute := server.Group("/auth")
-        authRoute.POST("/signup", r.dependencies.authController.SignUp)</span>
+        authRoute.POST("/signup", r.dependencies.authController.SignUp)
+        authRoute.POST("/signin", r.dependencies.authController.SignIn)</span>
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package cmd
+		<pre class="file" id="file11" style="display: none">package server
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"

@@ -1,6 +1,6 @@
-module github.com/Ernestgio/Hangout-Planner/services/hangout
-
 go 1.23.2
+
+module github.com/Ernestgio/Hangout-Planner/services/hangout
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2

@@ -6,6 +6,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"github.com/labstack/echo/v4"
@@ -13,10 +14,10 @@ import (
 
 type AuthController struct {
 	authService     services.AuthService
-	responseBuilder *dto.StandardResponseBuilder
+	responseBuilder *response.Builder
 }
 
-func NewAuthController(authService services.AuthService, responseBuilder *dto.StandardResponseBuilder) *AuthController {
+func NewAuthController(authService services.AuthService, responseBuilder *response.Builder) *AuthController {
 	return &AuthController{
 		authService:     authService,
 		responseBuilder: responseBuilder,
@@ -35,19 +36,19 @@ func NewAuthController(authService services.AuthService, responseBuilder *dto.St
 func (ac *AuthController) SignUp(c echo.Context) error {
 	var req dto.SignUpRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ac.responseBuilder.NewErrorResponse(apperrors.ErrInvalidPayload))
+		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
 	user, err := ac.authService.SignUser(&req)
 	if err != nil {
 		switch err {
 		case apperrors.ErrUserAlreadyExists:
-			return c.JSON(http.StatusConflict, ac.responseBuilder.NewErrorResponse(err))
+			return c.JSON(http.StatusConflict, ac.responseBuilder.Error(err))
 		default:
-			return c.JSON(http.StatusInternalServerError, ac.responseBuilder.NewErrorResponse(err))
+			return c.JSON(http.StatusInternalServerError, ac.responseBuilder.Error(err))
 		}
 	}
 
-	return c.JSON(http.StatusCreated, ac.responseBuilder.NewSuccessResponse(constants.UserSignedUpSuccessfully, mappings.UserToResponseDTO(user)))
+	return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mappings.UserToResponseDTO(user)))
 }
 
 // @Summary      Sign in
@@ -63,17 +64,17 @@ func (ac *AuthController) SignUp(c echo.Context) error {
 func (ac *AuthController) SignIn(c echo.Context) error {
 	var req dto.SignInRequest
 	if err := c.Bind(&req); err != nil {
-		return c.JSON(http.StatusBadRequest, ac.responseBuilder.NewErrorResponse(apperrors.ErrInvalidPayload))
+		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
 
 	token, err := ac.authService.SignInUser(&req)
 	if err != nil {
 		switch err {
 		case apperrors.ErrInvalidCredentials:
-			return c.JSON(http.StatusUnauthorized, ac.responseBuilder.NewErrorResponse(err))
+			return c.JSON(http.StatusUnauthorized, ac.responseBuilder.Error(err))
 		default:
-			return c.JSON(http.StatusInternalServerError, ac.responseBuilder.NewErrorResponse(err))
+			return c.JSON(http.StatusInternalServerError, ac.responseBuilder.Error(err))
 		}
 	}
-	return c.JSON(http.StatusOK, ac.responseBuilder.NewSuccessResponse(constants.UserSignedInSuccessfully, token))
+	return c.JSON(http.StatusOK, ac.responseBuilder.Success(constants.UserSignedInSuccessfully, token))
 }
