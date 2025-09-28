@@ -55,8 +55,12 @@ jobs:
       - name: Run Tests with Coverage
         run: go test -v -coverprofile=test/coverage.out ./internal/...
 
-      - name: Upload coverage
+      - name: Convert coverage to HTML report
+        run: go tool cover -html=coverage.out -o coverage.html
+
+      - name: Upload HTML coverage report
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-report
-          path: services/hangout/test/coverage.out
+          name: coverage-report-html
+          path: services/hangout/coverage.html
+          retention-days: 7
