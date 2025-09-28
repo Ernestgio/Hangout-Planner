@@ -12,13 +12,18 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type AuthController struct {
+type AuthController interface {
+	SignUp(c echo.Context) error
+	SignIn(c echo.Context) error
+}
+
+type authController struct {
 	authService     services.AuthService
 	responseBuilder *response.Builder
 }
 
-func NewAuthController(authService services.AuthService, responseBuilder *response.Builder) *AuthController {
-	return &AuthController{
+func NewAuthController(authService services.AuthService, responseBuilder *response.Builder) AuthController {
+	return &authController{
 		authService:     authService,
 		responseBuilder: responseBuilder,
 	}
@@ -33,7 +38,7 @@ func NewAuthController(authService services.AuthService, responseBuilder *respon
 // @Success      201   {object}  dto.StandardResponse
 // @Failure      400   {object}  dto.StandardResponse
 // @Router       /auth/signup [post]
-func (ac *AuthController) SignUp(c echo.Context) error {
+func (ac *authController) SignUp(c echo.Context) error {
 	req := new(dto.SignUpRequest)
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
@@ -61,7 +66,7 @@ func (ac *AuthController) SignUp(c echo.Context) error {
 // @Failure      400          {object}  dto.StandardResponse
 // @Failure      401          {object}  dto.StandardResponse
 // @Router       /auth/signin [post]
-func (ac *AuthController) SignIn(c echo.Context) error {
+func (ac *authController) SignIn(c echo.Context) error {
 	req := new(dto.SignInRequest)
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
