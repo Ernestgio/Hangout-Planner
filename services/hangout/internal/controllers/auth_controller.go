@@ -35,8 +35,10 @@ func NewAuthController(authService services.AuthService, responseBuilder *respon
 // @Accept       json
 // @Produce      json
 // @Param        user  body      dto.SignUpRequest  true  "User sign up data"
-// @Success      201   {object}  dto.StandardResponse
-// @Failure      400   {object}  dto.StandardResponse
+// @Success      201   {object}  response.StandardResponse
+// @Failure      400   {object}  response.StandardResponse
+// @Failure      409   {object}  response.StandardResponse
+// @Failure      500   {object}  response.StandardResponse
 // @Router       /auth/signup [post]
 func (ac *authController) SignUp(c echo.Context) error {
 	req := new(dto.SignUpRequest)
@@ -62,9 +64,10 @@ func (ac *authController) SignUp(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        credentials  body      dto.SignInRequest  true  "User sign in data"
-// @Success      200          {object}  dto.StandardResponse
-// @Failure      400          {object}  dto.StandardResponse
-// @Failure      401          {object}  dto.StandardResponse
+// @Success      200          {object}  response.StandardResponse
+// @Failure      400          {object}  response.StandardResponse
+// @Failure      401          {object}  response.StandardResponse
+// @Failure      500          {object}  response.StandardResponse
 // @Router       /auth/signin [post]
 func (ac *authController) SignIn(c echo.Context) error {
 	req := new(dto.SignInRequest)
