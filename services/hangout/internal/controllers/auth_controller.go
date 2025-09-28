@@ -34,11 +34,11 @@ func NewAuthController(authService services.AuthService, responseBuilder *respon
 // @Failure      400   {object}  dto.StandardResponse
 // @Router       /auth/signup [post]
 func (ac *AuthController) SignUp(c echo.Context) error {
-	var req dto.SignUpRequest
-	if err := c.Bind(&req); err != nil {
+	req := new(dto.SignUpRequest)
+	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
-	user, err := ac.authService.SignUser(&req)
+	user, err := ac.authService.SignUser(req)
 	if err != nil {
 		switch err {
 		case apperrors.ErrUserAlreadyExists:
@@ -62,12 +62,12 @@ func (ac *AuthController) SignUp(c echo.Context) error {
 // @Failure      401          {object}  dto.StandardResponse
 // @Router       /auth/signin [post]
 func (ac *AuthController) SignIn(c echo.Context) error {
-	var req dto.SignInRequest
-	if err := c.Bind(&req); err != nil {
+	req := new(dto.SignInRequest)
+	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
 
-	token, err := ac.authService.SignInUser(&req)
+	token, err := ac.authService.SignInUser(req)
 	if err != nil {
 		switch err {
 		case apperrors.ErrInvalidCredentials:
