@@ -7,7 +7,7 @@ import (
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/auth"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -29,7 +29,7 @@ func TestNewJWTUtils(t *testing.T) {
 }
 
 func TestJWTUtils_Generate(t *testing.T) {
-	testUser := &models.User{
+	testUser := &domain.User{
 		ID:    uuid.New(),
 		Email: "test@example.com",
 	}
@@ -37,7 +37,7 @@ func TestJWTUtils_Generate(t *testing.T) {
 	tests := []struct {
 		name        string
 		cfg         *config.JwtConfig
-		user        *models.User
+		user        *domain.User
 		checkClaims bool
 	}{
 		{

@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 )
 
@@ -17,7 +17,7 @@ func TestCreateUser(t *testing.T) {
 	db, mock := setupDB(t)
 	repo := repository.NewUserRepository(db)
 
-	u := &models.User{
+	u := &domain.User{
 		ID:       uuid.New(),
 		Name:     "X",
 		Email:    "x@example.com",

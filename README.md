@@ -9,7 +9,7 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 - Framework: Echo (HTTP)
 - ORM: GORM (MySQL)
 - Relational Database: MySQL 8.0
-- Infra & Tooling: Docker, Docker Compose, Makefile, Air, Golangci-Lint, Swag, Lefthook, Code QL
+- Infra & Tooling: Docker, Docker Compose, Makefile, Air, Golangci-Lint, Swag, Lefthook, Code QL github actions
 - Github Actions for CI/CD
 
 ## 🏃‍♂️ Local Development
@@ -61,6 +61,7 @@ make up
   - Dockerfile (multi services setup)
 - Github Actions CI/CD
 - Lefthook for pre-commit and pre-push actions
+- Github actions CI/CD
 
 ### hangout service
 
@@ -88,21 +89,11 @@ make up
 
 ## Short Term Plan
 
-### Controller, Services, and repository
-
-- Sign up func and auth service
-
 ### DB
 
 - Graceful shutdown
 - retry connections
 - Atlas versioned migration scripts (up and down)
-
-### Code quality
-
-- refactor and clean up services/hangout/internal/server package
-- main cleanup
-- separate AppConfig, DbConfig, RedisConfig
 
 ### Server settings
 
@@ -128,4 +119,4 @@ make up
 - open source static code analysis (sonarsource)
 - Memcached cluster for caching
 - File upload feature (photos attachment for hangout memories!)
-- Fil service
+- File service

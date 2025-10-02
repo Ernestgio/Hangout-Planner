@@ -6,9 +6,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 )
 
 func TestUserCreateRequestToModel(t *testing.T) {
@@ -24,7 +24,7 @@ func TestUserCreateRequestToModel(t *testing.T) {
 }
 
 func TestUserToResponseDTO(t *testing.T) {
-	user := &models.User{
+	user := &domain.User{
 		ID:    uuid.New(),
 		Name:  "Bob",
 		Email: "bob@example.com",

@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -17,17 +17,17 @@ type MockUserService struct {
 	mock.Mock
 }
 
-func (m *MockUserService) CreateUser(request dto.UserCreateRequest) (*models.User, error) {
+func (m *MockUserService) CreateUser(request dto.UserCreateRequest) (*domain.User, error) {
 	args := m.Called(request)
-	if user, ok := args.Get(0).(*models.User); ok {
+	if user, ok := args.Get(0).(*domain.User); ok {
 		return user, args.Error(1)
 	}
 	return nil, args.Error(1)
 }
 
-func (m *MockUserService) GetUserByEmail(email string) (*models.User, error) {
+func (m *MockUserService) GetUserByEmail(email string) (*domain.User, error) {
 	args := m.Called(email)
-	if u, ok := args.Get(0).(*models.User); ok {
+	if u, ok := args.Get(0).(*domain.User); ok {
 		return u, args.Error(1)
 	}
 	return nil, args.Error(1)
@@ -37,7 +37,7 @@ type MockJWTUtils struct {
 	mock.Mock
 }
 
-func (m *MockJWTUtils) Generate(user *models.User) (string, error) {
+func (m *MockJWTUtils) Generate(user *domain.User) (string, error) {
 	args := m.Called(user)
 	return args.String(0), args.Error(1)
 }
@@ -65,7 +65,7 @@ func TestAuthService_SignUser(t *testing.T) {
 		setupMock func(m *MockUserService)
 		input     *dto.SignUpRequest
 		wantErr   string
-		wantUser  *models.User
+		wantUser  *domain.User
 	}{
 		"User creation fails": {
 			setupMock: func(m *MockUserService) {
@@ -79,11 +79,11 @@ func TestAuthService_SignUser(t *testing.T) {
 		"User creation succeeds": {
 			setupMock: func(m *MockUserService) {
 				m.On("CreateUser", mock.Anything).
-					Return(&models.User{ID: newUserID, Email: "bob@example.com"}, nil)
+					Return(&domain.User{ID: newUserID, Email: "bob@example.com"}, nil)
 			},
 			input:    &dto.SignUpRequest{Name: "Bob", Email: "bob@example.com", Password: "password"},
 			wantErr:  "",
-			wantUser: &models.User{ID: newUserID, Email: "bob@example.com"},
+			wantUser: &domain.User{ID: newUserID, Email: "bob@example.com"},
 		},
 	}
 
@@ -117,7 +117,7 @@ func TestAuthService_SignInUser(t *testing.T) {
 	const mockToken = "signed.jwt.token"
 
 	validUserID := uuid.New()
-	validUser := &models.User{
+	validUser := &domain.User{
 		ID:       validUserID,
 		Email:    correctEmail,
 		Password: "hashed-password",

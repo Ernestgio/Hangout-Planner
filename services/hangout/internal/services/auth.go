@@ -2,13 +2,13 @@ package services
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
 )
 
 type AuthService interface {
-	SignUser(request *dto.SignUpRequest) (*models.User, error)
+	SignUser(request *dto.SignUpRequest) (*domain.User, error)
 	SignInUser(request *dto.SignInRequest) (*dto.SignInResponse, error)
 }
 
@@ -26,7 +26,7 @@ func NewAuthService(userService UserService, jwtUtils utils.JWTUtils, bcrytpUtil
 	}
 }
 
-func (s *authService) SignUser(request *dto.SignUpRequest) (*models.User, error) {
+func (s *authService) SignUser(request *dto.SignUpRequest) (*domain.User, error) {
 	user, err := s.userService.CreateUser(dto.UserCreateRequest{
 		Name:     request.Name,
 		Email:    request.Email,

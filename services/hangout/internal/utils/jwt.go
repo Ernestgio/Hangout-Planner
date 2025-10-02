@@ -5,25 +5,25 @@ import (
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/auth"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type JWTUtils interface {
-	Generate(user *models.User) (string, error)
+	Generate(user *domain.User) (string, error)
 }
 
 type jwtUtils struct {
-	jwtSecret          string
-	jWTExpirationHours int
+	Secret          string
+	ExpirationHours int
 }
 
 func NewJWTUtils(jWtConfig *config.JwtConfig) JWTUtils {
-	return &jwtUtils{jwtSecret: jWtConfig.JWTSecret, jWTExpirationHours: jWtConfig.JWTExpirationHours}
+	return &jwtUtils{Secret: jWtConfig.JWTSecret, ExpirationHours: jWtConfig.JWTExpirationHours}
 }
 
-func (j *jwtUtils) Generate(user *models.User) (string, error) {
-	expirationTime := time.Now().Add(time.Duration(j.jWTExpirationHours) * time.Hour)
+func (j *jwtUtils) Generate(user *domain.User) (string, error) {
+	expirationTime := time.Now().Add(time.Duration(j.ExpirationHours) * time.Hour)
 	claims := &auth.TokenCustomClaims{
 		UserID: user.ID,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -35,7 +35,10 @@ func (j *jwtUtils) Generate(user *models.User) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, _ := token.SignedString([]byte(j.jwtSecret))
+	tokenString, err := token.SignedString([]byte(j.Secret))
+	if err != nil {
+		return "", err
+	}
 
 	return tokenString, nil
 }
