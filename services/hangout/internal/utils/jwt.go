@@ -35,7 +35,10 @@ func (j *jwtUtils) Generate(user *domain.User) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	tokenString, _ := token.SignedString([]byte(j.jwtSecret))
+	tokenString, err := token.SignedString([]byte(j.jwtSecret))
+	if err != nil {
+		return "", err
+	}
 
 	return tokenString, nil
 }
