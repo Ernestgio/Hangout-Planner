@@ -34,7 +34,7 @@ Copy `.env.example` to `.env` and fill in your configuration.
 
 ### DB Connectivity
 
-- minified graceful shutdown
+- Graceful shutdown
 - Auto migrate (code-based migration)
 
 ### Server
@@ -43,3 +43,4 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - constants
 - sentinel errors
 - Clean architecture dependency Injection with interface segregation
+- Gzip response compression

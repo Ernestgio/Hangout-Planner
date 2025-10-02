@@ -62,6 +62,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	e := echo.New()
 	e.Validator = validator.NewValidator()
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
+	e.Use(middleware.Gzip())
 
 	router.NewRouter(e, authController)
 
