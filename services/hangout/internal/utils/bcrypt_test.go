@@ -16,7 +16,7 @@ func TestBcryptUtils(t *testing.T) {
 
 	bcryptUtils := utils.NewBcryptUtils(12)
 
-	bcryptUtilsInvalidCost := utils.NewBcryptUtils(32)
+	bcryptUtilsInvalidCost := utils.NewBcryptUtils(35)
 
 	tests := []struct {
 		name          string
