@@ -56,7 +56,7 @@ jobs:
         run: go test -v -coverprofile=test/coverage.out ./internal/...
 
       - name: Convert coverage to HTML report
-        run: go tool cover -html=coverage.out -o coverage.html
+        run: go tool cover -html=test/coverage.out -o coverage.html
 
       - name: Upload HTML coverage report
         uses: actions/upload-artifact@v4
