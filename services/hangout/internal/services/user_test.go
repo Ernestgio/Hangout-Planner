@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
 	"github.com/stretchr/testify/mock"
@@ -17,14 +17,14 @@ type MockUserRepository struct {
 	mock.Mock
 }
 
-func (m *MockUserRepository) CreateUser(user *models.User) error {
+func (m *MockUserRepository) CreateUser(user *domain.User) error {
 	args := m.Called(user)
 	return args.Error(0)
 }
 
-func (m *MockUserRepository) GetUserByEmail(email string) (*models.User, error) {
+func (m *MockUserRepository) GetUserByEmail(email string) (*domain.User, error) {
 	args := m.Called(email)
-	if u, ok := args.Get(0).(*models.User); ok {
+	if u, ok := args.Get(0).(*domain.User); ok {
 		return u, args.Error(1)
 	}
 	return nil, args.Error(1)
@@ -39,7 +39,7 @@ func TestUserService_CreateUser(t *testing.T) {
 		"user already exists": {
 			setupRepo: func(m *MockUserRepository) {
 				m.On("GetUserByEmail", "exists@example.com").
-					Return(&models.User{}, nil)
+					Return(&domain.User{}, nil)
 			},
 			request: dto.UserCreateRequest{
 				Name:     "Alice",
@@ -120,17 +120,17 @@ func TestUserService_GetUserByEmail(t *testing.T) {
 	tests := map[string]struct {
 		setupRepo func(m *MockUserRepository)
 		email     string
-		wantUser  *models.User
+		wantUser  *domain.User
 		wantErr   string
 	}{
 		"success": {
 			setupRepo: func(m *MockUserRepository) {
-				expected := &models.User{Email: "test@example.com"}
+				expected := &domain.User{Email: "test@example.com"}
 				m.On("GetUserByEmail", "test@example.com").
 					Return(expected, nil)
 			},
 			email:    "test@example.com",
-			wantUser: &models.User{Email: "test@example.com"},
+			wantUser: &domain.User{Email: "test@example.com"},
 			wantErr:  "",
 		},
 		"repo error": {

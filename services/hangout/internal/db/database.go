@@ -2,7 +2,7 @@ package db
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	gormmysql "gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -32,5 +32,5 @@ func Connect(cfg *config.DBConfig) (*gorm.DB, func() error, error) {
 }
 
 func Migrate(db *gorm.DB) error {
-	return db.AutoMigrate(&models.User{})
+	return db.AutoMigrate(&domain.User{})
 }

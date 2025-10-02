@@ -2,17 +2,17 @@ package services
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
 	"github.com/google/uuid"
 )
 
 type UserService interface {
-	CreateUser(request dto.UserCreateRequest) (*models.User, error)
-	GetUserByEmail(email string) (*models.User, error)
+	CreateUser(request dto.UserCreateRequest) (*domain.User, error)
+	GetUserByEmail(email string) (*domain.User, error)
 }
 
 type userService struct {
@@ -24,7 +24,7 @@ func NewUserService(userRepo repository.UserRepository, bcryptUtils utils.Bcrypt
 	return &userService{userRepo: userRepo, bcryptUtils: bcryptUtils}
 }
 
-func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, error) {
+func (s *userService) CreateUser(request dto.UserCreateRequest) (*domain.User, error) {
 	existingUser, err := s.userRepo.GetUserByEmail(request.Email)
 	if err == nil && existingUser != nil {
 		return nil, apperrors.ErrUserAlreadyExists
@@ -45,6 +45,6 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*models.User, e
 	return &user, nil
 }
 
-func (s *userService) GetUserByEmail(email string) (*models.User, error) {
+func (s *userService) GetUserByEmail(email string) (*domain.User, error) {
 	return s.userRepo.GetUserByEmail(email)
 }

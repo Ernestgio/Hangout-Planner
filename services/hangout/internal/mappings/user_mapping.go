@@ -1,18 +1,18 @@
 package mappings
 
 import (
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
 )
 
-func UserCreateRequestToModel(request dto.UserCreateRequest) models.User {
-	return models.User{
+func UserCreateRequestToModel(request dto.UserCreateRequest) domain.User {
+	return domain.User{
 		Name:  request.Name,
 		Email: request.Email,
 	}
 }
 
-func UserToResponseDTO(user *models.User) *dto.UserResponse {
+func UserToResponseDTO(user *domain.User) *dto.UserResponse {
 	return &dto.UserResponse{
 		ID:    user.ID,
 		Name:  user.Name,

@@ -1,13 +1,13 @@
 package repository
 
 import (
-	models "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/models"
+	domain "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"gorm.io/gorm"
 )
 
 type UserRepository interface {
-	CreateUser(user *models.User) error
-	GetUserByEmail(email string) (*models.User, error)
+	CreateUser(user *domain.User) error
+	GetUserByEmail(email string) (*domain.User, error)
 }
 
 type userRepository struct {
@@ -18,12 +18,12 @@ func NewUserRepository(db *gorm.DB) UserRepository {
 	return &userRepository{db: db}
 }
 
-func (r *userRepository) CreateUser(user *models.User) error {
+func (r *userRepository) CreateUser(user *domain.User) error {
 	return r.db.Create(user).Error
 }
 
-func (r *userRepository) GetUserByEmail(email string) (*models.User, error) {
-	var user models.User
+func (r *userRepository) GetUserByEmail(email string) (*domain.User, error) {
+	var user domain.User
 	result := r.db.Where("email = ?", email).First(&user)
 	if result.Error != nil {
 		return nil, result.Error
