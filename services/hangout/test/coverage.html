@@ -69,7 +69,7 @@
 				
 				<option value="file6">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/dsn.go (0.0%)</option>
 				
-				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/hangout.go (0.0%)</option>
+				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/hangout.go (100.0%)</option>
 				
 				<option value="file8">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/user.go (100.0%)</option>
 				
@@ -83,7 +83,7 @@
 				
 				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go (100.0%)</option>
 				
-				<option value="file14">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/hangout.go (0.0%)</option>
+				<option value="file14">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/hangout.go (100.0%)</option>
 				
 				<option value="file15">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.go (100.0%)</option>
 				
@@ -515,7 +515,7 @@ type Hangout struct {
         User   User       `gorm:"foreignKey:UserID"`
 }
 
-func (hangout *Hangout) BeforeCreate(tx *gorm.DB) (err error) <span class="cov0" title="0">{
+func (hangout *Hangout) BeforeCreate(tx *gorm.DB) (err error) <span class="cov8" title="1">{
         hangout.ID = uuid.New()
         return
 }</span>
@@ -739,71 +739,71 @@ type hangoutRepository struct {
         db *gorm.DB
 }
 
-func NewHangoutRepository(db *gorm.DB) HangoutRepository <span class="cov0" title="0">{
+func NewHangoutRepository(db *gorm.DB) HangoutRepository <span class="cov8" title="1">{
         return &amp;hangoutRepository{db: db}
 }</span>
 
-func (r *hangoutRepository) WithTx(tx *gorm.DB) HangoutRepository <span class="cov0" title="0">{
+func (r *hangoutRepository) WithTx(tx *gorm.DB) HangoutRepository <span class="cov8" title="1">{
         return &amp;hangoutRepository{db: tx}
 }</span>
 
-func (r *hangoutRepository) CreateHangout(hangout *domain.Hangout) (*domain.Hangout, error) <span class="cov0" title="0">{
-        if err := r.db.Create(hangout).Error; err != nil </span><span class="cov0" title="0">{
+func (r *hangoutRepository) CreateHangout(hangout *domain.Hangout) (*domain.Hangout, error) <span class="cov8" title="1">{
+        if err := r.db.Create(hangout).Error; err != nil </span><span class="cov8" title="1">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">return hangout, nil</span>
+        <span class="cov8" title="1">return hangout, nil</span>
 }
-func (r *hangoutRepository) GetHangoutByID(id uuid.UUID) (*domain.Hangout, error) <span class="cov0" title="0">{
+func (r *hangoutRepository) GetHangoutByID(id uuid.UUID) (*domain.Hangout, error) <span class="cov8" title="1">{
         var hangout domain.Hangout
-        if err := r.db.Preload("User").First(&amp;hangout, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+        if err := r.db.Preload("User").First(&amp;hangout, "id = ?", id).Error; err != nil </span><span class="cov8" title="1">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">return &amp;hangout, nil</span>
+        <span class="cov8" title="1">return &amp;hangout, nil</span>
 }
 
-func (r *hangoutRepository) UpdateHangout(hangout *domain.Hangout) (*domain.Hangout, error) <span class="cov0" title="0">{
-        if err := r.db.Save(hangout).Error; err != nil </span><span class="cov0" title="0">{
+func (r *hangoutRepository) UpdateHangout(hangout *domain.Hangout) (*domain.Hangout, error) <span class="cov8" title="1">{
+        if err := r.db.Save(hangout).Error; err != nil </span><span class="cov8" title="1">{
                 return nil, err
         }</span>
-        <span class="cov0" title="0">return hangout, nil</span>
+        <span class="cov8" title="1">return hangout, nil</span>
 }
-func (r *hangoutRepository) DeleteHangout(id uuid.UUID) error <span class="cov0" title="0">{
-        if err := r.db.Delete(&amp;domain.Hangout{}, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+func (r *hangoutRepository) DeleteHangout(id uuid.UUID) error <span class="cov8" title="1">{
+        if err := r.db.Delete(&amp;domain.Hangout{}, "id = ?", id).Error; err != nil </span><span class="cov8" title="1">{
                 return err
         }</span>
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov8" title="1">return nil</span>
 }
 
-func (r *hangoutRepository) GetHangoutsByUserID(userID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Hangout, error) <span class="cov0" title="0">{
+func (r *hangoutRepository) GetHangoutsByUserID(userID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Hangout, error) <span class="cov8" title="1">{
         var hangouts []domain.Hangout
 
         query := r.db.Model(&amp;domain.Hangout{}).Where("user_id = ?", userID)
 
-        if pagination.AfterID != nil </span><span class="cov0" title="0">{
+        if pagination.AfterID != nil </span><span class="cov8" title="1">{
                 sortByColumn := pagination.GetSortBy()
                 subQuery := r.db.Model(&amp;domain.Hangout{}).Select(sortByColumn).Where("id = ?", *pagination.AfterID)
 
                 comparisonOperator := "&gt;="
-                if pagination.GetSortDir() == constants.SortDirectionDesc </span><span class="cov0" title="0">{
+                if pagination.GetSortDir() == constants.SortDirectionDesc </span><span class="cov8" title="1">{
                         comparisonOperator = "&lt;="
                 }</span>
 
-                <span class="cov0" title="0">query = query.Where(fmt.Sprintf("%s %s (?)", sortByColumn, comparisonOperator), subQuery)
+                <span class="cov8" title="1">query = query.Where(fmt.Sprintf("%s %s (?)", sortByColumn, comparisonOperator), subQuery)
 
                 idSubQuery := r.db.Model(&amp;domain.Hangout{}).Select("id").Where(sortByColumn+" = (?)", subQuery)
                 query = query.Where("id NOT IN (?)", idSubQuery)</span>
         }
 
-        <span class="cov0" title="0">err := query.
+        <span class="cov8" title="1">err := query.
                 Order(pagination.GetOrderByClause()).
                 Limit(pagination.GetLimit()).
                 Find(&amp;hangouts).Error
 
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 return nil, err
         }</span>
 
-        <span class="cov0" title="0">return hangouts, nil</span>
+        <span class="cov8" title="1">return hangouts, nil</span>
 }
 </pre>
 		
