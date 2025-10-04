@@ -1,13 +1,17 @@
 # Hangout Service - Core Service for Hangout Planner Project
 
-A scalable backend service for planning and managing hangouts, built with Go, Echo, GORM, and MySQL.  
-Designed with clean architecture, best practices, and future-proofing in mind.
+The **core backend service** responsible for creating, managing, and listing hangouts.  
+Implements clean architecture principles and production-ready practices using Go, Echo, and GORM.
 
-## 🚀 Tech Stack
+## ⚙️ Tech Stack
 
-- Language: Go 1.23+
-- Framework: Echo (HTTP)
-- ORM: GORM (MySQL)
+- 🟦 Go 1.23+
+- ⚙️ Echo (HTTP Web Framework)
+- 🗄️ GORM (ORM)
+- 💾 MySQL (8.0)
+- 🧪 GolangCI-Lint
+- 🧰 Air (Live reload)
+- 🧾 Swag (API documentation)
 
 ## 🏃‍♂️ Local Development
 
@@ -23,27 +27,32 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 
 Copy `.env.example` to `.env` and fill in your configuration.
 
-## Existing Feature
+## ✅ Features
 
-### Module
+### 💡 Core
 
-- Documentation (with echoswagger)
-- Unit Tests
-  - with mocking and table driven test whenever applicable
-  - tests folder containing unit test coverage file in HTML
-- Code quality analysis, formatting, and linting with golangci-lint
-- Makefile scripts
-- Air for project auto reload
+- RESTful API built on Echo
+- Swagger API documentation
+- Graceful server shutdown
+- Dependency injection via interfaces
+- Auto DB migration
 
-### DB Connectivity
+### 🧪 Testing & Quality
 
-- Graceful shutdown
-- Auto migrate (code-based migration)
+- Unit tests (table-driven + mocks)
+- HTML test coverage reports
+- GolangCI-Lint configuration
+- Makefile automation
+- Live reload with Air
 
-### Server
+🧰 Server Layer
 
-- standard response
-- constants
-- sentinel errors
-- Clean architecture dependency Injection with interface segregation
-- Gzip response compression
+- Standard JSON response format
+- Sentinel error design
+- Request validator integration
+
+🧭 Future Enhancements
+
+- JWT authentication middleware
+- Pagination, filtering, sorting
+- Centralized error handling middleware
