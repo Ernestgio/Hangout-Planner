@@ -1,5 +1,5 @@
 pre-commit:
-  parallel: true
+  parallel: false
   commands:
     shared-go-mod-tidy:
       run: cd pkg/shared && go mod tidy
