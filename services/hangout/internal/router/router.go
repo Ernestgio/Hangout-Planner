@@ -4,12 +4,12 @@ import (
 	"net/http"
 
 	_ "github.com/Ernestgio/Hangout-Planner/services/hangout/api"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers"
 	"github.com/labstack/echo/v4"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func NewRouter(e *echo.Echo, authController controllers.AuthController) {
+func NewRouter(e *echo.Echo, authhandler handlers.AuthHandler) {
 	e.GET("/healthz", func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	})
@@ -18,7 +18,7 @@ func NewRouter(e *echo.Echo, authController controllers.AuthController) {
 
 	// Auth routes
 	authRoute := e.Group("/auth")
-	authRoute.POST("/signup", authController.SignUp)
-	authRoute.POST("/signin", authController.SignIn)
+	authRoute.POST("/signup", authhandler.SignUp)
+	authRoute.POST("/signin", authhandler.SignIn)
 
 }

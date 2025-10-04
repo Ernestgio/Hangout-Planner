@@ -12,8 +12,8 @@ import (
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
@@ -55,8 +55,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 	userService := services.NewUserService(userRepo, bcryptUtils)
 	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
 
-	// Controller Layer
-	authController := controllers.NewAuthController(authService, responseBuilder)
+	// handler Layer
+	authhandler := handlers.NewAuthHandler(authService, responseBuilder)
 
 	// Server Setup
 	e := echo.New()
@@ -64,7 +64,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
 	e.Use(middleware.Gzip())
 
-	router.NewRouter(e, authController)
+	router.NewRouter(e, authhandler)
 
 	return &App{
 		server: e,

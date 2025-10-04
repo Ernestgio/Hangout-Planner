@@ -105,7 +105,7 @@ make up
 
 - Features for hangouts, budgets, locations, activities, excel export, sharing
 - HTTPS with lets encrypt open source certs
-- Nginx API Gateway
+- Nginx API Gateway, cache, load balancer
 - Multiple microservices
 - Shared Module for microservices
 - Multi db for microservices
