@@ -6,3 +6,6 @@ pre-commit:
 
     shared-golangci-lint:
       run: cd pkg/shared && golangci-lint run ./...
+
+    shared-go-test:
+      run: cd pkg/shared && go test -v ./...
