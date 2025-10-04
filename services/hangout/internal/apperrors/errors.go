@@ -18,3 +18,4 @@ var ErrUserNotFound = errors.New("user not found")
 
 // hangout
 var ErrForbidden = errors.New("forbidden")
+var ErrNotFound = errors.New("resource not found")
