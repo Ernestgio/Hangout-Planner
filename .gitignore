@@ -6,4 +6,4 @@
 .vscode/*
 
 # tmp files
-./services/hangout/tmp/**
+services/hangout/tmp/**
