@@ -2,8 +2,8 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-  cmd = "go run ."
-  bin = ""        
+  cmd = "go build -o ./tmp/hangout.exe main.go"
+  bin = "tmp/hangout.exe"        
   full_bin = ""  
   exclude_dir = ["assets", "tmp", "vendor", "testdata"]
   exclude_regex = ["_test.go"]
@@ -25,7 +25,7 @@ tmp_dir = "tmp"
   time = false
 
 [misc]
-  clean_on_exit = false
+  clean_on_exit = true
 
 [proxy]
   app_port = 0

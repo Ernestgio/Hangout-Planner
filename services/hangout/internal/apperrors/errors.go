@@ -15,3 +15,6 @@ var ErrInvalidPayload = errors.New("invalid payload")
 var ErrUserAlreadyExists = errors.New("user with that email already exists")
 var ErrInvalidCredentials = errors.New("invalid credentials")
 var ErrUserNotFound = errors.New("user not found")
+
+// hangout
+var ErrForbidden = errors.New("forbidden")
