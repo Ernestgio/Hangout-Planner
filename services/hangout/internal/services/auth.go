@@ -27,7 +27,7 @@ func NewAuthService(userService UserService, jwtUtils utils.JWTUtils, bcrytpUtil
 }
 
 func (s *authService) SignUser(request *dto.SignUpRequest) (*domain.User, error) {
-	user, err := s.userService.CreateUser(dto.UserCreateRequest{
+	user, err := s.userService.CreateUser(dto.CreateuserRequest{
 		Name:     request.Name,
 		Email:    request.Email,
 		Password: request.Password,

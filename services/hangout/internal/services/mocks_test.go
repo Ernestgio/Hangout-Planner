@@ -27,7 +27,7 @@ type MockUserService struct {
 	mock.Mock
 }
 
-func (m *MockUserService) CreateUser(request dto.UserCreateRequest) (*domain.User, error) {
+func (m *MockUserService) CreateUser(request dto.CreateuserRequest) (*domain.User, error) {
 	args := m.Called(request)
 	if user, ok := args.Get(0).(*domain.User); ok {
 		return user, args.Error(1)

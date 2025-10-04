@@ -20,7 +20,7 @@ func TestUserService_CreateUser(t *testing.T) {
 	userService := services.NewUserService(mockUserRepo, mockBcrypt)
 
 	t.Run("success", func(t *testing.T) {
-		req := dto.UserCreateRequest{
+		req := dto.CreateuserRequest{
 			Name:     "Test User",
 			Email:    "test@example.com",
 			Password: "password123",
@@ -49,7 +49,7 @@ func TestUserService_CreateUser(t *testing.T) {
 	})
 
 	t.Run("user already exists", func(t *testing.T) {
-		req := dto.UserCreateRequest{Email: "exists@example.com"}
+		req := dto.CreateuserRequest{Email: "exists@example.com"}
 		existingUser := &domain.User{Email: req.Email}
 
 		mockUserRepo.On("GetUserByEmail", req.Email).Return(existingUser, nil).Once()
@@ -63,7 +63,7 @@ func TestUserService_CreateUser(t *testing.T) {
 	})
 
 	t.Run("bcrypt fails", func(t *testing.T) {
-		req := dto.UserCreateRequest{Email: "test@example.com", Password: "password123"}
+		req := dto.CreateuserRequest{Email: "test@example.com", Password: "password123"}
 		bcryptError := errors.New("bcrypt error")
 
 		mockUserRepo.On("GetUserByEmail", req.Email).Return(nil, gorm.ErrRecordNotFound).Once()
@@ -79,7 +79,7 @@ func TestUserService_CreateUser(t *testing.T) {
 	})
 
 	t.Run("repository create fails", func(t *testing.T) {
-		req := dto.UserCreateRequest{Email: "test@example.com", Password: "password12p3"}
+		req := dto.CreateuserRequest{Email: "test@example.com", Password: "password12p3"}
 		repoError := errors.New("repo error")
 		hashedPassword := "hashed_password"
 

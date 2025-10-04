@@ -785,7 +785,7 @@ import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 )
 
-func UserCreateRequestToModel(request dto.UserCreateRequest) domain.User <span class="cov8" title="1">{
+func CreateuserRequestToModel(request dto.CreateuserRequest) domain.User <span class="cov8" title="1">{
         return domain.User{
                 Name:  request.Name,
                 Email: request.Email,
@@ -983,7 +983,7 @@ func NewAuthService(userService UserService, jwtUtils utils.JWTUtils, bcrytpUtil
 }</span>
 
 func (s *authService) SignUser(request *dto.SignUpRequest) (*domain.User, error) <span class="cov8" title="1">{
-        user, err := s.userService.CreateUser(dto.UserCreateRequest{
+        user, err := s.userService.CreateUser(dto.CreateuserRequest{
                 Name:     request.Name,
                 Email:    request.Email,
                 Password: request.Password,
@@ -1094,7 +1094,7 @@ import (
 )
 
 type UserService interface {
-        CreateUser(request dto.UserCreateRequest) (*domain.User, error)
+        CreateUser(request dto.CreateuserRequest) (*domain.User, error)
         GetUserByEmail(email string) (*domain.User, error)
 }
 
@@ -1107,13 +1107,13 @@ func NewUserService(userRepo repository.UserRepository, bcryptUtils utils.Bcrypt
         return &amp;userService{userRepo: userRepo, bcryptUtils: bcryptUtils}
 }</span>
 
-func (s *userService) CreateUser(request dto.UserCreateRequest) (*domain.User, error) <span class="cov8" title="1">{
+func (s *userService) CreateUser(request dto.CreateuserRequest) (*domain.User, error) <span class="cov8" title="1">{
         existingUser, err := s.userRepo.GetUserByEmail(request.Email)
         if err == nil &amp;&amp; existingUser != nil </span><span class="cov8" title="1">{
                 return nil, apperrors.ErrUserAlreadyExists
         }</span>
 
-        <span class="cov8" title="1">user := mapper.UserCreateRequestToModel(request)
+        <span class="cov8" title="1">user := mapper.CreateuserRequestToModel(request)
         hashedPassword, err := s.bcryptUtils.GenerateFromPassword(request.Password)
         if err != nil </span><span class="cov8" title="1">{
                 return nil, err

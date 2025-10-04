@@ -10,7 +10,7 @@ import (
 )
 
 type UserService interface {
-	CreateUser(request dto.UserCreateRequest) (*domain.User, error)
+	CreateUser(request dto.CreateuserRequest) (*domain.User, error)
 	GetUserByEmail(email string) (*domain.User, error)
 }
 
@@ -23,13 +23,13 @@ func NewUserService(userRepo repository.UserRepository, bcryptUtils utils.Bcrypt
 	return &userService{userRepo: userRepo, bcryptUtils: bcryptUtils}
 }
 
-func (s *userService) CreateUser(request dto.UserCreateRequest) (*domain.User, error) {
+func (s *userService) CreateUser(request dto.CreateuserRequest) (*domain.User, error) {
 	existingUser, err := s.userRepo.GetUserByEmail(request.Email)
 	if err == nil && existingUser != nil {
 		return nil, apperrors.ErrUserAlreadyExists
 	}
 
-	user := mapper.UserCreateRequestToModel(request)
+	user := mapper.CreateuserRequestToModel(request)
 	hashedPassword, err := s.bcryptUtils.GenerateFromPassword(request.Password)
 	if err != nil {
 		return nil, err
