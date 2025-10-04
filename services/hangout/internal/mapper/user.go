@@ -1,4 +1,4 @@
-package mappings
+package mapper
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"

@@ -1,4 +1,4 @@
-package mappings_test
+package mapper_test
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+	mappings "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
 )
 
 func TestUserCreateRequestToModel(t *testing.T) {
