@@ -1,11 +1,11 @@
-package mappings
+package mapper
 
 import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 )
 
-func UserCreateRequestToModel(request dto.UserCreateRequest) domain.User {
+func CreateuserRequestToModel(request dto.CreateuserRequest) domain.User {
 	return domain.User{
 		Name:  request.Name,
 		Email: request.Email,

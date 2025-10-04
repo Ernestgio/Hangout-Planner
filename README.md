@@ -1,16 +1,26 @@
-# Hangout-Planner
+🌍 Hangout Planner — Scalable Go Backend Platform
 
-A scalable backend project for planning and managing hangouts, built with Go, Echo, GORM, and MySQL.  
-Designed with clean architecture, best practices, and future-proofing in mind.
+A **production-grade backend platform** for planning and managing hangouts — built in **Go** with **Echo**, **GORM**, and **MySQL**.  
+Designed with **clean architecture**, **SOLID principles**, and **future-proof modular design** for microservices scalability.
 
 ## 🚀 Tech Stack
 
-- Language: Go 1.23+
-- Framework: Echo (HTTP)
-- ORM: GORM (MySQL)
-- Relational Database: MySQL 8.0
-- Infra & Tooling: Docker, Docker Compose, Makefile, Air, Golangci-Lint, Swag, Lefthook, Code QL github actions
-- Github Actions for CI/CD
+**Core:**
+
+- 🟦 Language: Go 1.23+
+- ⚙️ Framework: Echo (HTTP)
+- 🗄️ ORM: GORM
+- 💾 Database: MySQL 8.0
+
+**Infra & Dev Tooling:**
+
+- 🐳 Docker & Docker Compose
+- 🧰 Makefile (automated scripts)
+- 🌀 Air (live reload)
+- 🧹 GolangCI-Lint (code linting)
+- 🧾 Swag (OpenAPI documentation)
+- 🪝 Lefthook (pre-commit & pre-push hooks)
+- 🧪 CodeQL & GitHub Actions (CI/CD)
 
 ## 🏃‍♂️ Local Development
 
@@ -50,73 +60,59 @@ make up
 
 ---
 
-## Existing Feature
+## ⚡ Existing Features
 
-### Project
+### 🔧 Project Infrastructure
 
-- Orchestration with docker-compose
-  - Network
-  - regular health checks
-  - fault tolerance (`restart : on-failure`)
-  - Dockerfile (multi services setup)
-- Github Actions CI/CD
-- Lefthook for pre-commit and pre-push actions
-- Github actions CI/CD
+- Docker Compose orchestration
+- Health checks and container restart policies
+- GitHub Actions CI/CD
+- Lefthook for local Git workflow automation
 
-### hangout service
+### 💬 Hangout Service
 
-#### Module
+- Swagger auto-docs with echoswagger
+- Unit tests (mocking, table-driven)
+- Test coverage reports (HTML)
+- GolangCI-Lint, Air reload
+- Makefile automation
 
-- Documentation (with echoswagger)
-- Unit Tests
-  - with mocking and table driven test whenever applicable
-  - tests folder containing unit test coverage file in HTML
-- Code quality analysis, formatting, and linting with golangci-lint
-- Makefile scripts
-- Air for project auto reload
+### 💾 Database
 
-#### DB Connectivity
-
-- minified graceful shutdown
-- Auto migrate (code-based migration)
-
-#### Server
-
-- standard response
-- constants
-- sentinel errors
-- Clean architecture dependency Injection with interface segregation
-
-## Short Term Plan
-
-### DB
-
+- Auto migration
 - Graceful shutdown
-- retry connections
-- Atlas versioned migration scripts (up and down)
+- Future migration tooling ready (Atlas)
 
-### Server settings
+### 🌐 Server
 
-- cors middleware
-- jwt middleware
-- redis initializations
+- Standardized JSON response builder
+- Centralized constants & sentinel errors
+- Dependency injection (interfaces for all layers)
 
-## Long Term Plan
+## 🧭 Roadmap
 
-- Features for hangouts, budgets, locations, activities, excel export, sharing
-- HTTPS with lets encrypt open source certs
-- Nginx API Gateway
-- Multiple microservices
-- Shared Module for microservices
-- Multi db for microservices
-- Cloud Deployments
-- OAuth / multiple login method
-- Excel service export
-- Scheduled Notification service
-- AWS S3 connectivity for excel file storage (localstack for local development)
-- RabbitMQ Docker setup for connection between hangout service and report service
-- shared module in pkg/shared
-- open source static code analysis (sonarsource)
-- Memcached cluster for caching
+### 🧩 Short-Term Goals
+
+- Graceful shutdown improvements
+- Retryable DB connections
+- Atlas migration (up/down)
+- CORS & JWT middleware
+- Full Hangout CRUD
+- Budget, activity, and location modules
+- Code refactor to include context
+
+### 🌐 Long-Term Vision
+
+- Full Hangout CRUD & collaboration
+- Excel export microservice
+- Notification scheduling
+- AWS S3 integration (LocalStack support)
 - File upload feature (photos attachment for hangout memories!)
-- File service
+- - Multi db for microservices
+- shared module in pkg/shared
+- RabbitMQ service interconnect
+- Memcached cluster caching
+- OAuth / federated logins
+- File uploads for hangout memories
+- Nginx API gateway + HTTPS (Let’s Encrypt)
+- Advanced observability: metrics, tracing, logging

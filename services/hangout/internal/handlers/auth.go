@@ -1,4 +1,4 @@
-package controllers
+package handlers
 
 import (
 	"net/http"
@@ -6,24 +6,25 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"github.com/labstack/echo/v4"
 )
 
-type AuthController interface {
+type AuthHandler interface {
 	SignUp(c echo.Context) error
 	SignIn(c echo.Context) error
 }
 
-type authController struct {
+type authHandler struct {
 	authService     services.AuthService
 	responseBuilder *response.Builder
 }
 
-func NewAuthController(authService services.AuthService, responseBuilder *response.Builder) AuthController {
-	return &authController{
+func NewAuthHandler(authService services.AuthService, responseBuilder *response.Builder) AuthHandler {
+	return &authHandler{
 		authService:     authService,
 		responseBuilder: responseBuilder,
 	}
@@ -40,9 +41,9 @@ func NewAuthController(authService services.AuthService, responseBuilder *respon
 // @Failure      409   {object}  response.StandardResponse
 // @Failure      500   {object}  response.StandardResponse
 // @Router       /auth/signup [post]
-func (ac *authController) SignUp(c echo.Context) error {
-	req := new(dto.SignUpRequest)
-	if err := c.Validate(req); err != nil {
+func (ac *authHandler) SignUp(c echo.Context) error {
+	req, err := request.BindAndValidate[dto.SignUpRequest](c)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
 	user, err := ac.authService.SignUser(req)
@@ -55,7 +56,7 @@ func (ac *authController) SignUp(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mappings.UserToResponseDTO(user)))
+	return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mapper.UserToResponseDTO(user)))
 }
 
 // @Summary      Sign in
@@ -69,9 +70,9 @@ func (ac *authController) SignUp(c echo.Context) error {
 // @Failure      401          {object}  response.StandardResponse
 // @Failure      500          {object}  response.StandardResponse
 // @Router       /auth/signin [post]
-func (ac *authController) SignIn(c echo.Context) error {
-	req := new(dto.SignInRequest)
-	if err := c.Validate(req); err != nil {
+func (ac *authHandler) SignIn(c echo.Context) error {
+	req, err := request.BindAndValidate[dto.SignInRequest](c)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
 

@@ -1,0 +1,40 @@
+name: Shared Library CI
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "pkg/shared/**"
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: "Reason for manually triggering the CI"
+        required: true
+        default: "Manual test"
+
+jobs:
+  shared-library-ci:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pkg/shared
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.23"
+
+      - name: install dependencies
+        run: go mod download
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v4

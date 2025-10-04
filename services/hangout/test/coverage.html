@@ -1,105 +1,204 @@
-
 <!DOCTYPE html>
 <html>
-	<head>
-		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-		<title>app: Go Coverage Report</title>
-		<style>
-			body {
-				background: black;
-				color: rgb(80, 80, 80);
-			}
-			body, pre, #legend span {
-				font-family: Menlo, monospace;
-				font-weight: bold;
-			}
-			#topbar {
-				background: black;
-				position: fixed;
-				top: 0; left: 0; right: 0;
-				height: 42px;
-				border-bottom: 1px solid rgb(80, 80, 80);
-			}
-			#content {
-				margin-top: 50px;
-			}
-			#nav, #legend {
-				float: left;
-				margin-left: 10px;
-			}
-			#legend {
-				margin-top: 12px;
-			}
-			#nav {
-				margin-top: 10px;
-			}
-			#legend span {
-				margin: 0 5px;
-			}
-			.cov0 { color: rgb(192, 0, 0) }
-.cov1 { color: rgb(128, 128, 128) }
-.cov2 { color: rgb(116, 140, 131) }
-.cov3 { color: rgb(104, 152, 134) }
-.cov4 { color: rgb(92, 164, 137) }
-.cov5 { color: rgb(80, 176, 140) }
-.cov6 { color: rgb(68, 188, 143) }
-.cov7 { color: rgb(56, 200, 146) }
-.cov8 { color: rgb(44, 212, 149) }
-.cov9 { color: rgb(32, 224, 152) }
-.cov10 { color: rgb(20, 236, 155) }
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>app: Go Coverage Report</title>
+    <style>
+      body {
+        background: black;
+        color: rgb(80, 80, 80);
+      }
+      body,
+      pre,
+      #legend span {
+        font-family: Menlo, monospace;
+        font-weight: bold;
+      }
+      #topbar {
+        background: black;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 42px;
+        border-bottom: 1px solid rgb(80, 80, 80);
+      }
+      #content {
+        margin-top: 50px;
+      }
+      #nav,
+      #legend {
+        float: left;
+        margin-left: 10px;
+      }
+      #legend {
+        margin-top: 12px;
+      }
+      #nav {
+        margin-top: 10px;
+      }
+      #legend span {
+        margin: 0 5px;
+      }
+      .cov0 {
+        color: rgb(192, 0, 0);
+      }
+      .cov1 {
+        color: rgb(128, 128, 128);
+      }
+      .cov2 {
+        color: rgb(116, 140, 131);
+      }
+      .cov3 {
+        color: rgb(104, 152, 134);
+      }
+      .cov4 {
+        color: rgb(92, 164, 137);
+      }
+      .cov5 {
+        color: rgb(80, 176, 140);
+      }
+      .cov6 {
+        color: rgb(68, 188, 143);
+      }
+      .cov7 {
+        color: rgb(56, 200, 146);
+      }
+      .cov8 {
+        color: rgb(44, 212, 149);
+      }
+      .cov9 {
+        color: rgb(32, 224, 152);
+      }
+      .cov10 {
+        color: rgb(20, 236, 155);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="topbar">
+      <div id="nav">
+        <select id="files">
+          <option value="file0">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/app/app.go
+            (0.0%)
+          </option>
 
-		</style>
-	</head>
-	<body>
-		<div id="topbar">
-			<div id="nav">
-				<select id="files">
-				
-				<option value="file0">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/app/app.go (0.0%)</option>
-				
-				<option value="file1">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/config.go (46.7%)</option>
-				
-				<option value="file2">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/db.go (100.0%)</option>
-				
-				<option value="file3">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/jwt.go (100.0%)</option>
-				
-				<option value="file4">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers/auth.go (0.0%)</option>
-				
-				<option value="file5">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/database.go (0.0%)</option>
-				
-				<option value="file6">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/dsn.go (0.0%)</option>
-				
-				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response/response.go (100.0%)</option>
-				
-				<option value="file8">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go (100.0%)</option>
-				
-				<option value="file9">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go (100.0%)</option>
-				
-				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.go (100.0%)</option>
-				
-				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router/router.go (0.0%)</option>
-				
-				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth.go (100.0%)</option>
-				
-				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user.go (100.0%)</option>
-				
-				<option value="file14">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt_utils.go (100.0%)</option>
-				
-				<option value="file15">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt.go (87.5%)</option>
-				
-				</select>
-			</div>
-			<div id="legend">
-				<span>not tracked</span>
-			
-				<span class="cov0">not covered</span>
-				<span class="cov8">covered</span>
-			
-			</div>
-		</div>
-		<div id="content">
-		
-		<pre class="file" id="file0" style="display: none">package app
+          <option value="file1">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/config.go
+            (46.7%)
+          </option>
+
+          <option value="file2">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/db.go
+            (100.0%)
+          </option>
+
+          <option value="file3">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config/jwt.go
+            (100.0%)
+          </option>
+
+          <option value="file4">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers/auth.go
+            (0.0%)
+          </option>
+
+          <option value="file5">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/database.go
+            (0.0%)
+          </option>
+
+          <option value="file6">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/dsn.go
+            (0.0%)
+          </option>
+
+          <option value="file7">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/hangout.go
+            (100.0%)
+          </option>
+
+          <option value="file8">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/user.go
+            (100.0%)
+          </option>
+
+          <option value="file9">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto/pagination.go
+            (100.0%)
+          </option>
+
+          <option value="file10">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request/request.go
+            (100.0%)
+          </option>
+
+          <option value="file11">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response/response.go
+            (100.0%)
+          </option>
+
+          <option value="file12">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go
+            (100.0%)
+          </option>
+
+          <option value="file13">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper/user_mapping.go
+            (100.0%)
+          </option>
+
+          <option value="file14">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/hangout.go
+            (100.0%)
+          </option>
+
+          <option value="file15">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.go
+            (100.0%)
+          </option>
+
+          <option value="file16">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router/router.go
+            (0.0%)
+          </option>
+
+          <option value="file17">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth.go
+            (100.0%)
+          </option>
+
+          <option value="file18">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/hangout.go
+            (0.0%)
+          </option>
+
+          <option value="file19">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user.go
+            (100.0%)
+          </option>
+
+          <option value="file20">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt_utils.go
+            (100.0%)
+          </option>
+
+          <option value="file21">
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt.go
+            (87.5%)
+          </option>
+        </select>
+      </div>
+      <div id="legend">
+        <span>not tracked</span>
+
+        <span class="cov0">not covered</span>
+        <span class="cov8">covered</span>
+      </div>
+    </div>
+    <div id="content">
+      <pre class="file" id="file0" style="display: none">package app
 
 import (
         "context"
@@ -113,7 +212,7 @@ import (
 
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
-        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator"
@@ -156,8 +255,8 @@ func NewApp(cfg *config.Config) (*App, error) <span class="cov0" title="0">{
         userService := services.NewUserService(userRepo, bcryptUtils)
         authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
 
-        // Controller Layer
-        authController := controllers.NewAuthController(authService, responseBuilder)
+        // handler Layer
+        authhandler := handlers.NewAuthhandler(authService, responseBuilder)
 
         // Server Setup
         e := echo.New()
@@ -165,7 +264,7 @@ func NewApp(cfg *config.Config) (*App, error) <span class="cov0" title="0">{
         e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
         e.Use(middleware.Gzip())
 
-        router.NewRouter(e, authController)
+        router.NewRouter(e, authhandler)
 
         return &amp;App{
                 server: e,
@@ -212,8 +311,8 @@ func (a *App) Shutdown() error <span class="cov0" title="0">{
         <span class="cov0" title="0">return nil</span>
 }
 </pre>
-		
-		<pre class="file" id="file1" style="display: none">package config
+
+      <pre class="file" id="file1" style="display: none">package config
 
 import (
         "os"
@@ -273,8 +372,8 @@ func getEnvInt(key string, def int) int <span class="cov8" title="1">{
         <span class="cov8" title="1">return def</span>
 }
 </pre>
-		
-		<pre class="file" id="file2" style="display: none">package config
+
+      <pre class="file" id="file2" style="display: none">package config
 
 import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 
@@ -296,8 +395,8 @@ func NewDBConfig() *DBConfig <span class="cov8" title="1">{
         }
 }</span>
 </pre>
-		
-		<pre class="file" id="file3" style="display: none">package config
+
+      <pre class="file" id="file3" style="display: none">package config
 
 import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 
@@ -313,8 +412,8 @@ func NewJwtConfig() *JwtConfig <span class="cov8" title="1">{
         }
 }</span>
 </pre>
-		
-		<pre class="file" id="file4" style="display: none">package controllers
+
+      <pre class="file" id="file4" style="display: none">package handlers
 
 import (
         "net/http"
@@ -322,24 +421,25 @@ import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
-        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
         "github.com/labstack/echo/v4"
 )
 
-type AuthController interface {
+type Authhandler interface {
         SignUp(c echo.Context) error
         SignIn(c echo.Context) error
 }
 
-type authController struct {
+type authhandler struct {
         authService     services.AuthService
         responseBuilder *response.Builder
 }
 
-func NewAuthController(authService services.AuthService, responseBuilder *response.Builder) AuthController <span class="cov0" title="0">{
-        return &amp;authController{
+func NewAuthhandler(authService services.AuthService, responseBuilder *response.Builder) Authhandler <span class="cov0" title="0">{
+        return &amp;authhandler{
                 authService:     authService,
                 responseBuilder: responseBuilder,
         }
@@ -356,9 +456,9 @@ func NewAuthController(authService services.AuthService, responseBuilder *respon
 // @Failure      409   {object}  response.StandardResponse
 // @Failure      500   {object}  response.StandardResponse
 // @Router       /auth/signup [post]
-func (ac *authController) SignUp(c echo.Context) error <span class="cov0" title="0">{
-        req := new(dto.SignUpRequest)
-        if err := c.Validate(req); err != nil </span><span class="cov0" title="0">{
+func (ac *authhandler) SignUp(c echo.Context) error <span class="cov0" title="0">{
+        req, err := request.BindAndValidate[dto.SignUpRequest](c)
+        if err != nil </span><span class="cov0" title="0">{
                 return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
         }</span>
         <span class="cov0" title="0">user, err := ac.authService.SignUser(req)
@@ -371,7 +471,7 @@ func (ac *authController) SignUp(c echo.Context) error <span class="cov0" title=
                 }
         }
 
-        <span class="cov0" title="0">return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mappings.UserToResponseDTO(user)))</span>
+        <span class="cov0" title="0">return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mapper.UserToResponseDTO(user)))</span>
 }
 
 // @Summary      Sign in
@@ -385,9 +485,9 @@ func (ac *authController) SignUp(c echo.Context) error <span class="cov0" title=
 // @Failure      401          {object}  response.StandardResponse
 // @Failure      500          {object}  response.StandardResponse
 // @Router       /auth/signin [post]
-func (ac *authController) SignIn(c echo.Context) error <span class="cov0" title="0">{
-        req := new(dto.SignInRequest)
-        if err := c.Validate(req); err != nil </span><span class="cov0" title="0">{
+func (ac *authhandler) SignIn(c echo.Context) error <span class="cov0" title="0">{
+        req, err := request.BindAndValidate[dto.SignInRequest](c)
+        if err != nil </span><span class="cov0" title="0">{
                 return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
         }</span>
 
@@ -403,8 +503,8 @@ func (ac *authController) SignIn(c echo.Context) error <span class="cov0" title=
         <span class="cov0" title="0">return c.JSON(http.StatusOK, ac.responseBuilder.Success(constants.UserSignedInSuccessfully, token))</span>
 }
 </pre>
-		
-		<pre class="file" id="file5" style="display: none">package db
+
+      <pre class="file" id="file5" style="display: none">package db
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
@@ -438,11 +538,20 @@ func Connect(cfg *config.DBConfig) (*gorm.DB, func() error, error) <span class="
 }
 
 func Migrate(db *gorm.DB) error <span class="cov0" title="0">{
-        return db.AutoMigrate(&amp;domain.User{})
-}</span>
+        err := db.AutoMigrate(&amp;domain.User{})
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">err = db.AutoMigrate(&amp;domain.Hangout{})
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
 </pre>
-		
-		<pre class="file" id="file6" style="display: none">package db
+
+      <pre class="file" id="file6" style="display: none">package db
 
 import (
         "fmt"
@@ -469,8 +578,139 @@ func buildDSN(cfg *config.DBConfig) string <span class="cov0" title="0">{
         return mdcfg.FormatDSN()
 }</span>
 </pre>
-		
-		<pre class="file" id="file7" style="display: none">package response
+
+      <pre class="file" id="file7" style="display: none">package domain
+
+import (
+        "time"
+
+        "github.com/google/uuid"
+        "gorm.io/gorm"
+)
+
+type Hangout struct {
+        ID          uuid.UUID  `gorm:"primaryKey;type:char(36)"`
+        Title       string     `gorm:"type:varchar(255);not null" json:"title"`
+        Description *string    `gorm:"type:text" json:"description"`
+        Date        *time.Time `gorm:"not null" json:"date"`
+        Status      *string    `gorm:"type:varchar(50);not null" json:"status"`
+        CreatedAt   time.Time
+        UpdatedAt   time.Time
+        DeletedAt   gorm.DeletedAt `gorm:"index"`
+
+        UserID *uuid.UUID `gorm:"type:char(36)"`
+        User   User       `gorm:"foreignKey:UserID"`
+}
+
+func (hangout *Hangout) BeforeCreate(tx *gorm.DB) (err error) <span class="cov8" title="1">{
+        hangout.ID = uuid.New()
+        return
+}</span>
+</pre>
+
+      <pre class="file" id="file8" style="display: none">package domain
+
+import (
+        "time"
+
+        "github.com/google/uuid"
+        "gorm.io/gorm"
+)
+
+type User struct {
+        ID        uuid.UUID `gorm:"primaryKey;type:char(36)"`
+        Name      string    `gorm:"type:varchar(255);not null"`
+        Email     string    `gorm:"type:varchar(255);uniqueIndex;not null"`
+        Password  string    `gorm:"type:varchar(255);not null"`
+        CreatedAt time.Time
+        UpdatedAt time.Time
+        DeletedAt gorm.DeletedAt `gorm:"index"`
+
+        Hangouts []Hangout
+}
+
+func (user *User) BeforeCreate(tx *gorm.DB) (err error) <span class="cov8" title="1">{
+        user.ID = uuid.New()
+        return
+}</span>
+</pre>
+
+      <pre class="file" id="file9" style="display: none">package dto
+
+import (
+        "fmt"
+        "strings"
+
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+        "github.com/google/uuid"
+)
+
+type CursorPagination struct {
+        Limit   int        `query:"limit"`
+        AfterID *uuid.UUID `query:"after_id"`
+        SortBy  string     `query:"sort_by"`
+        SortDir string     `query:"sort_dir"`
+}
+
+func (p *CursorPagination) GetLimit() int <span class="cov8" title="1">{
+        if p.Limit &lt;= 0 </span><span class="cov8" title="1">{
+                return constants.DefaultLimit
+        }</span>
+        <span class="cov8" title="1">if p.Limit &gt; constants.MaxLimit </span><span class="cov8" title="1">{
+                return constants.MaxLimit
+        }</span>
+        <span class="cov8" title="1">return p.Limit</span>
+}
+
+func (p *CursorPagination) GetSortBy() string <span class="cov8" title="1">{
+        switch p.SortBy </span>{
+        case constants.SortByDate, constants.SortByCreatedAt:<span class="cov8" title="1">
+                return p.SortBy</span>
+        default:<span class="cov8" title="1">
+                return constants.SortByCreatedAt</span>
+        }
+}
+
+func (p *CursorPagination) GetSortDir() string <span class="cov8" title="1">{
+        switch strings.ToLower(p.SortDir) </span>{
+        case constants.SortDirectionAsc:<span class="cov8" title="1">
+                return constants.SortDirectionAsc</span>
+        case constants.SortDirectionDesc:<span class="cov8" title="1">
+                return constants.SortDirectionDesc</span>
+        default:<span class="cov8" title="1">
+                return constants.SortDirectionDesc</span>
+        }
+}
+
+func (p *CursorPagination) GetOrderByClause() string <span class="cov8" title="1">{
+        return fmt.Sprintf("%s %s, id %s", p.GetSortBy(), p.GetSortDir(), p.GetSortDir())
+}</span>
+</pre>
+
+      <pre class="file" id="file10" style="display: none">package request
+
+import (
+        "net/http"
+
+        "github.com/labstack/echo/v4"
+)
+
+func BindAndValidate[T any](c echo.Context) (*T, error) <span class="cov8" title="1">{
+        var req T
+
+        if err := c.Bind(&amp;req); err != nil </span><span class="cov8" title="1">{
+                return nil, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+        }</span>
+
+        <span class="cov8" title="1">if err := c.Validate(&amp;req); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;req, nil</span>
+}
+</pre>
+
+      <pre class="file" id="file11" style="display: none">package response
 
 import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 
@@ -512,8 +752,8 @@ func (b *Builder) Error(err error) *StandardResponse <span class="cov8" title="1
         }</span>
 }
 </pre>
-		
-		<pre class="file" id="file8" style="display: none">package validator
+
+      <pre class="file" id="file12" style="display: none">package validator
 
 import (
         "net/http"
@@ -537,15 +777,15 @@ func (cv *CustomValidator) Validate(i interface{}) error <span class="cov8" titl
         <span class="cov8" title="1">return nil</span>
 }
 </pre>
-		
-		<pre class="file" id="file9" style="display: none">package mappings
+
+      <pre class="file" id="file13" style="display: none">package mapper
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 )
 
-func UserCreateRequestToModel(request dto.UserCreateRequest) domain.User <span class="cov8" title="1">{
+func CreateuserRequestToModel(request dto.CreateuserRequest) domain.User <span class="cov8" title="1">{
         return domain.User{
                 Name:  request.Name,
                 Email: request.Email,
@@ -560,8 +800,101 @@ func UserToResponseDTO(user *domain.User) *dto.UserResponse <span class="cov8" t
         }
 }</span>
 </pre>
-		
-		<pre class="file" id="file10" style="display: none">package repository
+
+      <pre class="file" id="file14" style="display: none">package repository
+
+import (
+        "fmt"
+
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+        domain "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/google/uuid"
+        "gorm.io/gorm"
+)
+
+type HangoutRepository interface {
+        WithTx(tx *gorm.DB) HangoutRepository
+        CreateHangout(hangout *domain.Hangout) (*domain.Hangout, error)
+        GetHangoutByID(id uuid.UUID) (*domain.Hangout, error)
+        UpdateHangout(hangout *domain.Hangout) (*domain.Hangout, error)
+        DeleteHangout(id uuid.UUID) error
+        GetHangoutsByUserID(userID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Hangout, error)
+}
+
+type hangoutRepository struct {
+        db *gorm.DB
+}
+
+func NewHangoutRepository(db *gorm.DB) HangoutRepository <span class="cov8" title="1">{
+        return &amp;hangoutRepository{db: db}
+}</span>
+
+func (r *hangoutRepository) WithTx(tx *gorm.DB) HangoutRepository <span class="cov8" title="1">{
+        return &amp;hangoutRepository{db: tx}
+}</span>
+
+func (r *hangoutRepository) CreateHangout(hangout *domain.Hangout) (*domain.Hangout, error) <span class="cov8" title="1">{
+        if err := r.db.Create(hangout).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return hangout, nil</span>
+}
+func (r *hangoutRepository) GetHangoutByID(id uuid.UUID) (*domain.Hangout, error) <span class="cov8" title="1">{
+        var hangout domain.Hangout
+        if err := r.db.Preload("User").First(&amp;hangout, "id = ?", id).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return &amp;hangout, nil</span>
+}
+
+func (r *hangoutRepository) UpdateHangout(hangout *domain.Hangout) (*domain.Hangout, error) <span class="cov8" title="1">{
+        if err := r.db.Save(hangout).Error; err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">return hangout, nil</span>
+}
+func (r *hangoutRepository) DeleteHangout(id uuid.UUID) error <span class="cov8" title="1">{
+        if err := r.db.Delete(&amp;domain.Hangout{}, "id = ?", id).Error; err != nil </span><span class="cov8" title="1">{
+                return err
+        }</span>
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (r *hangoutRepository) GetHangoutsByUserID(userID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Hangout, error) <span class="cov8" title="1">{
+        var hangouts []domain.Hangout
+
+        query := r.db.Model(&amp;domain.Hangout{}).Where("user_id = ?", userID)
+
+        if pagination.AfterID != nil </span><span class="cov8" title="1">{
+                sortByColumn := pagination.GetSortBy()
+                subQuery := r.db.Model(&amp;domain.Hangout{}).Select(sortByColumn).Where("id = ?", *pagination.AfterID)
+
+                comparisonOperator := "&gt;="
+                if pagination.GetSortDir() == constants.SortDirectionDesc </span><span class="cov8" title="1">{
+                        comparisonOperator = "&lt;="
+                }</span>
+
+                <span class="cov8" title="1">query = query.Where(fmt.Sprintf("%s %s (?)", sortByColumn, comparisonOperator), subQuery)
+
+                idSubQuery := r.db.Model(&amp;domain.Hangout{}).Select("id").Where(sortByColumn+" = (?)", subQuery)
+                query = query.Where("id NOT IN (?)", idSubQuery)</span>
+        }
+
+        <span class="cov8" title="1">err := query.
+                Order(pagination.GetOrderByClause()).
+                Limit(pagination.GetLimit()).
+                Find(&amp;hangouts).Error
+
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return hangouts, nil</span>
+}
+</pre>
+
+      <pre class="file" id="file15" style="display: none">package repository
 
 import (
         domain "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
@@ -594,19 +927,19 @@ func (r *userRepository) GetUserByEmail(email string) (*domain.User, error) <spa
         <span class="cov8" title="1">return &amp;user, nil</span>
 }
 </pre>
-		
-		<pre class="file" id="file11" style="display: none">package router
+
+      <pre class="file" id="file16" style="display: none">package router
 
 import (
         "net/http"
 
         _ "github.com/Ernestgio/Hangout-Planner/services/hangout/api"
-        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/controllers"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers"
         "github.com/labstack/echo/v4"
         echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func NewRouter(e *echo.Echo, authController controllers.AuthController) <span class="cov0" title="0">{
+func NewRouter(e *echo.Echo, authhandler handlers.Authhandler) <span class="cov0" title="0">{
         e.GET("/healthz", func(c echo.Context) error </span><span class="cov0" title="0">{
                 return c.String(http.StatusOK, "OK")
         }</span>)
@@ -615,13 +948,13 @@ func NewRouter(e *echo.Echo, authController controllers.AuthController) <span cl
 
         // Auth routes
         authRoute := e.Group("/auth")
-        authRoute.POST("/signup", authController.SignUp)
-        authRoute.POST("/signin", authController.SignIn)</span>
+        authRoute.POST("/signup", authhandler.SignUp)
+        authRoute.POST("/signin", authhandler.SignIn)</span>
 
 }
 </pre>
-		
-		<pre class="file" id="file12" style="display: none">package services
+
+      <pre class="file" id="file17" style="display: none">package services
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -650,7 +983,7 @@ func NewAuthService(userService UserService, jwtUtils utils.JWTUtils, bcrytpUtil
 }</span>
 
 func (s *authService) SignUser(request *dto.SignUpRequest) (*domain.User, error) <span class="cov8" title="1">{
-        user, err := s.userService.CreateUser(dto.UserCreateRequest{
+        user, err := s.userService.CreateUser(dto.CreateuserRequest{
                 Name:     request.Name,
                 Email:    request.Email,
                 Password: request.Password,
@@ -686,21 +1019,82 @@ func (s *authService) SignInUser(request *dto.SignInRequest) (*dto.SignInRespons
         }, nil</span>
 }
 </pre>
-		
-		<pre class="file" id="file13" style="display: none">package services
+
+      <pre class="file" id="file18" style="display: none">package services
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
-        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
+        "github.com/google/uuid"
+        "gorm.io/gorm"
+)
+
+type HangoutService interface {
+        UpdateHangout(id, userID uuid.UUID, req *dto.UpdateHangoutRequest) (*domain.Hangout, error)
+}
+
+type hangoutService struct {
+        db          *gorm.DB
+        hangoutRepo repository.HangoutRepository
+}
+
+func NewHangoutService(db *gorm.DB, hangoutRepo repository.HangoutRepository) HangoutService <span class="cov0" title="0">{
+        return &amp;hangoutService{
+                db:          db,
+                hangoutRepo: hangoutRepo,
+        }
+}</span>
+
+func (s *hangoutService) UpdateHangout(id, userID uuid.UUID, req *dto.UpdateHangoutRequest) (*domain.Hangout, error) <span class="cov0" title="0">{
+        var updatedHangout *domain.Hangout
+
+        err := s.db.Transaction(func(tx *gorm.DB) error </span><span class="cov0" title="0">{
+                txRepo := s.hangoutRepo.WithTx(tx)
+
+                existingHangout, err := txRepo.GetHangoutByID(id)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov0" title="0">if *existingHangout.UserID != userID </span><span class="cov0" title="0">{
+                        return apperrors.ErrForbidden
+                }</span>
+
+                <span class="cov0" title="0">if req.Title != "" </span><span class="cov0" title="0">{
+                        existingHangout.Title = req.Title
+                }</span>
+
+                <span class="cov0" title="0">updatedHangout, err = txRepo.UpdateHangout(existingHangout)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov0" title="0">return nil</span>
+        })
+
+        <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return updatedHangout, nil</span>
+}
+</pre>
+
+      <pre class="file" id="file19" style="display: none">package services
+
+import (
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
-        "github.com/google/uuid"
 )
 
 type UserService interface {
-        CreateUser(request dto.UserCreateRequest) (*domain.User, error)
+        CreateUser(request dto.CreateuserRequest) (*domain.User, error)
         GetUserByEmail(email string) (*domain.User, error)
 }
 
@@ -713,14 +1107,13 @@ func NewUserService(userRepo repository.UserRepository, bcryptUtils utils.Bcrypt
         return &amp;userService{userRepo: userRepo, bcryptUtils: bcryptUtils}
 }</span>
 
-func (s *userService) CreateUser(request dto.UserCreateRequest) (*domain.User, error) <span class="cov8" title="1">{
+func (s *userService) CreateUser(request dto.CreateuserRequest) (*domain.User, error) <span class="cov8" title="1">{
         existingUser, err := s.userRepo.GetUserByEmail(request.Email)
         if err == nil &amp;&amp; existingUser != nil </span><span class="cov8" title="1">{
                 return nil, apperrors.ErrUserAlreadyExists
         }</span>
 
-        <span class="cov8" title="1">user := mappings.UserCreateRequestToModel(request)
-        user.ID = uuid.New()
+        <span class="cov8" title="1">user := mapper.CreateuserRequestToModel(request)
         hashedPassword, err := s.bcryptUtils.GenerateFromPassword(request.Password)
         if err != nil </span><span class="cov8" title="1">{
                 return nil, err
@@ -738,8 +1131,8 @@ func (s *userService) GetUserByEmail(email string) (*domain.User, error) <span c
         return s.userRepo.GetUserByEmail(email)
 }</span>
 </pre>
-		
-		<pre class="file" id="file14" style="display: none">package utils
+
+      <pre class="file" id="file20" style="display: none">package utils
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -780,8 +1173,8 @@ func (b *bcryptUtils) GenerateFromPassword(password string) (string, error) <spa
         <span class="cov8" title="1">return string(hashedPassword), nil</span>
 }
 </pre>
-		
-		<pre class="file" id="file15" style="display: none">package utils
+
+      <pre class="file" id="file21" style="display: none">package utils
 
 import (
         "time"
@@ -797,16 +1190,16 @@ type JWTUtils interface {
 }
 
 type jwtUtils struct {
-        jwtSecret          string
-        jWTExpirationHours int
+        Secret          string
+        ExpirationHours int
 }
 
 func NewJWTUtils(jWtConfig *config.JwtConfig) JWTUtils <span class="cov8" title="1">{
-        return &amp;jwtUtils{jwtSecret: jWtConfig.JWTSecret, jWTExpirationHours: jWtConfig.JWTExpirationHours}
+        return &amp;jwtUtils{Secret: jWtConfig.JWTSecret, ExpirationHours: jWtConfig.JWTExpirationHours}
 }</span>
 
 func (j *jwtUtils) Generate(user *domain.User) (string, error) <span class="cov8" title="1">{
-        expirationTime := time.Now().Add(time.Duration(j.jWTExpirationHours) * time.Hour)
+        expirationTime := time.Now().Add(time.Duration(j.ExpirationHours) * time.Hour)
         claims := &amp;auth.TokenCustomClaims{
                 UserID: user.ID,
                 RegisteredClaims: jwt.RegisteredClaims{
@@ -818,7 +1211,7 @@ func (j *jwtUtils) Generate(user *domain.User) (string, error) <span class="cov8
 
         token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-        tokenString, err := token.SignedString([]byte(j.jwtSecret))
+        tokenString, err := token.SignedString([]byte(j.Secret))
         if err != nil </span><span class="cov0" title="0">{
                 return "", err
         }</span>
@@ -826,34 +1219,31 @@ func (j *jwtUtils) Generate(user *domain.User) (string, error) <span class="cov8
         <span class="cov8" title="1">return tokenString, nil</span>
 }
 </pre>
-		
-		</div>
-	</body>
-	<script>
-	(function() {
-		var files = document.getElementById('files');
-		var visible;
-		files.addEventListener('change', onChange, false);
-		function select(part) {
-			if (visible)
-				visible.style.display = 'none';
-			visible = document.getElementById(part);
-			if (!visible)
-				return;
-			files.value = part;
-			visible.style.display = 'block';
-			location.hash = part;
-		}
-		function onChange() {
-			select(files.value);
-			window.scrollTo(0, 0);
-		}
-		if (location.hash != "") {
-			select(location.hash.substr(1));
-		}
-		if (!visible) {
-			select("file0");
-		}
-	})();
-	</script>
+    </div>
+  </body>
+  <script>
+    (function () {
+      var files = document.getElementById("files");
+      var visible;
+      files.addEventListener("change", onChange, false);
+      function select(part) {
+        if (visible) visible.style.display = "none";
+        visible = document.getElementById(part);
+        if (!visible) return;
+        files.value = part;
+        visible.style.display = "block";
+        location.hash = part;
+      }
+      function onChange() {
+        select(files.value);
+        window.scrollTo(0, 0);
+      }
+      if (location.hash != "") {
+        select(location.hash.substr(1));
+      }
+      if (!visible) {
+        select("file0");
+      }
+    })();
+  </script>
 </html>

@@ -13,49 +13,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type MockUserService struct {
-	mock.Mock
-}
-
-func (m *MockUserService) CreateUser(request dto.UserCreateRequest) (*domain.User, error) {
-	args := m.Called(request)
-	if user, ok := args.Get(0).(*domain.User); ok {
-		return user, args.Error(1)
-	}
-	return nil, args.Error(1)
-}
-
-func (m *MockUserService) GetUserByEmail(email string) (*domain.User, error) {
-	args := m.Called(email)
-	if u, ok := args.Get(0).(*domain.User); ok {
-		return u, args.Error(1)
-	}
-	return nil, args.Error(1)
-}
-
-type MockJWTUtils struct {
-	mock.Mock
-}
-
-func (m *MockJWTUtils) Generate(user *domain.User) (string, error) {
-	args := m.Called(user)
-	return args.String(0), args.Error(1)
-}
-
-type MockBcryptUtils struct {
-	mock.Mock
-}
-
-func (m *MockBcryptUtils) CompareHashAndPassword(hashedPassword, password string) error {
-	args := m.Called(hashedPassword, password)
-	return args.Error(0)
-}
-
-func (m *MockBcryptUtils) GenerateFromPassword(password string) (string, error) {
-	args := m.Called(password)
-	return args.String(0), args.Error(1)
-}
-
 func TestAuthService_SignUser(t *testing.T) {
 	mockJwtSvc := new(MockJWTUtils)
 	mockBcrypt := new(MockBcryptUtils)
@@ -210,7 +167,7 @@ func TestAuthService_SignInUser(t *testing.T) {
 			if tt.wantErr != nil {
 				require.Error(t, err)
 				if errors.Is(tt.wantErr, apperrors.ErrInvalidCredentials) {
-					require.True(t, errors.Is(err, tt.wantErr))
+					require.ErrorIs(t, err, tt.wantErr)
 				} else {
 					require.EqualError(t, err, tt.wantErr.Error())
 				}

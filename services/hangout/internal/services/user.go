@@ -4,14 +4,13 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
-	"github.com/google/uuid"
 )
 
 type UserService interface {
-	CreateUser(request dto.UserCreateRequest) (*domain.User, error)
+	CreateUser(request dto.CreateuserRequest) (*domain.User, error)
 	GetUserByEmail(email string) (*domain.User, error)
 }
 
@@ -24,14 +23,13 @@ func NewUserService(userRepo repository.UserRepository, bcryptUtils utils.Bcrypt
 	return &userService{userRepo: userRepo, bcryptUtils: bcryptUtils}
 }
 
-func (s *userService) CreateUser(request dto.UserCreateRequest) (*domain.User, error) {
+func (s *userService) CreateUser(request dto.CreateuserRequest) (*domain.User, error) {
 	existingUser, err := s.userRepo.GetUserByEmail(request.Email)
 	if err == nil && existingUser != nil {
 		return nil, apperrors.ErrUserAlreadyExists
 	}
 
-	user := mappings.UserCreateRequestToModel(request)
-	user.ID = uuid.New()
+	user := mapper.CreateuserRequestToModel(request)
 	hashedPassword, err := s.bcryptUtils.GenerateFromPassword(request.Password)
 	if err != nil {
 		return nil, err
