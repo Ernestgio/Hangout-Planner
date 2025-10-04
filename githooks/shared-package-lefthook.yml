@@ -1,0 +1,8 @@
+pre-commit:
+  parallel: true
+  commands:
+    shared-go-mod-tidy:
+      run: cd pkg/shared && go mod tidy
+
+    shared-golangci-lint:
+      run: cd pkg/shared && golangci-lint run ./...

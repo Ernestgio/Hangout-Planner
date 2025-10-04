@@ -21,6 +21,7 @@ type hangoutRepository struct {
 func NewHangoutRepository(db *gorm.DB) HangoutRepository {
 	return &hangoutRepository{db: db}
 }
+
 func (r *hangoutRepository) CreateHangout(hangout *domain.Hangout) (*domain.Hangout, error) {
 	if err := r.db.Create(hangout).Error; err != nil {
 		return nil, err
