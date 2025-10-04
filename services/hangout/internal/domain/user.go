@@ -15,6 +15,8 @@ type User struct {
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`
+
+	Hangouts []Hangout
 }
 
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) {
