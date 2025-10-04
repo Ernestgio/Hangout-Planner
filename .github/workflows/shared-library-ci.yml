@@ -1,4 +1,6 @@
 name: Shared Library CI
+permissions:
+  contents: read
 
 on:
   push:
