@@ -8,7 +8,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"github.com/labstack/echo/v4"
 )
@@ -56,7 +56,7 @@ func (ac *authHandler) SignUp(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mappings.UserToResponseDTO(user)))
+	return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mapper.UserToResponseDTO(user)))
 }
 
 // @Summary      Sign in

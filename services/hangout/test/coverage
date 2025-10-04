@@ -120,8 +120,8 @@ github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.g
 github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.go:31.2,31.19 1 1
 github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/hangout.go:24.63,27.2 2 0
 github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/user.go:22.57,25.2 2 0
-github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go:8.74,13.2 1 1
-github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go:15.61,21.2 1 1
+github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper/user_mapping.go:8.74,13.2 1 1
+github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper/user_mapping.go:15.61,21.2 1 1
 github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go:14.36,16.2 1 1
 github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go:18.58,19.47 1 1
 github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go:19.47,21.3 1 1

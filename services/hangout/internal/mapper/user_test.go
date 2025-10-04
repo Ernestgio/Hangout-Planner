@@ -8,7 +8,7 @@ import (
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
-	mappings "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
+	mapper "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
 )
 
 func TestUserCreateRequestToModel(t *testing.T) {
@@ -17,7 +17,7 @@ func TestUserCreateRequestToModel(t *testing.T) {
 		Email: "alice@example.com",
 	}
 
-	user := mappings.UserCreateRequestToModel(req)
+	user := mapper.UserCreateRequestToModel(req)
 
 	assert.Equal(t, req.Name, user.Name)
 	assert.Equal(t, req.Email, user.Email)
@@ -30,7 +30,7 @@ func TestUserToResponseDTO(t *testing.T) {
 		Email: "bob@example.com",
 	}
 
-	resp := mappings.UserToResponseDTO(user)
+	resp := mapper.UserToResponseDTO(user)
 
 	assert.Equal(t, user.ID, resp.ID)
 	assert.Equal(t, user.Name, resp.Name)

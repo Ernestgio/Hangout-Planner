@@ -4,7 +4,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
 )
@@ -29,7 +29,7 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*domain.User, e
 		return nil, apperrors.ErrUserAlreadyExists
 	}
 
-	user := mappings.UserCreateRequestToModel(request)
+	user := mapper.UserCreateRequestToModel(request)
 	hashedPassword, err := s.bcryptUtils.GenerateFromPassword(request.Password)
 	if err != nil {
 		return nil, err

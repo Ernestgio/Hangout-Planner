@@ -145,7 +145,7 @@
           </option>
 
           <option value="file13">
-            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go
+            github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper/user_mapping.go
             (100.0%)
           </option>
 
@@ -423,7 +423,7 @@ import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
-        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
         "github.com/labstack/echo/v4"
 )
@@ -471,7 +471,7 @@ func (ac *authhandler) SignUp(c echo.Context) error <span class="cov0" title="0"
                 }
         }
 
-        <span class="cov0" title="0">return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mappings.UserToResponseDTO(user)))</span>
+        <span class="cov0" title="0">return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mapper.UserToResponseDTO(user)))</span>
 }
 
 // @Summary      Sign in
@@ -778,7 +778,7 @@ func (cv *CustomValidator) Validate(i interface{}) error <span class="cov8" titl
 }
 </pre>
 
-      <pre class="file" id="file13" style="display: none">package mappings
+      <pre class="file" id="file13" style="display: none">package mapper
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
@@ -1088,7 +1088,7 @@ import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
-        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
 )
@@ -1113,7 +1113,7 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*domain.User, e
                 return nil, apperrors.ErrUserAlreadyExists
         }</span>
 
-        <span class="cov8" title="1">user := mappings.UserCreateRequestToModel(request)
+        <span class="cov8" title="1">user := mapper.UserCreateRequestToModel(request)
         hashedPassword, err := s.bcryptUtils.GenerateFromPassword(request.Password)
         if err != nil </span><span class="cov8" title="1">{
                 return nil, err
