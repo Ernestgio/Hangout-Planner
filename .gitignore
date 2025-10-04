@@ -5,5 +5,4 @@
 # vs code
 .vscode/*
 
-# tmp files
-./services/hangout/tmp/*
+
