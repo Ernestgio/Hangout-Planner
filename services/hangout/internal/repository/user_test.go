@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"errors"
 	"testing"
 	"time"
 
@@ -13,62 +14,104 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 )
 
-func TestCreateUser(t *testing.T) {
+func TestNewUserRepository(t *testing.T) {
+	db, _ := setupDB(t)
+	repo := repository.NewUserRepository(db)
+	require.NotNil(t, repo)
+}
+
+func TestCreateUser_Success(t *testing.T) {
 	db, mock := setupDB(t)
 	repo := repository.NewUserRepository(db)
 
-	u := &domain.User{
-		ID:       uuid.New(),
-		Name:     "X",
-		Email:    "x@example.com",
-		Password: "secret",
+	user := &domain.User{
+		Name:     "Ernest",
+		Email:    "ernest@example.com",
+		Password: "hashed_password",
 	}
 
 	mock.ExpectBegin()
 	mock.ExpectExec("INSERT INTO `users` (`id`,`name`,`email`,`password`,`created_at`,`updated_at`,`deleted_at`) VALUES (?,?,?,?,?,?,?)").
-		WithArgs(
-			u.ID, u.Name, u.Email, u.Password,
-			sqlmock.AnyArg(),
-			sqlmock.AnyArg(),
-			sqlmock.AnyArg(),
-		).
+		WithArgs(sqlmock.AnyArg(), user.Name, user.Email, user.Password, sqlmock.AnyArg(), sqlmock.AnyArg(), nil).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	require.NoError(t, repo.CreateUser(u))
+	err := repo.CreateUser(user)
+	require.NoError(t, err)
+	require.NoError(t, mock.ExpectationsWereMet())
 }
 
-func TestGetUserByEmail(t *testing.T) {
+func TestCreateUser_Error(t *testing.T) {
+	db, mock := setupDB(t)
+	repo := repository.NewUserRepository(db)
+	dbError := errors.New("db error")
+
+	user := &domain.User{
+		Name:     "Ernest",
+		Email:    "ernest@example.com",
+		Password: "hashed_password",
+	}
+
+	mock.ExpectBegin()
+	mock.ExpectExec("INSERT INTO `users` (`id`,`name`,`email`,`password`,`created_at`,`updated_at`,`deleted_at`) VALUES (?,?,?,?,?,?,?)").
+		WithArgs(sqlmock.AnyArg(), user.Name, user.Email, user.Password, sqlmock.AnyArg(), sqlmock.AnyArg(), nil).
+		WillReturnError(dbError)
+	mock.ExpectRollback()
+
+	err := repo.CreateUser(user)
+	require.Error(t, err)
+	require.Equal(t, dbError, err)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetUserByEmail_Success(t *testing.T) {
 	db, mock := setupDB(t)
 	repo := repository.NewUserRepository(db)
 
 	id := uuid.New()
 	now := time.Now()
+	email := "found@example.com"
 
-	rows := sqlmock.NewRows([]string{
-		"id", "name", "email", "password", "created_at", "updated_at", "deleted_at",
-	}).AddRow(id, "Y", "y@example.com", "pwd", now, now, nil)
+	rows := sqlmock.NewRows([]string{"id", "name", "email", "password", "created_at", "updated_at", "deleted_at"}).
+		AddRow(id, "Found User", email, "pwd", now, now, nil)
 
-	mock.ExpectQuery("SELECT * FROM `users` WHERE email = ? AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT ?").
-		WithArgs("y@example.com", 1).
-		WillReturnRows(rows)
+	expectedSQL := "SELECT * FROM `users` WHERE email = ? AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT ?"
+	mock.ExpectQuery(expectedSQL).WithArgs(email, 1).WillReturnRows(rows)
 
-	user, err := repo.GetUserByEmail("y@example.com")
+	user, err := repo.GetUserByEmail(email)
 	require.NoError(t, err)
-	require.Equal(t, "y@example.com", user.Email)
+	require.NotNil(t, user)
+	require.Equal(t, email, user.Email)
+	require.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestGetUserByEmail_NotFound(t *testing.T) {
 	db, mock := setupDB(t)
 	repo := repository.NewUserRepository(db)
+	email := "notfound@example.com"
 
-	mock.ExpectQuery("SELECT .* FROM users.*").
-		WithArgs("missing@example.com", 1).
-		WillReturnError(gorm.ErrRecordNotFound)
+	expectedSQL := "SELECT * FROM `users` WHERE email = ? AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT ?"
+	mock.ExpectQuery(expectedSQL).WithArgs(email, 1).WillReturnError(gorm.ErrRecordNotFound)
 
-	user, err := repo.GetUserByEmail("missing@example.com")
+	user, err := repo.GetUserByEmail(email)
 	require.Error(t, err)
+	require.ErrorIs(t, err, gorm.ErrRecordNotFound)
 	require.Nil(t, user)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
 
-	require.Error(t, mock.ExpectationsWereMet())
+func TestGetUserByEmail_DBError(t *testing.T) {
+	db, mock := setupDB(t)
+	repo := repository.NewUserRepository(db)
+	email := "error@example.com"
+	dbError := errors.New("db error")
+
+	expectedSQL := "SELECT * FROM `users` WHERE email = ? AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT ?"
+	mock.ExpectQuery(expectedSQL).WithArgs(email, 1).WillReturnError(dbError)
+
+	user, err := repo.GetUserByEmail(email)
+	require.Error(t, err)
+	require.Equal(t, dbError, err)
+	require.Nil(t, user)
+	require.NoError(t, mock.ExpectationsWereMet())
 }

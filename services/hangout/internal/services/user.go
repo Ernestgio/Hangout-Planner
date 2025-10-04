@@ -7,7 +7,6 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
-	"github.com/google/uuid"
 )
 
 type UserService interface {
@@ -31,7 +30,6 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*domain.User, e
 	}
 
 	user := mappings.UserCreateRequestToModel(request)
-	user.ID = uuid.New()
 	hashedPassword, err := s.bcryptUtils.GenerateFromPassword(request.Password)
 	if err != nil {
 		return nil, err

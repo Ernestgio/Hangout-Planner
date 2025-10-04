@@ -69,23 +69,27 @@
 				
 				<option value="file6">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/dsn.go (0.0%)</option>
 				
-				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response/response.go (100.0%)</option>
+				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/user.go (100.0%)</option>
 				
-				<option value="file8">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go (100.0%)</option>
+				<option value="file8">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request/request.go (100.0%)</option>
 				
-				<option value="file9">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go (100.0%)</option>
+				<option value="file9">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response/response.go (100.0%)</option>
 				
-				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.go (100.0%)</option>
+				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go (100.0%)</option>
 				
-				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router/router.go (0.0%)</option>
+				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go (100.0%)</option>
 				
-				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth.go (100.0%)</option>
+				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.go (100.0%)</option>
 				
-				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user.go (100.0%)</option>
+				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router/router.go (0.0%)</option>
 				
-				<option value="file14">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt_utils.go (100.0%)</option>
+				<option value="file14">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth.go (100.0%)</option>
 				
-				<option value="file15">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt.go (87.5%)</option>
+				<option value="file15">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user.go (100.0%)</option>
+				
+				<option value="file16">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt_utils.go (100.0%)</option>
+				
+				<option value="file17">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt.go (87.5%)</option>
 				
 				</select>
 			</div>
@@ -322,6 +326,7 @@ import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
@@ -357,8 +362,8 @@ func NewAuthController(authService services.AuthService, responseBuilder *respon
 // @Failure      500   {object}  response.StandardResponse
 // @Router       /auth/signup [post]
 func (ac *authController) SignUp(c echo.Context) error <span class="cov0" title="0">{
-        req := new(dto.SignUpRequest)
-        if err := c.Validate(req); err != nil </span><span class="cov0" title="0">{
+        req, err := request.BindAndValidate[dto.SignUpRequest](c)
+        if err != nil </span><span class="cov0" title="0">{
                 return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
         }</span>
         <span class="cov0" title="0">user, err := ac.authService.SignUser(req)
@@ -386,8 +391,8 @@ func (ac *authController) SignUp(c echo.Context) error <span class="cov0" title=
 // @Failure      500          {object}  response.StandardResponse
 // @Router       /auth/signin [post]
 func (ac *authController) SignIn(c echo.Context) error <span class="cov0" title="0">{
-        req := new(dto.SignInRequest)
-        if err := c.Validate(req); err != nil </span><span class="cov0" title="0">{
+        req, err := request.BindAndValidate[dto.SignInRequest](c)
+        if err != nil </span><span class="cov0" title="0">{
                 return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
         }</span>
 
@@ -470,7 +475,55 @@ func buildDSN(cfg *config.DBConfig) string <span class="cov0" title="0">{
 }</span>
 </pre>
 		
-		<pre class="file" id="file7" style="display: none">package response
+		<pre class="file" id="file7" style="display: none">package domain
+
+import (
+        "time"
+
+        "github.com/google/uuid"
+        "gorm.io/gorm"
+)
+
+type User struct {
+        ID        uuid.UUID `gorm:"primaryKey;type:char(36)"`
+        Name      string    `gorm:"type:varchar(255);not null"`
+        Email     string    `gorm:"type:varchar(255);uniqueIndex;not null"`
+        Password  string    `gorm:"type:varchar(255);not null"`
+        CreatedAt time.Time
+        UpdatedAt time.Time
+        DeletedAt gorm.DeletedAt `gorm:"index"`
+}
+
+func (user *User) BeforeCreate(tx *gorm.DB) (err error) <span class="cov8" title="1">{
+        user.ID = uuid.New()
+        return
+}</span>
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package request
+
+import (
+        "net/http"
+
+        "github.com/labstack/echo/v4"
+)
+
+func BindAndValidate[T any](c echo.Context) (*T, error) <span class="cov8" title="1">{
+        var req T
+
+        if err := c.Bind(&amp;req); err != nil </span><span class="cov8" title="1">{
+                return nil, echo.NewHTTPError(http.StatusBadRequest, err.Error())
+        }</span>
+
+        <span class="cov8" title="1">if err := c.Validate(&amp;req); err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return &amp;req, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file9" style="display: none">package response
 
 import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 
@@ -513,7 +566,7 @@ func (b *Builder) Error(err error) *StandardResponse <span class="cov8" title="1
 }
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package validator
+		<pre class="file" id="file10" style="display: none">package validator
 
 import (
         "net/http"
@@ -538,7 +591,7 @@ func (cv *CustomValidator) Validate(i interface{}) error <span class="cov8" titl
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package mappings
+		<pre class="file" id="file11" style="display: none">package mappings
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
@@ -561,7 +614,7 @@ func UserToResponseDTO(user *domain.User) *dto.UserResponse <span class="cov8" t
 }</span>
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">package repository
+		<pre class="file" id="file12" style="display: none">package repository
 
 import (
         domain "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
@@ -595,7 +648,7 @@ func (r *userRepository) GetUserByEmail(email string) (*domain.User, error) <spa
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package router
+		<pre class="file" id="file13" style="display: none">package router
 
 import (
         "net/http"
@@ -621,7 +674,7 @@ func NewRouter(e *echo.Echo, authController controllers.AuthController) <span cl
 }
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">package services
+		<pre class="file" id="file14" style="display: none">package services
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -687,7 +740,7 @@ func (s *authService) SignInUser(request *dto.SignInRequest) (*dto.SignInRespons
 }
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package services
+		<pre class="file" id="file15" style="display: none">package services
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -696,7 +749,6 @@ import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
-        "github.com/google/uuid"
 )
 
 type UserService interface {
@@ -720,7 +772,6 @@ func (s *userService) CreateUser(request dto.UserCreateRequest) (*domain.User, e
         }</span>
 
         <span class="cov8" title="1">user := mappings.UserCreateRequestToModel(request)
-        user.ID = uuid.New()
         hashedPassword, err := s.bcryptUtils.GenerateFromPassword(request.Password)
         if err != nil </span><span class="cov8" title="1">{
                 return nil, err
@@ -739,7 +790,7 @@ func (s *userService) GetUserByEmail(email string) (*domain.User, error) <span c
 }</span>
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package utils
+		<pre class="file" id="file16" style="display: none">package utils
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -781,7 +832,7 @@ func (b *bcryptUtils) GenerateFromPassword(password string) (string, error) <spa
 }
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">package utils
+		<pre class="file" id="file17" style="display: none">package utils
 
 import (
         "time"
@@ -797,16 +848,16 @@ type JWTUtils interface {
 }
 
 type jwtUtils struct {
-        jwtSecret          string
-        jWTExpirationHours int
+        Secret          string
+        ExpirationHours int
 }
 
 func NewJWTUtils(jWtConfig *config.JwtConfig) JWTUtils <span class="cov8" title="1">{
-        return &amp;jwtUtils{jwtSecret: jWtConfig.JWTSecret, jWTExpirationHours: jWtConfig.JWTExpirationHours}
+        return &amp;jwtUtils{Secret: jWtConfig.JWTSecret, ExpirationHours: jWtConfig.JWTExpirationHours}
 }</span>
 
 func (j *jwtUtils) Generate(user *domain.User) (string, error) <span class="cov8" title="1">{
-        expirationTime := time.Now().Add(time.Duration(j.jWTExpirationHours) * time.Hour)
+        expirationTime := time.Now().Add(time.Duration(j.ExpirationHours) * time.Hour)
         claims := &amp;auth.TokenCustomClaims{
                 UserID: user.ID,
                 RegisteredClaims: jwt.RegisteredClaims{
@@ -818,7 +869,7 @@ func (j *jwtUtils) Generate(user *domain.User) (string, error) <span class="cov8
 
         token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-        tokenString, err := token.SignedString([]byte(j.jwtSecret))
+        tokenString, err := token.SignedString([]byte(j.Secret))
         if err != nil </span><span class="cov0" title="0">{
                 return "", err
         }</span>

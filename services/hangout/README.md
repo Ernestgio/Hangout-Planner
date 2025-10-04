@@ -15,6 +15,9 @@ Designed with clean architecture, best practices, and future-proofing in mind.
 
 - Go 1.23+
 - Docker & Docker Compose
+- golangci-lint
+- Make (Makefile)
+- ☁️ Air - Live reload for Go apps
 
 ### Environment Variables
 

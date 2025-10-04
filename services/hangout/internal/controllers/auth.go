@@ -6,6 +6,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
@@ -41,8 +42,8 @@ func NewAuthController(authService services.AuthService, responseBuilder *respon
 // @Failure      500   {object}  response.StandardResponse
 // @Router       /auth/signup [post]
 func (ac *authController) SignUp(c echo.Context) error {
-	req := new(dto.SignUpRequest)
-	if err := c.Validate(req); err != nil {
+	req, err := request.BindAndValidate[dto.SignUpRequest](c)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
 	user, err := ac.authService.SignUser(req)
@@ -70,8 +71,8 @@ func (ac *authController) SignUp(c echo.Context) error {
 // @Failure      500          {object}  response.StandardResponse
 // @Router       /auth/signin [post]
 func (ac *authController) SignIn(c echo.Context) error {
-	req := new(dto.SignInRequest)
-	if err := c.Validate(req); err != nil {
+	req, err := request.BindAndValidate[dto.SignInRequest](c)
+	if err != nil {
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
 

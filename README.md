@@ -120,3 +120,4 @@ make up
 - Memcached cluster for caching
 - File upload feature (photos attachment for hangout memories!)
 - File service
+- Instrumentation, logging, and telemetry
