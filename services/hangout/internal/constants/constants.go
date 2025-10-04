@@ -36,4 +36,12 @@ const (
 	// Error message constants
 	ProdErrorMessage = "An unexpected error occurred. Please try again later."
 	ErrBadRequest    = "Bad request"
+
+	// pagination
+	DefaultLimit      = 20
+	MaxLimit          = 100
+	SortDirectionAsc  = "asc"
+	SortDirectionDesc = "desc"
+	SortByCreatedAt   = "created_at"
+	SortByDate        = "date"
 )

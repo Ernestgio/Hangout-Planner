@@ -69,27 +69,35 @@
 				
 				<option value="file6">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db/dsn.go (0.0%)</option>
 				
-				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/user.go (100.0%)</option>
+				<option value="file7">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/hangout.go (0.0%)</option>
 				
-				<option value="file8">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request/request.go (100.0%)</option>
+				<option value="file8">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain/user.go (100.0%)</option>
 				
-				<option value="file9">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response/response.go (100.0%)</option>
+				<option value="file9">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto/pagination.go (100.0%)</option>
 				
-				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go (100.0%)</option>
+				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request/request.go (100.0%)</option>
 				
-				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go (100.0%)</option>
+				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response/response.go (100.0%)</option>
 				
-				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.go (100.0%)</option>
+				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go (100.0%)</option>
 				
-				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router/router.go (0.0%)</option>
+				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mappings/user_mapping.go (100.0%)</option>
 				
-				<option value="file14">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth.go (100.0%)</option>
+				<option value="file14">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/hangout.go (0.0%)</option>
 				
-				<option value="file15">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user.go (100.0%)</option>
+				<option value="file15">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.go (100.0%)</option>
 				
-				<option value="file16">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt_utils.go (100.0%)</option>
+				<option value="file16">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router/router.go (0.0%)</option>
 				
-				<option value="file17">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt.go (87.5%)</option>
+				<option value="file17">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth.go (100.0%)</option>
+				
+				<option value="file18">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/hangout.go (0.0%)</option>
+				
+				<option value="file19">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user.go (100.0%)</option>
+				
+				<option value="file20">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt_utils.go (100.0%)</option>
+				
+				<option value="file21">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt.go (87.5%)</option>
 				
 				</select>
 			</div>
@@ -443,8 +451,17 @@ func Connect(cfg *config.DBConfig) (*gorm.DB, func() error, error) <span class="
 }
 
 func Migrate(db *gorm.DB) error <span class="cov0" title="0">{
-        return db.AutoMigrate(&amp;domain.User{})
-}</span>
+        err := db.AutoMigrate(&amp;domain.User{})
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">err = db.AutoMigrate(&amp;domain.Hangout{})
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov0" title="0">return nil</span>
+}
 </pre>
 		
 		<pre class="file" id="file6" style="display: none">package db
@@ -484,6 +501,35 @@ import (
         "gorm.io/gorm"
 )
 
+type Hangout struct {
+        ID          uuid.UUID  `gorm:"primaryKey;type:char(36)"`
+        Title       string     `gorm:"type:varchar(255);not null" json:"title"`
+        Description *string    `gorm:"type:text" json:"description"`
+        Date        *time.Time `gorm:"not null" json:"date"`
+        Status      *string    `gorm:"type:varchar(50);not null" json:"status"`
+        CreatedAt   time.Time
+        UpdatedAt   time.Time
+        DeletedAt   gorm.DeletedAt `gorm:"index"`
+
+        UserID *uuid.UUID `gorm:"type:char(36)"`
+        User   User       `gorm:"foreignKey:UserID"`
+}
+
+func (hangout *Hangout) BeforeCreate(tx *gorm.DB) (err error) <span class="cov0" title="0">{
+        hangout.ID = uuid.New()
+        return
+}</span>
+</pre>
+		
+		<pre class="file" id="file8" style="display: none">package domain
+
+import (
+        "time"
+
+        "github.com/google/uuid"
+        "gorm.io/gorm"
+)
+
 type User struct {
         ID        uuid.UUID `gorm:"primaryKey;type:char(36)"`
         Name      string    `gorm:"type:varchar(255);not null"`
@@ -492,6 +538,8 @@ type User struct {
         CreatedAt time.Time
         UpdatedAt time.Time
         DeletedAt gorm.DeletedAt `gorm:"index"`
+
+        Hangouts []Hangout
 }
 
 func (user *User) BeforeCreate(tx *gorm.DB) (err error) <span class="cov8" title="1">{
@@ -500,7 +548,59 @@ func (user *User) BeforeCreate(tx *gorm.DB) (err error) <span class="cov8" title
 }</span>
 </pre>
 		
-		<pre class="file" id="file8" style="display: none">package request
+		<pre class="file" id="file9" style="display: none">package dto
+
+import (
+        "fmt"
+        "strings"
+
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+        "github.com/google/uuid"
+)
+
+type CursorPagination struct {
+        Limit   int        `query:"limit"`
+        AfterID *uuid.UUID `query:"after_id"`
+        SortBy  string     `query:"sort_by"`
+        SortDir string     `query:"sort_dir"`
+}
+
+func (p *CursorPagination) GetLimit() int <span class="cov8" title="1">{
+        if p.Limit &lt;= 0 </span><span class="cov8" title="1">{
+                return constants.DefaultLimit
+        }</span>
+        <span class="cov8" title="1">if p.Limit &gt; constants.MaxLimit </span><span class="cov8" title="1">{
+                return constants.MaxLimit
+        }</span>
+        <span class="cov8" title="1">return p.Limit</span>
+}
+
+func (p *CursorPagination) GetSortBy() string <span class="cov8" title="1">{
+        switch p.SortBy </span>{
+        case constants.SortByDate, constants.SortByCreatedAt:<span class="cov8" title="1">
+                return p.SortBy</span>
+        default:<span class="cov8" title="1">
+                return constants.SortByCreatedAt</span>
+        }
+}
+
+func (p *CursorPagination) GetSortDir() string <span class="cov8" title="1">{
+        switch strings.ToLower(p.SortDir) </span>{
+        case constants.SortDirectionAsc:<span class="cov8" title="1">
+                return constants.SortDirectionAsc</span>
+        case constants.SortDirectionDesc:<span class="cov8" title="1">
+                return constants.SortDirectionDesc</span>
+        default:<span class="cov8" title="1">
+                return constants.SortDirectionDesc</span>
+        }
+}
+
+func (p *CursorPagination) GetOrderByClause() string <span class="cov8" title="1">{
+        return fmt.Sprintf("%s %s, id %s", p.GetSortBy(), p.GetSortDir(), p.GetSortDir())
+}</span>
+</pre>
+		
+		<pre class="file" id="file10" style="display: none">package request
 
 import (
         "net/http"
@@ -523,7 +623,7 @@ func BindAndValidate[T any](c echo.Context) (*T, error) <span class="cov8" title
 }
 </pre>
 		
-		<pre class="file" id="file9" style="display: none">package response
+		<pre class="file" id="file11" style="display: none">package response
 
 import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 
@@ -566,7 +666,7 @@ func (b *Builder) Error(err error) *StandardResponse <span class="cov8" title="1
 }
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">package validator
+		<pre class="file" id="file12" style="display: none">package validator
 
 import (
         "net/http"
@@ -591,7 +691,7 @@ func (cv *CustomValidator) Validate(i interface{}) error <span class="cov8" titl
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package mappings
+		<pre class="file" id="file13" style="display: none">package mappings
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
@@ -614,7 +714,100 @@ func UserToResponseDTO(user *domain.User) *dto.UserResponse <span class="cov8" t
 }</span>
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">package repository
+		<pre class="file" id="file14" style="display: none">package repository
+
+import (
+        "fmt"
+
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+        domain "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/google/uuid"
+        "gorm.io/gorm"
+)
+
+type HangoutRepository interface {
+        WithTx(tx *gorm.DB) HangoutRepository
+        CreateHangout(hangout *domain.Hangout) (*domain.Hangout, error)
+        GetHangoutByID(id uuid.UUID) (*domain.Hangout, error)
+        UpdateHangout(hangout *domain.Hangout) (*domain.Hangout, error)
+        DeleteHangout(id uuid.UUID) error
+        GetHangoutsByUserID(userID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Hangout, error)
+}
+
+type hangoutRepository struct {
+        db *gorm.DB
+}
+
+func NewHangoutRepository(db *gorm.DB) HangoutRepository <span class="cov0" title="0">{
+        return &amp;hangoutRepository{db: db}
+}</span>
+
+func (r *hangoutRepository) WithTx(tx *gorm.DB) HangoutRepository <span class="cov0" title="0">{
+        return &amp;hangoutRepository{db: tx}
+}</span>
+
+func (r *hangoutRepository) CreateHangout(hangout *domain.Hangout) (*domain.Hangout, error) <span class="cov0" title="0">{
+        if err := r.db.Create(hangout).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return hangout, nil</span>
+}
+func (r *hangoutRepository) GetHangoutByID(id uuid.UUID) (*domain.Hangout, error) <span class="cov0" title="0">{
+        var hangout domain.Hangout
+        if err := r.db.Preload("User").First(&amp;hangout, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return &amp;hangout, nil</span>
+}
+
+func (r *hangoutRepository) UpdateHangout(hangout *domain.Hangout) (*domain.Hangout, error) <span class="cov0" title="0">{
+        if err := r.db.Save(hangout).Error; err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">return hangout, nil</span>
+}
+func (r *hangoutRepository) DeleteHangout(id uuid.UUID) error <span class="cov0" title="0">{
+        if err := r.db.Delete(&amp;domain.Hangout{}, "id = ?", id).Error; err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">return nil</span>
+}
+
+func (r *hangoutRepository) GetHangoutsByUserID(userID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Hangout, error) <span class="cov0" title="0">{
+        var hangouts []domain.Hangout
+
+        query := r.db.Model(&amp;domain.Hangout{}).Where("user_id = ?", userID)
+
+        if pagination.AfterID != nil </span><span class="cov0" title="0">{
+                sortByColumn := pagination.GetSortBy()
+                subQuery := r.db.Model(&amp;domain.Hangout{}).Select(sortByColumn).Where("id = ?", *pagination.AfterID)
+
+                comparisonOperator := "&gt;="
+                if pagination.GetSortDir() == constants.SortDirectionDesc </span><span class="cov0" title="0">{
+                        comparisonOperator = "&lt;="
+                }</span>
+
+                <span class="cov0" title="0">query = query.Where(fmt.Sprintf("%s %s (?)", sortByColumn, comparisonOperator), subQuery)
+
+                idSubQuery := r.db.Model(&amp;domain.Hangout{}).Select("id").Where(sortByColumn+" = (?)", subQuery)
+                query = query.Where("id NOT IN (?)", idSubQuery)</span>
+        }
+
+        <span class="cov0" title="0">err := query.
+                Order(pagination.GetOrderByClause()).
+                Limit(pagination.GetLimit()).
+                Find(&amp;hangouts).Error
+
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return hangouts, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file15" style="display: none">package repository
 
 import (
         domain "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
@@ -648,7 +841,7 @@ func (r *userRepository) GetUserByEmail(email string) (*domain.User, error) <spa
 }
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package router
+		<pre class="file" id="file16" style="display: none">package router
 
 import (
         "net/http"
@@ -674,7 +867,7 @@ func NewRouter(e *echo.Echo, authController controllers.AuthController) <span cl
 }
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package services
+		<pre class="file" id="file17" style="display: none">package services
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -740,7 +933,69 @@ func (s *authService) SignInUser(request *dto.SignInRequest) (*dto.SignInRespons
 }
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">package services
+		<pre class="file" id="file18" style="display: none">package services
+
+import (
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
+        "github.com/google/uuid"
+        "gorm.io/gorm"
+)
+
+type HangoutService interface {
+        UpdateHangout(id, userID uuid.UUID, req *dto.UpdateHangoutRequest) (*domain.Hangout, error)
+}
+
+type hangoutService struct {
+        db          *gorm.DB
+        hangoutRepo repository.HangoutRepository
+}
+
+func NewHangoutService(db *gorm.DB, hangoutRepo repository.HangoutRepository) HangoutService <span class="cov0" title="0">{
+        return &amp;hangoutService{
+                db:          db,
+                hangoutRepo: hangoutRepo,
+        }
+}</span>
+
+func (s *hangoutService) UpdateHangout(id, userID uuid.UUID, req *dto.UpdateHangoutRequest) (*domain.Hangout, error) <span class="cov0" title="0">{
+        var updatedHangout *domain.Hangout
+
+        err := s.db.Transaction(func(tx *gorm.DB) error </span><span class="cov0" title="0">{
+                txRepo := s.hangoutRepo.WithTx(tx)
+
+                existingHangout, err := txRepo.GetHangoutByID(id)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov0" title="0">if *existingHangout.UserID != userID </span><span class="cov0" title="0">{
+                        return apperrors.ErrForbidden
+                }</span>
+
+                <span class="cov0" title="0">if req.Title != "" </span><span class="cov0" title="0">{
+                        existingHangout.Title = req.Title
+                }</span>
+
+                <span class="cov0" title="0">updatedHangout, err = txRepo.UpdateHangout(existingHangout)
+                if err != nil </span><span class="cov0" title="0">{
+                        return err
+                }</span>
+
+                <span class="cov0" title="0">return nil</span>
+        })
+
+        <span class="cov0" title="0">if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return updatedHangout, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file19" style="display: none">package services
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -790,7 +1045,7 @@ func (s *userService) GetUserByEmail(email string) (*domain.User, error) <span c
 }</span>
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">package utils
+		<pre class="file" id="file20" style="display: none">package utils
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -832,7 +1087,7 @@ func (b *bcryptUtils) GenerateFromPassword(password string) (string, error) <spa
 }
 </pre>
 		
-		<pre class="file" id="file17" style="display: none">package utils
+		<pre class="file" id="file21" style="display: none">package utils
 
 import (
         "time"
