@@ -19,15 +19,40 @@ func HangoutCreateRequestToModel(request *dto.CreateHangoutRequest) (*domain.Han
 		Title:       request.Title,
 		Description: request.Description,
 		Date:        parsedDate,
+		Status:      request.Status,
 	}, nil
 }
 
-func HangoutToResponseDTO(hangout *domain.Hangout) *dto.HangoutDetailResponse {
+func HangoutUpdateRequestToModel(request *dto.UpdateHangoutRequest) (*domain.Hangout, error) {
+	parsedDate, err := time.Parse(constants.DateFormat, request.Date)
+	if err != nil {
+		return nil, err
+	}
+	return &domain.Hangout{
+		Title:       request.Title,
+		Description: request.Description,
+		Date:        parsedDate,
+		Status:      request.Status,
+	}, nil
+
+}
+
+func HangoutToDetailResponseDTO(hangout *domain.Hangout) *dto.HangoutDetailResponse {
 	return &dto.HangoutDetailResponse{
 		ID:          hangout.ID,
 		Title:       hangout.Title,
 		Description: hangout.Description,
 		Date:        hangout.Date,
 		Status:      hangout.Status,
+	}
+}
+
+func HangoutToListItemResponseDTO(hangout *domain.Hangout) *dto.HangoutListItemResponse {
+	return &dto.HangoutListItemResponse{
+		ID:        hangout.ID,
+		Title:     hangout.Title,
+		Date:      hangout.Date,
+		Status:    hangout.Status,
+		CreatedAt: hangout.CreatedAt,
 	}
 }

@@ -1,4 +1,4 @@
-🌍 Hangout Planner — Scalable Go Backend Platform
+# 🌍 Hangout Planner — Scalable Go Backend Platform
 
 A **production-grade backend platform** for planning and managing hangouts — built in **Go** with **Echo**, **GORM**, and **MySQL**.  
 Designed with **clean architecture**, **SOLID principles**, and **future-proof modular design** for microservices scalability.
