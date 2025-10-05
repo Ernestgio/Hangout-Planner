@@ -5,7 +5,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 )
 
-func CreateuserRequestToModel(request dto.CreateuserRequest) domain.User {
+func CreateUserRequestToModel(request dto.CreateUserRequest) domain.User {
 	return domain.User{
 		Name:  request.Name,
 		Email: request.Email,

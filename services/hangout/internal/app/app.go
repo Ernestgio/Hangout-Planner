@@ -52,7 +52,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	userRepo := repository.NewUserRepository(dbConn)
 
 	// Service Layer
-	userService := services.NewUserService(userRepo, bcryptUtils)
+	userService := services.NewUserService(dbConn, userRepo, bcryptUtils)
 	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
 
 	// handler Layer

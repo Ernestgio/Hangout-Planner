@@ -1,6 +1,7 @@
 package repository_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 	"time"
@@ -20,9 +21,23 @@ func TestNewUserRepository(t *testing.T) {
 	require.NotNil(t, repo)
 }
 
+func TestUserRepository_WithTx(t *testing.T) {
+	db, mock := setupDB(t)
+	repo := repository.NewUserRepository(db)
+
+	mock.ExpectBegin()
+	tx := db.Begin()
+
+	txRepo := repo.WithTx(tx)
+
+	require.NotNil(t, txRepo, "WithTx should return a new repository instance")
+	require.NotEqual(t, repo, txRepo, "The transactional repository should be a different instance from the original")
+}
+
 func TestCreateUser_Success(t *testing.T) {
 	db, mock := setupDB(t)
 	repo := repository.NewUserRepository(db)
+	ctx := context.Background()
 
 	user := &domain.User{
 		Name:     "Ernest",
@@ -36,7 +51,7 @@ func TestCreateUser_Success(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(1, 1))
 	mock.ExpectCommit()
 
-	err := repo.CreateUser(user)
+	err := repo.CreateUser(ctx, user)
 	require.NoError(t, err)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
@@ -45,6 +60,7 @@ func TestCreateUser_Error(t *testing.T) {
 	db, mock := setupDB(t)
 	repo := repository.NewUserRepository(db)
 	dbError := errors.New("db error")
+	ctx := context.Background()
 
 	user := &domain.User{
 		Name:     "Ernest",
@@ -58,7 +74,7 @@ func TestCreateUser_Error(t *testing.T) {
 		WillReturnError(dbError)
 	mock.ExpectRollback()
 
-	err := repo.CreateUser(user)
+	err := repo.CreateUser(ctx, user)
 	require.Error(t, err)
 	require.Equal(t, dbError, err)
 	require.NoError(t, mock.ExpectationsWereMet())
@@ -67,6 +83,7 @@ func TestCreateUser_Error(t *testing.T) {
 func TestGetUserByEmail_Success(t *testing.T) {
 	db, mock := setupDB(t)
 	repo := repository.NewUserRepository(db)
+	ctx := context.Background()
 
 	id := uuid.New()
 	now := time.Now()
@@ -78,7 +95,7 @@ func TestGetUserByEmail_Success(t *testing.T) {
 	expectedSQL := "SELECT * FROM `users` WHERE email = ? AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT ?"
 	mock.ExpectQuery(expectedSQL).WithArgs(email, 1).WillReturnRows(rows)
 
-	user, err := repo.GetUserByEmail(email)
+	user, err := repo.GetUserByEmail(ctx, email)
 	require.NoError(t, err)
 	require.NotNil(t, user)
 	require.Equal(t, email, user.Email)
@@ -89,11 +106,12 @@ func TestGetUserByEmail_NotFound(t *testing.T) {
 	db, mock := setupDB(t)
 	repo := repository.NewUserRepository(db)
 	email := "notfound@example.com"
+	ctx := context.Background()
 
 	expectedSQL := "SELECT * FROM `users` WHERE email = ? AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT ?"
 	mock.ExpectQuery(expectedSQL).WithArgs(email, 1).WillReturnError(gorm.ErrRecordNotFound)
 
-	user, err := repo.GetUserByEmail(email)
+	user, err := repo.GetUserByEmail(ctx, email)
 	require.Error(t, err)
 	require.ErrorIs(t, err, gorm.ErrRecordNotFound)
 	require.Nil(t, user)
@@ -105,11 +123,12 @@ func TestGetUserByEmail_DBError(t *testing.T) {
 	repo := repository.NewUserRepository(db)
 	email := "error@example.com"
 	dbError := errors.New("db error")
+	ctx := context.Background()
 
 	expectedSQL := "SELECT * FROM `users` WHERE email = ? AND `users`.`deleted_at` IS NULL ORDER BY `users`.`id` LIMIT ?"
 	mock.ExpectQuery(expectedSQL).WithArgs(email, 1).WillReturnError(dbError)
 
-	user, err := repo.GetUserByEmail(email)
+	user, err := repo.GetUserByEmail(ctx, email)
 	require.Error(t, err)
 	require.Equal(t, dbError, err)
 	require.Nil(t, user)

@@ -46,7 +46,8 @@ func (ac *authHandler) SignUp(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
-	user, err := ac.authService.SignUser(req)
+	ctx := c.Request().Context()
+	user, err := ac.authService.SignUser(ctx, req)
 	if err != nil {
 		switch err {
 		case apperrors.ErrUserAlreadyExists:
@@ -75,8 +76,8 @@ func (ac *authHandler) SignIn(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
-
-	token, err := ac.authService.SignInUser(req)
+	ctx := c.Request().Context()
+	token, err := ac.authService.SignInUser(ctx, req)
 	if err != nil {
 		switch err {
 		case apperrors.ErrInvalidCredentials:

@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
@@ -8,8 +10,8 @@ import (
 )
 
 type AuthService interface {
-	SignUser(request *dto.SignUpRequest) (*domain.User, error)
-	SignInUser(request *dto.SignInRequest) (*dto.SignInResponse, error)
+	SignUser(ctx context.Context, request *dto.SignUpRequest) (*domain.User, error)
+	SignInUser(ctx context.Context, request *dto.SignInRequest) (*dto.SignInResponse, error)
 }
 
 type authService struct {
@@ -26,8 +28,8 @@ func NewAuthService(userService UserService, jwtUtils utils.JWTUtils, bcrytpUtil
 	}
 }
 
-func (s *authService) SignUser(request *dto.SignUpRequest) (*domain.User, error) {
-	user, err := s.userService.CreateUser(dto.CreateuserRequest{
+func (s *authService) SignUser(ctx context.Context, request *dto.SignUpRequest) (*domain.User, error) {
+	user, err := s.userService.CreateUser(ctx, dto.CreateUserRequest{
 		Name:     request.Name,
 		Email:    request.Email,
 		Password: request.Password,
@@ -39,8 +41,8 @@ func (s *authService) SignUser(request *dto.SignUpRequest) (*domain.User, error)
 	return user, nil
 }
 
-func (s *authService) SignInUser(request *dto.SignInRequest) (*dto.SignInResponse, error) {
-	user, err := s.userService.GetUserByEmail(request.Email)
+func (s *authService) SignInUser(ctx context.Context, request *dto.SignInRequest) (*dto.SignInResponse, error) {
+	user, err := s.userService.GetUserByEmail(ctx, request.Email)
 	if err != nil {
 		return nil, err
 	}
