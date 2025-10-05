@@ -61,8 +61,11 @@ func NewApp(cfg *config.Config) (*App, error) {
 	// Server Setup
 	e := echo.New()
 	e.Validator = validator.NewValidator()
+
+	// middleware
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
 	e.Use(middleware.Gzip())
+	e.Use(middleware.Decompress())
 
 	router.NewRouter(e, authhandler)
 
