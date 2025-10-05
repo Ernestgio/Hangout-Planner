@@ -36,6 +36,7 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - Graceful server shutdown
 - Dependency injection via interfaces
 - Auto DB migration
+- Context propagation across all layers (for timeouts, cancellation, and future observability/tracing)
 
 ### 🧪 Testing & Quality
 
