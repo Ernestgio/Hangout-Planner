@@ -99,7 +99,6 @@ make up
 - CORS & JWT middleware
 - Full Hangout CRUD
 - Budget, activity, and location modules
-- Code refactor to include context
 
 ### 🌐 Long-Term Vision
 
@@ -108,11 +107,11 @@ make up
 - Notification scheduling
 - AWS S3 integration (LocalStack support)
 - File upload feature (photos attachment for hangout memories!)
-- - Multi db for microservices
+- Multi db for microservices
 - shared module in pkg/shared
 - RabbitMQ service interconnect
 - Memcached cluster caching
 - OAuth / federated logins
 - File uploads for hangout memories
 - Nginx API gateway + HTTPS (Let’s Encrypt)
-- Advanced observability: metrics, tracing, logging
+- Context propagation refactor + Advanced observability: metrics, tracing, logging
