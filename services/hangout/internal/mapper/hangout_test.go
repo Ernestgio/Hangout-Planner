@@ -124,6 +124,7 @@ func TestHangoutToDetailResponseDTO(t *testing.T) {
 		Description: stringPtr("This is a detailed description."),
 		Date:        now,
 		Status:      enums.StatusExecuted,
+		CreatedAt:   now,
 	}
 
 	response := mapper.HangoutToDetailResponseDTO(hangout)
@@ -134,6 +135,7 @@ func TestHangoutToDetailResponseDTO(t *testing.T) {
 	require.Equal(t, "This is a detailed description.", *response.Description) // Dereference pointer for comparison
 	require.Equal(t, now, response.Date)
 	require.Equal(t, enums.StatusExecuted, response.Status)
+	require.Equal(t, now, response.CreatedAt)
 }
 
 func TestHangoutToListItemResponseDTO(t *testing.T) {

@@ -10,14 +10,14 @@ import (
 type CreateHangoutRequest struct {
 	Title       string              `json:"title" validate:"required"`
 	Description *string             `json:"description"`
-	Date        string              `json:"date" validate:"datetime=2006-01-02T15:04:05Z07:00:00.000Z"`
+	Date        string              `json:"date" validate:"datetime=2006-01-02 15:04:05.000"`
 	Status      enums.HangoutStatus `json:"status"`
 }
 
 type UpdateHangoutRequest struct {
 	Title       string              `json:"title" validate:"required"`
 	Description *string             `json:"description"`
-	Date        string              `json:"date" validate:"datetime=2006-01-02T15:04:05Z07:00:00.000Z"`
+	Date        string              `json:"date" validate:"datetime=2006-01-02 15:04:05.000"`
 	Status      enums.HangoutStatus `json:"status"`
 }
 

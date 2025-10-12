@@ -36,7 +36,7 @@ func NewAuthHandler(authService services.AuthService, responseBuilder *response.
 // @Accept       json
 // @Produce      json
 // @Param        user  body      dto.SignUpRequest  true  "User sign up data"
-// @Success      201   {object}  response.StandardResponse
+// @Success      201   {object}  response.StandardResponse{data=dto.UserResponse}
 // @Failure      400   {object}  response.StandardResponse
 // @Failure      409   {object}  response.StandardResponse
 // @Failure      500   {object}  response.StandardResponse
@@ -66,7 +66,7 @@ func (ac *authHandler) SignUp(c echo.Context) error {
 // @Accept       json
 // @Produce      json
 // @Param        credentials  body      dto.SignInRequest  true  "User sign in data"
-// @Success      200          {object}  response.StandardResponse
+// @Success      200          {object}  response.StandardResponse{data=dto.SignInResponse}
 // @Failure      400          {object}  response.StandardResponse
 // @Failure      401          {object}  response.StandardResponse
 // @Failure      500          {object}  response.StandardResponse

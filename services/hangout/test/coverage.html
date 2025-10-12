@@ -75,31 +75,37 @@
 				
 				<option value="file9">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers/auth.go (0.0%)</option>
 				
-				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request/request.go (100.0%)</option>
+				<option value="file10">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers/hangout.go (0.0%)</option>
 				
-				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response/response.go (100.0%)</option>
+				<option value="file11">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request/request.go (100.0%)</option>
 				
-				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go (100.0%)</option>
+				<option value="file12">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response/response.go (100.0%)</option>
 				
-				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper/hangout.go (100.0%)</option>
+				<option value="file13">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/sanitizer/sanitizer.go (0.0%)</option>
 				
-				<option value="file14">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper/user.go (100.0%)</option>
+				<option value="file14">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator/validator.go (100.0%)</option>
 				
-				<option value="file15">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/hangout.go (100.0%)</option>
+				<option value="file15">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper/hangout.go (100.0%)</option>
 				
-				<option value="file16">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.go (100.0%)</option>
+				<option value="file16">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper/user.go (100.0%)</option>
 				
-				<option value="file17">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router/router.go (0.0%)</option>
+				<option value="file17">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/middlewares/jwt.go (0.0%)</option>
 				
-				<option value="file18">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth.go (100.0%)</option>
+				<option value="file18">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/hangout.go (100.0%)</option>
 				
-				<option value="file19">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/hangout.go (100.0%)</option>
+				<option value="file19">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository/user.go (100.0%)</option>
 				
-				<option value="file20">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user.go (100.0%)</option>
+				<option value="file20">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router/router.go (0.0%)</option>
 				
-				<option value="file21">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt.go (100.0%)</option>
+				<option value="file21">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/auth.go (100.0%)</option>
 				
-				<option value="file22">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt.go (87.5%)</option>
+				<option value="file22">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/hangout.go (100.0%)</option>
+				
+				<option value="file23">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services/user.go (100.0%)</option>
+				
+				<option value="file24">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/bcrypt.go (100.0%)</option>
+				
+				<option value="file25">github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils/jwt.go (87.5%)</option>
 				
 				</select>
 			</div>
@@ -165,21 +171,27 @@ func NewApp(cfg *config.Config) (*App, error) <span class="cov0" title="0">{
 
         // Repository Layer
         userRepo := repository.NewUserRepository(dbConn)
+        hangoutRepo := repository.NewHangoutRepository(dbConn)
 
         // Service Layer
         userService := services.NewUserService(dbConn, userRepo, bcryptUtils)
         authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
+        hangoutService := services.NewHangoutService(dbConn, hangoutRepo)
 
         // handler Layer
         authhandler := handlers.NewAuthHandler(authService, responseBuilder)
+        hangoutHandler := handlers.NewHangoutHandler(hangoutService, responseBuilder)
 
         // Server Setup
         e := echo.New()
         e.Validator = validator.NewValidator()
+
+        // middleware
         e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
         e.Use(middleware.Gzip())
+        e.Use(middleware.Decompress())
 
-        router.NewRouter(e, authhandler)
+        router.NewRouter(e, cfg, responseBuilder, authhandler, hangoutHandler)
 
         return &amp;App{
                 server: e,
@@ -550,7 +562,7 @@ func NewAuthHandler(authService services.AuthService, responseBuilder *response.
 // @Accept       json
 // @Produce      json
 // @Param        user  body      dto.SignUpRequest  true  "User sign up data"
-// @Success      201   {object}  response.StandardResponse
+// @Success      201   {object}  response.StandardResponse{data=dto.UserResponse}
 // @Failure      400   {object}  response.StandardResponse
 // @Failure      409   {object}  response.StandardResponse
 // @Failure      500   {object}  response.StandardResponse
@@ -580,7 +592,7 @@ func (ac *authHandler) SignUp(c echo.Context) error <span class="cov0" title="0"
 // @Accept       json
 // @Produce      json
 // @Param        credentials  body      dto.SignInRequest  true  "User sign in data"
-// @Success      200          {object}  response.StandardResponse
+// @Success      200          {object}  response.StandardResponse{data=dto.SignInResponse}
 // @Failure      400          {object}  response.StandardResponse
 // @Failure      401          {object}  response.StandardResponse
 // @Failure      500          {object}  response.StandardResponse
@@ -604,7 +616,83 @@ func (ac *authHandler) SignIn(c echo.Context) error <span class="cov0" title="0"
 }
 </pre>
 		
-		<pre class="file" id="file10" style="display: none">package request
+		<pre class="file" id="file10" style="display: none">package handlers
+
+import (
+        "net/http"
+        "strings"
+
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/auth"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/sanitizer"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
+        "github.com/golang-jwt/jwt/v5"
+        "github.com/labstack/echo/v4"
+)
+
+type HangoutHandler interface {
+        CreateHangout(c echo.Context) error
+}
+
+type hangoutHandler struct {
+        hangoutService  services.HangoutService
+        responseBuilder *response.Builder
+}
+
+func NewHangoutHandler(hangoutService services.HangoutService, responseBuilder *response.Builder) HangoutHandler <span class="cov0" title="0">{
+        return &amp;hangoutHandler{
+                hangoutService:  hangoutService,
+                responseBuilder: responseBuilder,
+        }
+}</span>
+
+// @Summary      Create Hangout
+// @Description  Creates a new hangout for the authenticated user.
+// @Tags         Hangouts
+// @Accept       json
+// @Produce      json
+// @Param        hangout body dto.CreateHangoutRequest true "Hangout creation data"
+// @Success      201 {object} response.StandardResponse{data=dto.HangoutDetailResponse} "Hangout created successfully"
+// @Failure      400 {object} response.StandardResponse "Invalid request payload"
+// @Failure      401 {object} response.StandardResponse "Unauthorized"
+// @Failure      500 {object} response.StandardResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /hangouts/ [post]
+func (h *hangoutHandler) CreateHangout(c echo.Context) error <span class="cov0" title="0">{
+        req, err := request.BindAndValidate[dto.CreateHangoutRequest](c)
+        if err != nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidPayload))
+        }</span>
+
+        <span class="cov0" title="0">sanitizedTitle := sanitizer.SanitizeString(strings.TrimSpace(req.Title))
+        sanitizedDescriptionHTML, err := sanitizer.SanitizeMarkdown(*req.Description)
+        if err != nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(apperrors.ErrSanitizeDescription))
+        }</span>
+
+        <span class="cov0" title="0">req.Title = sanitizedTitle
+        req.Description = &amp;sanitizedDescriptionHTML
+
+        ctx := c.Request().Context()
+        userToken := c.Get("userId").(*jwt.Token)
+        claims := userToken.Claims.(*auth.TokenCustomClaims)
+        userID := claims.UserID
+
+        hangout, err := h.hangoutService.CreateHangout(ctx, userID, req)
+
+        if err != nil </span><span class="cov0" title="0">{
+                return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
+        }</span>
+
+        <span class="cov0" title="0">return c.JSON(http.StatusCreated, h.responseBuilder.Success(constants.HangoutCreatedSuccessfully, hangout))</span>
+}
+</pre>
+		
+		<pre class="file" id="file11" style="display: none">package request
 
 import (
         "net/http"
@@ -627,7 +715,7 @@ func BindAndValidate[T any](c echo.Context) (*T, error) <span class="cov8" title
 }
 </pre>
 		
-		<pre class="file" id="file11" style="display: none">package response
+		<pre class="file" id="file12" style="display: none">package response
 
 import "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 
@@ -670,7 +758,37 @@ func (b *Builder) Error(err error) *StandardResponse <span class="cov8" title="1
 }
 </pre>
 		
-		<pre class="file" id="file12" style="display: none">package validator
+		<pre class="file" id="file13" style="display: none">package sanitizer
+
+import (
+        "bytes"
+
+        "github.com/microcosm-cc/bluemonday"
+        "github.com/yuin/goldmark"
+        "github.com/yuin/goldmark/extension"
+)
+
+var (
+        strictPolicy = bluemonday.StrictPolicy()
+        ugcPolicy    = bluemonday.UGCPolicy()
+)
+
+func SanitizeString(s string) string <span class="cov0" title="0">{
+        return strictPolicy.Sanitize(s)
+}</span>
+
+func SanitizeMarkdown(md string) (string, error) <span class="cov0" title="0">{
+        var buf bytes.Buffer
+        if err := goldmark.New(goldmark.WithExtensions(extension.GFM)).Convert([]byte(md), &amp;buf); err != nil </span><span class="cov0" title="0">{
+                return "", err
+        }</span>
+
+        <span class="cov0" title="0">safeHTML := ugcPolicy.Sanitize(buf.String())
+        return safeHTML, nil</span>
+}
+</pre>
+		
+		<pre class="file" id="file14" style="display: none">package validator
 
 import (
         "net/http"
@@ -695,7 +813,7 @@ func (cv *CustomValidator) Validate(i interface{}) error <span class="cov8" titl
 }
 </pre>
 		
-		<pre class="file" id="file13" style="display: none">package mapper
+		<pre class="file" id="file15" style="display: none">package mapper
 
 import (
         "time"
@@ -741,6 +859,7 @@ func HangoutToDetailResponseDTO(hangout *domain.Hangout) *dto.HangoutDetailRespo
                 Description: hangout.Description,
                 Date:        hangout.Date,
                 Status:      hangout.Status,
+                CreatedAt:   hangout.CreatedAt,
         }
 }</span>
 
@@ -755,7 +874,7 @@ func HangoutToListItemResponseDTO(hangout *domain.Hangout) *dto.HangoutListItemR
 }</span>
 </pre>
 		
-		<pre class="file" id="file14" style="display: none">package mapper
+		<pre class="file" id="file16" style="display: none">package mapper
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
@@ -778,7 +897,36 @@ func UserToResponseDTO(user *domain.User) *dto.UserResponse <span class="cov8" t
 }</span>
 </pre>
 		
-		<pre class="file" id="file15" style="display: none">package repository
+		<pre class="file" id="file17" style="display: none">package middlewares
+
+import (
+        "net/http"
+
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/auth"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
+        "github.com/golang-jwt/jwt/v5"
+        echojwt "github.com/labstack/echo-jwt/v4"
+        "github.com/labstack/echo/v4"
+)
+
+func JWT(cfg *config.Config, responseBuilder *response.Builder) echo.MiddlewareFunc <span class="cov0" title="0">{
+        config := echojwt.Config{
+                NewClaimsFunc: func(c echo.Context) jwt.Claims </span><span class="cov0" title="0">{
+                        return new(auth.TokenCustomClaims)
+                }</span>,
+                SigningKey: []byte(cfg.JwtConfig.JWTSecret),
+                ContextKey: "userId",
+                ErrorHandler: func(c echo.Context, err error) error <span class="cov0" title="0">{
+                        return c.JSON(http.StatusUnauthorized, responseBuilder.Error(apperrors.ErrUnauthorized))
+                }</span>,
+        }
+        <span class="cov0" title="0">return echojwt.WithConfig(config)</span>
+}
+</pre>
+		
+		<pre class="file" id="file18" style="display: none">package repository
 
 import (
         "context"
@@ -873,7 +1021,7 @@ func (r *hangoutRepository) GetHangoutsByUserID(ctx context.Context, userID uuid
 }
 </pre>
 		
-		<pre class="file" id="file16" style="display: none">package repository
+		<pre class="file" id="file19" style="display: none">package repository
 
 import (
         "context"
@@ -914,33 +1062,41 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*dom
 }
 </pre>
 		
-		<pre class="file" id="file17" style="display: none">package router
+		<pre class="file" id="file20" style="display: none">package router
 
 import (
         "net/http"
 
         _ "github.com/Ernestgio/Hangout-Planner/services/hangout/api"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
+        "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/middlewares"
         "github.com/labstack/echo/v4"
         echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func NewRouter(e *echo.Echo, authhandler handlers.AuthHandler) <span class="cov0" title="0">{
-        e.GET("/healthz", func(c echo.Context) error </span><span class="cov0" title="0">{
+func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler) <span class="cov0" title="0">{
+        e.GET(constants.HealthCheckRoute, func(c echo.Context) error </span><span class="cov0" title="0">{
                 return c.String(http.StatusOK, "OK")
         }</span>)
 
-        <span class="cov0" title="0">e.GET("/swagger/*", echoSwagger.WrapHandler)
+        <span class="cov0" title="0">e.GET(constants.SwaggerRoute, echoSwagger.WrapHandler)
 
         // Auth routes
-        authRoute := e.Group("/auth")
-        authRoute.POST("/signup", authhandler.SignUp)
-        authRoute.POST("/signin", authhandler.SignIn)</span>
+        authRoutes := e.Group(constants.AuthRoutes)
+        authRoutes.POST("/signup", authHandler.SignUp)
+        authRoutes.POST("/signin", authHandler.SignIn)
 
+        // hangout routes
+        hangoutRoutes := e.Group(constants.HangoutRoutes)
+        hangoutRoutes.Use(middlewares.JWT(cfg, responseBuilder))
+        hangoutRoutes.POST("/", hangoutHandler.CreateHangout)</span>
 }
 </pre>
 		
-		<pre class="file" id="file18" style="display: none">package services
+		<pre class="file" id="file21" style="display: none">package services
 
 import (
         "context"
@@ -1008,7 +1164,7 @@ func (s *authService) SignInUser(ctx context.Context, request *dto.SignInRequest
 }
 </pre>
 		
-		<pre class="file" id="file19" style="display: none">package services
+		<pre class="file" id="file22" style="display: none">package services
 
 import (
         "context"
@@ -1126,7 +1282,7 @@ func (s *hangoutService) GetHangoutsByUserID(ctx context.Context, userID uuid.UU
 }
 </pre>
 		
-		<pre class="file" id="file20" style="display: none">package services
+		<pre class="file" id="file23" style="display: none">package services
 
 import (
         "context"
@@ -1194,7 +1350,7 @@ func (s *userService) GetUserByEmail(ctx context.Context, email string) (*domain
 }</span>
 </pre>
 		
-		<pre class="file" id="file21" style="display: none">package utils
+		<pre class="file" id="file24" style="display: none">package utils
 
 import (
         "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -1236,7 +1392,7 @@ func (b *bcryptUtils) GenerateFromPassword(password string) (string, error) <spa
 }
 </pre>
 		
-		<pre class="file" id="file22" style="display: none">package utils
+		<pre class="file" id="file25" style="display: none">package utils
 
 import (
         "time"

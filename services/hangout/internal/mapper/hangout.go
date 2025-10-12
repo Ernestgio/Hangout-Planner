@@ -44,6 +44,7 @@ func HangoutToDetailResponseDTO(hangout *domain.Hangout) *dto.HangoutDetailRespo
 		Description: hangout.Description,
 		Date:        hangout.Date,
 		Status:      hangout.Status,
+		CreatedAt:   hangout.CreatedAt,
 	}
 }
 

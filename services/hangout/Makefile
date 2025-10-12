@@ -23,7 +23,7 @@ lint:
 
 ## Generate swagger docs (swag init)
 swag:
-	swag init -g main.go -o api
+	swag init -g main.go -o api --parseDependency --parseInternal
 
 
 ## Build the binary
