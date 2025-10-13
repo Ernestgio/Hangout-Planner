@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Ernestgio/Hangout-Planner/pkg/shared/enums"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
@@ -246,31 +248,43 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 	ctx := context.Background()
 	hangoutID := uuid.New()
 	userID := uuid.New()
-	req := &dto.UpdateHangoutRequest{Title: "New Title"}
+	newTitle := "New Title"
+	newDateStr := "2025-12-25 18:00:00.000"
 	dbError := errors.New("db error")
 
 	testCases := []struct {
 		name        string
+		request     *dto.UpdateHangoutRequest
 		setupMock   func(repo *MockHangoutRepository, sqlMock sqlmock.Sqlmock)
 		checkResult func(t *testing.T, res *dto.HangoutDetailResponse, err error)
 	}{
 		{
 			name: "success",
+			request: &dto.UpdateHangoutRequest{
+				Title:  newTitle,
+				Date:   newDateStr,
+				Status: enums.StatusConfirmed,
+			},
 			setupMock: func(repo *MockHangoutRepository, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo).Once()
 				repo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old Title"}, nil).Once()
-				repo.On("UpdateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool { return h.Title == "New Title" })).Return(&domain.Hangout{ID: hangoutID, Title: "New Title"}, nil).Once()
+				repo.On("UpdateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool { return h.Title == newTitle })).Return(&domain.Hangout{ID: hangoutID, Title: newTitle}, nil).Once()
 				sqlMock.ExpectCommit()
 			},
 			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, res)
-				require.Equal(t, "New Title", res.Title)
+				require.Equal(t, newTitle, res.Title)
 			},
 		},
 		{
 			name: "hangout not found",
+			request: &dto.UpdateHangoutRequest{
+				Title:  newTitle,
+				Date:   newDateStr,
+				Status: enums.StatusConfirmed,
+			},
 			setupMock: func(repo *MockHangoutRepository, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo).Once()
@@ -279,11 +293,52 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 			},
 			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
 				require.Error(t, err)
-				require.ErrorIs(t, err, gorm.ErrRecordNotFound)
+				require.ErrorIs(t, err, apperrors.ErrNotFound)
+			},
+		},
+		{
+			name: "get hangout by id returns generic db error",
+			request: &dto.UpdateHangoutRequest{
+				Title:  newTitle,
+				Date:   newDateStr,
+				Status: enums.StatusConfirmed,
+			},
+			setupMock: func(repo *MockHangoutRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				repo.On("WithTx", mock.Anything).Return(repo).Once()
+				repo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, dbError).Once()
+				sqlMock.ExpectRollback()
+			},
+			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+			},
+		},
+		{
+			name: "mapper fails on invalid date format",
+			request: &dto.UpdateHangoutRequest{
+				Title: newTitle,
+				Date:  "invalid-date",
+			},
+			setupMock: func(repo *MockHangoutRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				repo.On("WithTx", mock.Anything).Return(repo).Once()
+				repo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
+				sqlMock.ExpectRollback()
+			},
+			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				var parseErr *time.ParseError
+				require.ErrorAs(t, err, &parseErr)
 			},
 		},
 		{
 			name: "update fails",
+			request: &dto.UpdateHangoutRequest{
+				Title:  newTitle,
+				Date:   newDateStr,
+				Status: enums.StatusConfirmed,
+			},
 			setupMock: func(repo *MockHangoutRepository, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo).Once()
@@ -305,7 +360,7 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 			service := services.NewHangoutService(db, mockRepo)
 			tc.setupMock(mockRepo, sqlMock)
 
-			result, err := service.UpdateHangout(ctx, hangoutID, userID, req)
+			result, err := service.UpdateHangout(ctx, hangoutID, userID, tc.request)
 			tc.checkResult(t, result, err)
 			mockRepo.AssertExpectations(t)
 			require.NoError(t, sqlMock.ExpectationsWereMet())

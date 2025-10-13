@@ -2,9 +2,11 @@ package services
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Ernestgio/Hangout-Planner/pkg/shared/enums"
 
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
@@ -69,11 +71,15 @@ func (s *hangoutService) UpdateHangout(ctx context.Context, id uuid.UUID, userID
 
 		existingHangout, err := txRepo.GetHangoutByID(ctx, id, userID)
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return apperrors.ErrNotFound
+			}
 			return err
 		}
 
-		if req.Title != "" {
-			existingHangout.Title = req.Title
+		err = mapper.ApplyUpdateToHangout(existingHangout, req)
+		if err != nil {
+			return err
 		}
 
 		updatedHangout, err = txRepo.UpdateHangout(ctx, existingHangout)

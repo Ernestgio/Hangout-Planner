@@ -11,14 +11,14 @@ type CreateHangoutRequest struct {
 	Title       string              `json:"title" validate:"required"`
 	Description *string             `json:"description"`
 	Date        string              `json:"date" validate:"datetime=2006-01-02 15:04:05.000"`
-	Status      enums.HangoutStatus `json:"status"`
+	Status      enums.HangoutStatus `json:"status" validate:"oneof=PLANNING CONFIRMED EXECUTED CANCELLED"`
 }
 
 type UpdateHangoutRequest struct {
 	Title       string              `json:"title" validate:"required"`
 	Description *string             `json:"description"`
 	Date        string              `json:"date" validate:"datetime=2006-01-02 15:04:05.000"`
-	Status      enums.HangoutStatus `json:"status"`
+	Status      enums.HangoutStatus `json:"status" validate:"oneof=PLANNING CONFIRMED EXECUTED CANCELLED"`
 }
 
 type HangoutDetailResponse struct {

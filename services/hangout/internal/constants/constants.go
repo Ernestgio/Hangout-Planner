@@ -39,6 +39,7 @@ const (
 	UserSignedUpSuccessfully   = "User created successfully."
 	UserSignedInSuccessfully   = "User signed in successfully."
 	HangoutCreatedSuccessfully = "Hangout created successfully."
+	HangoutUpdatedSuccessfully = "Hangout updated successfully."
 
 	// Error message constants
 	ProdErrorMessage = "An unexpected error occurred. Please try again later."

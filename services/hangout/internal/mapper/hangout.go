@@ -3,6 +3,7 @@ package mapper
 import (
 	"time"
 
+	"github.com/Ernestgio/Hangout-Planner/pkg/shared/enums"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 
@@ -23,18 +24,22 @@ func HangoutCreateRequestToModel(request *dto.CreateHangoutRequest) (*domain.Han
 	}, nil
 }
 
-func HangoutUpdateRequestToModel(request *dto.UpdateHangoutRequest) (*domain.Hangout, error) {
-	parsedDate, err := time.Parse(constants.DateFormat, request.Date)
-	if err != nil {
-		return nil, err
+func ApplyUpdateToHangout(hangout *domain.Hangout, req *dto.UpdateHangoutRequest) error {
+	if req.Title != "" {
+		hangout.Title = req.Title
 	}
-	return &domain.Hangout{
-		Title:       request.Title,
-		Description: request.Description,
-		Date:        parsedDate,
-		Status:      request.Status,
-	}, nil
+	hangout.Status = enums.HangoutStatus(req.Status)
+	parsedDate, err := time.Parse(constants.DateFormat, req.Date)
+	if err != nil {
+		return err
+	}
+	hangout.Date = parsedDate
 
+	if req.Description != nil {
+		hangout.Description = req.Description
+	}
+
+	return nil
 }
 
 func HangoutToDetailResponseDTO(hangout *domain.Hangout) *dto.HangoutDetailResponse {

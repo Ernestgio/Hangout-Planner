@@ -66,51 +66,63 @@ func TestHangoutCreateRequestToModel(t *testing.T) {
 	}
 }
 
-func TestHangoutUpdateRequestToModel(t *testing.T) {
-	validTimeStr := "2025-11-20 18:30:00.000"
-	parsedTime, _ := time.Parse(constants.DateFormat, validTimeStr)
+func TestApplyUpdateToHangout(t *testing.T) {
+	initialDate := time.Now().Add(-24 * time.Hour)
+	newDateStr := "2025-12-25 18:00:00.000"
+	parsedNewDate, _ := time.Parse(constants.DateFormat, newDateStr)
 
 	testCases := []struct {
-		name        string
-		request     *dto.UpdateHangoutRequest
-		expectError bool
-		checkResult func(t *testing.T, hangout *domain.Hangout, err error)
+		name           string
+		initialHangout *domain.Hangout
+		request        *dto.UpdateHangoutRequest
+		expectError    bool
+		checkResult    func(t *testing.T, hangout *domain.Hangout)
 	}{
 		{
-			name: "success",
+			name: "success: full update",
+			initialHangout: &domain.Hangout{
+				ID:    uuid.New(),
+				Title: "Old Title",
+				Date:  initialDate,
+			},
 			request: &dto.UpdateHangoutRequest{
-				Title:       "Updated Hangout",
-				Description: stringPtr("Updated description."),
-				Date:        validTimeStr,
+				Title:       "New Title",
+				Description: stringPtr("New Description"),
+				Date:        newDateStr,
 				Status:      enums.StatusConfirmed,
 			},
 			expectError: false,
-			checkResult: func(t *testing.T, hangout *domain.Hangout, err error) {
-				require.NoError(t, err)
-				require.NotNil(t, hangout)
-				require.Equal(t, "Updated Hangout", hangout.Title)
-				require.Equal(t, "Updated description.", *hangout.Description)
-				require.Equal(t, parsedTime, hangout.Date)
+			checkResult: func(t *testing.T, hangout *domain.Hangout) {
+				require.Equal(t, "New Title", hangout.Title)
+				require.Equal(t, "New Description", *hangout.Description)
+				require.Equal(t, parsedNewDate, hangout.Date)
 				require.Equal(t, enums.StatusConfirmed, hangout.Status)
 			},
 		},
 		{
-			name: "invalid date format",
+			name: "error: invalid date format",
+			initialHangout: &domain.Hangout{
+				ID: uuid.New(),
+			},
 			request: &dto.UpdateHangoutRequest{
-				Date: "2025/11/20",
+				Date: "invalid-date-format",
 			},
 			expectError: true,
-			checkResult: func(t *testing.T, hangout *domain.Hangout, err error) {
-				require.Error(t, err)
-				require.Nil(t, hangout)
+			checkResult: func(t *testing.T, hangout *domain.Hangout) {
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			hangout, err := mapper.HangoutUpdateRequestToModel(tc.request)
-			tc.checkResult(t, hangout, err)
+			err := mapper.ApplyUpdateToHangout(tc.initialHangout, tc.request)
+
+			if tc.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				tc.checkResult(t, tc.initialHangout)
+			}
 		})
 	}
 }

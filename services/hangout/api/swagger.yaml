@@ -56,6 +56,19 @@ definitions:
     - name
     - password
     type: object
+  dto.UpdateHangoutRequest:
+    properties:
+      date:
+        type: string
+      description:
+        type: string
+      status:
+        $ref: '#/definitions/enums.HangoutStatus'
+      title:
+        type: string
+    required:
+    - title
+    type: object
   dto.UserResponse:
     properties:
       email:
@@ -209,6 +222,56 @@ paths:
       security:
       - BearerAuth: []
       summary: Create Hangout
+      tags:
+      - Hangouts
+  /hangouts/{hangout_id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing hangout for the authenticated user.
+      parameters:
+      - description: Hangout ID
+        in: path
+        name: hangout_id
+        required: true
+        type: string
+      - description: Hangout update data
+        in: body
+        name: hangout
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateHangoutRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Hangout updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.HangoutDetailResponse'
+              type: object
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "404":
+          description: resource not found
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Hangout
       tags:
       - Hangouts
 securityDefinitions:
