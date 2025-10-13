@@ -1,9 +1,11 @@
 package services_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
@@ -15,128 +17,155 @@ import (
 )
 
 func TestUserService_CreateUser(t *testing.T) {
-	mockUserRepo := new(MockUserRepository)
-	mockBcrypt := new(MockBcryptUtils)
-	userService := services.NewUserService(mockUserRepo, mockBcrypt)
+	ctx := context.Background()
+	req := dto.CreateUserRequest{
+		Name:     "Test User",
+		Email:    "test@example.com",
+		Password: "password123",
+	}
+	dbError := errors.New("db error")
+	bcryptError := errors.New("bcrypt error")
 
-	t.Run("success", func(t *testing.T) {
-		req := dto.CreateuserRequest{
-			Name:     "Test User",
-			Email:    "test@example.com",
-			Password: "password123",
-		}
-		hashedPassword := "hashed_password"
+	testCases := []struct {
+		name        string
+		setupMocks  func(repo *MockUserRepository, bcrypt *MockBcryptUtils, sqlMock sqlmock.Sqlmock)
+		checkResult func(t *testing.T, user *domain.User, err error)
+	}{
+		{
+			name: "success",
+			setupMocks: func(repo *MockUserRepository, bcrypt *MockBcryptUtils, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				repo.On("WithTx", mock.Anything).Return(repo).Once()
+				repo.On("GetUserByEmail", ctx, req.Email).Return(nil, gorm.ErrRecordNotFound).Once()
+				bcrypt.On("GenerateFromPassword", req.Password).Return("hashed", nil).Once()
+				repo.On("CreateUser", ctx, mock.AnythingOfType("*domain.User")).Run(func(args mock.Arguments) {
+					userArg := args.Get(1).(*domain.User)
+					userArg.ID = uuid.New()
+				}).Return(nil).Once()
+				sqlMock.ExpectCommit()
+			},
+			checkResult: func(t *testing.T, user *domain.User, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, user)
+				require.NotEqual(t, uuid.Nil, user.ID)
+			},
+		},
+		{
+			name: "user already exists",
+			setupMocks: func(repo *MockUserRepository, bcrypt *MockBcryptUtils, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				repo.On("WithTx", mock.Anything).Return(repo).Once()
+				repo.On("GetUserByEmail", ctx, req.Email).Return(&domain.User{}, nil).Once()
+				sqlMock.ExpectRollback()
+			},
+			checkResult: func(t *testing.T, user *domain.User, err error) {
+				require.Error(t, err)
+				require.ErrorIs(t, err, apperrors.ErrUserAlreadyExists)
+			},
+		},
+		{
+			name: "bcrypt fails",
+			setupMocks: func(repo *MockUserRepository, bcrypt *MockBcryptUtils, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				repo.On("WithTx", mock.Anything).Return(repo).Once()
+				repo.On("GetUserByEmail", ctx, req.Email).Return(nil, gorm.ErrRecordNotFound).Once()
+				bcrypt.On("GenerateFromPassword", req.Password).Return("", bcryptError).Once()
+				sqlMock.ExpectRollback()
+			},
+			checkResult: func(t *testing.T, user *domain.User, err error) {
+				require.Error(t, err)
+				require.Equal(t, bcryptError, err)
+			},
+		},
+		{
+			name: "repository create fails",
+			setupMocks: func(repo *MockUserRepository, bcrypt *MockBcryptUtils, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				repo.On("WithTx", mock.Anything).Return(repo).Once()
+				repo.On("GetUserByEmail", ctx, req.Email).Return(nil, gorm.ErrRecordNotFound).Once()
+				bcrypt.On("GenerateFromPassword", req.Password).Return("hashed", nil).Once()
+				repo.On("CreateUser", ctx, mock.AnythingOfType("*domain.User")).Return(dbError).Once()
+				sqlMock.ExpectRollback()
+			},
+			checkResult: func(t *testing.T, user *domain.User, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+			},
+		},
+	}
 
-		mockUserRepo.On("GetUserByEmail", req.Email).Return(nil, gorm.ErrRecordNotFound).Once()
-		mockBcrypt.On("GenerateFromPassword", req.Password).Return(hashedPassword, nil).Once()
-		mockUserRepo.On("CreateUser", mock.AnythingOfType("*domain.User")).
-			Return(nil).
-			Run(func(args mock.Arguments) {
-				userArg := args.Get(0).(*domain.User)
-				userArg.ID = uuid.New()
-			}).Once()
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			db, sqlMock := setupDB(t)
+			mockRepo := new(MockUserRepository)
+			mockBcrypt := new(MockBcryptUtils)
+			service := services.NewUserService(db, mockRepo, mockBcrypt)
+			tc.setupMocks(mockRepo, mockBcrypt, sqlMock)
 
-		createdUser, err := userService.CreateUser(req)
+			user, err := service.CreateUser(ctx, req)
+			tc.checkResult(t, user, err)
 
-		require.NoError(t, err)
-		require.NotNil(t, createdUser)
-		require.NotEqual(t, uuid.Nil, createdUser.ID)
-		require.Equal(t, req.Name, createdUser.Name)
-		require.Equal(t, req.Email, createdUser.Email)
-		require.Equal(t, hashedPassword, createdUser.Password)
-		mockUserRepo.AssertExpectations(t)
-		mockBcrypt.AssertExpectations(t)
-	})
-
-	t.Run("user already exists", func(t *testing.T) {
-		req := dto.CreateuserRequest{Email: "exists@example.com"}
-		existingUser := &domain.User{Email: req.Email}
-
-		mockUserRepo.On("GetUserByEmail", req.Email).Return(existingUser, nil).Once()
-
-		createdUser, err := userService.CreateUser(req)
-
-		require.Error(t, err)
-		require.ErrorIs(t, err, apperrors.ErrUserAlreadyExists)
-		require.Nil(t, createdUser)
-		mockUserRepo.AssertExpectations(t)
-	})
-
-	t.Run("bcrypt fails", func(t *testing.T) {
-		req := dto.CreateuserRequest{Email: "test@example.com", Password: "password123"}
-		bcryptError := errors.New("bcrypt error")
-
-		mockUserRepo.On("GetUserByEmail", req.Email).Return(nil, gorm.ErrRecordNotFound).Once()
-		mockBcrypt.On("GenerateFromPassword", req.Password).Return("", bcryptError).Once()
-
-		createdUser, err := userService.CreateUser(req)
-
-		require.Error(t, err)
-		require.Equal(t, bcryptError, err)
-		require.Nil(t, createdUser)
-		mockUserRepo.AssertExpectations(t)
-		mockBcrypt.AssertExpectations(t)
-	})
-
-	t.Run("repository create fails", func(t *testing.T) {
-		req := dto.CreateuserRequest{Email: "test@example.com", Password: "password12p3"}
-		repoError := errors.New("repo error")
-		hashedPassword := "hashed_password"
-
-		mockUserRepo.On("GetUserByEmail", req.Email).Return(nil, gorm.ErrRecordNotFound).Once()
-		mockBcrypt.On("GenerateFromPassword", req.Password).Return(hashedPassword, nil).Once()
-		mockUserRepo.On("CreateUser", mock.AnythingOfType("*domain.User")).Return(repoError).Once()
-
-		createdUser, err := userService.CreateUser(req)
-
-		require.Error(t, err)
-		require.Equal(t, repoError, err)
-		require.Nil(t, createdUser)
-		mockUserRepo.AssertExpectations(t)
-		mockBcrypt.AssertExpectations(t)
-	})
+			mockRepo.AssertExpectations(t)
+			mockBcrypt.AssertExpectations(t)
+			require.NoError(t, sqlMock.ExpectationsWereMet())
+		})
+	}
 }
 
 func TestUserService_GetUserByEmail(t *testing.T) {
-	mockUserRepo := new(MockUserRepository)
-	mockBcrypt := new(MockBcryptUtils)
-	userService := services.NewUserService(mockUserRepo, mockBcrypt)
+	ctx := context.Background()
+	email := "test@example.com"
+	dbError := errors.New("db error")
 
-	t.Run("success", func(t *testing.T) {
-		email := "found@example.com"
-		expectedUser := &domain.User{ID: uuid.New(), Email: email}
-		mockUserRepo.On("GetUserByEmail", email).Return(expectedUser, nil).Once()
+	testCases := []struct {
+		name        string
+		setupMock   func(repo *MockUserRepository)
+		checkResult func(t *testing.T, user *domain.User, err error)
+	}{
+		{
+			name: "success",
+			setupMock: func(repo *MockUserRepository) {
+				repo.On("GetUserByEmail", ctx, email).Return(&domain.User{Email: email}, nil).Once()
+			},
+			checkResult: func(t *testing.T, user *domain.User, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, user)
+				require.Equal(t, email, user.Email)
+			},
+		},
+		{
+			name: "not found",
+			setupMock: func(repo *MockUserRepository) {
+				repo.On("GetUserByEmail", ctx, email).Return(nil, gorm.ErrRecordNotFound).Once()
+			},
+			checkResult: func(t *testing.T, user *domain.User, err error) {
+				require.Error(t, err)
+				require.ErrorIs(t, err, gorm.ErrRecordNotFound)
+				require.Nil(t, user)
+			},
+		},
+		{
+			name: "database error",
+			setupMock: func(repo *MockUserRepository) {
+				repo.On("GetUserByEmail", ctx, email).Return(nil, dbError).Once()
+			},
+			checkResult: func(t *testing.T, user *domain.User, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+				require.Nil(t, user)
+			},
+		},
+	}
 
-		user, err := userService.GetUserByEmail(email)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockRepo := new(MockUserRepository)
+			service := services.NewUserService(nil, mockRepo, nil)
+			tc.setupMock(mockRepo)
 
-		require.NoError(t, err)
-		require.NotNil(t, user)
-		require.Equal(t, expectedUser, user)
-		mockUserRepo.AssertExpectations(t)
-	})
-
-	t.Run("not found", func(t *testing.T) {
-		email := "notfound@example.com"
-		mockUserRepo.On("GetUserByEmail", email).Return(nil, gorm.ErrRecordNotFound).Once()
-
-		user, err := userService.GetUserByEmail(email)
-
-		require.Error(t, err)
-		require.ErrorIs(t, err, gorm.ErrRecordNotFound)
-		require.Nil(t, user)
-		mockUserRepo.AssertExpectations(t)
-	})
-
-	t.Run("generic db error", func(t *testing.T) {
-		email := "db-error@example.com"
-		dbErr := errors.New("some database error")
-		mockUserRepo.On("GetUserByEmail", email).Return(nil, dbErr).Once()
-
-		user, err := userService.GetUserByEmail(email)
-
-		require.Error(t, err)
-		require.Equal(t, dbErr, err)
-		require.Nil(t, user)
-		mockUserRepo.AssertExpectations(t)
-	})
+			user, err := service.GetUserByEmail(ctx, email)
+			tc.checkResult(t, user, err)
+			mockRepo.AssertExpectations(t)
+		})
+	}
 }

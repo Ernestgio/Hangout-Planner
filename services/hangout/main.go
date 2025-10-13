@@ -13,6 +13,10 @@ import (
 // @host 			localhost:9000
 // @BasePath 		/
 
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer" followed by a space and a JWT.
 func main() {
 	// 1. Load configuration
 	cfg, err := config.Load()

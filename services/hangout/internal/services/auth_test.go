@@ -1,6 +1,7 @@
 package services_test
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -17,6 +18,7 @@ func TestAuthService_SignUser(t *testing.T) {
 	mockJwtSvc := new(MockJWTUtils)
 	mockBcrypt := new(MockBcryptUtils)
 	newUserID := uuid.New()
+	ctx := context.Background()
 
 	tests := map[string]struct {
 		setupMock func(m *MockUserService)
@@ -26,7 +28,7 @@ func TestAuthService_SignUser(t *testing.T) {
 	}{
 		"User creation fails": {
 			setupMock: func(m *MockUserService) {
-				m.On("CreateUser", mock.Anything).
+				m.On("CreateUser", ctx, mock.Anything).
 					Return(nil, errors.New("db error"))
 			},
 			input:    &dto.SignUpRequest{Name: "Alice", Email: "alice@example.com", Password: "secret"},
@@ -35,7 +37,7 @@ func TestAuthService_SignUser(t *testing.T) {
 		},
 		"User creation succeeds": {
 			setupMock: func(m *MockUserService) {
-				m.On("CreateUser", mock.Anything).
+				m.On("CreateUser", ctx, mock.Anything).
 					Return(&domain.User{ID: newUserID, Email: "bob@example.com"}, nil)
 			},
 			input:    &dto.SignUpRequest{Name: "Bob", Email: "bob@example.com", Password: "password"},
@@ -50,7 +52,7 @@ func TestAuthService_SignUser(t *testing.T) {
 			tt.setupMock(mockUserSvc)
 
 			authSvc := services.NewAuthService(mockUserSvc, mockJwtSvc, mockBcrypt)
-			user, err := authSvc.SignUser(tt.input)
+			user, err := authSvc.SignUser(ctx, tt.input)
 
 			if tt.wantErr != "" {
 				require.Error(t, err)
@@ -79,6 +81,7 @@ func TestAuthService_SignInUser(t *testing.T) {
 		Email:    correctEmail,
 		Password: "hashed-password",
 	}
+	ctx := context.Background()
 
 	tests := map[string]struct {
 		setupUserMock   func(m *MockUserService)
@@ -90,7 +93,7 @@ func TestAuthService_SignInUser(t *testing.T) {
 	}{
 		"Failure_UserNotFound": {
 			setupUserMock: func(m *MockUserService) {
-				m.On("GetUserByEmail", "notfound@email.com").Return(nil, nil)
+				m.On("GetUserByEmail", ctx, "notfound@email.com").Return(nil, nil)
 			},
 			setupBcryptMock: func(m *MockBcryptUtils) {},
 			setupJWTMock:    func(m *MockJWTUtils) {},
@@ -100,7 +103,7 @@ func TestAuthService_SignInUser(t *testing.T) {
 		},
 		"Failure_UserServiceError": {
 			setupUserMock: func(m *MockUserService) {
-				m.On("GetUserByEmail", correctEmail).Return(nil, errors.New("db connection error"))
+				m.On("GetUserByEmail", ctx, correctEmail).Return(nil, errors.New("db connection error"))
 			},
 			setupBcryptMock: func(m *MockBcryptUtils) {},
 			setupJWTMock:    func(m *MockJWTUtils) {},
@@ -110,7 +113,7 @@ func TestAuthService_SignInUser(t *testing.T) {
 		},
 		"Failure_PasswordMismatch": {
 			setupUserMock: func(m *MockUserService) {
-				m.On("GetUserByEmail", correctEmail).Return(validUser, nil)
+				m.On("GetUserByEmail", ctx, correctEmail).Return(validUser, nil)
 			},
 			setupBcryptMock: func(m *MockBcryptUtils) {
 				m.On("CompareHashAndPassword", validUser.Password, "WrongPassword").
@@ -123,7 +126,7 @@ func TestAuthService_SignInUser(t *testing.T) {
 		},
 		"Failure_JWTGenerationError": {
 			setupUserMock: func(m *MockUserService) {
-				m.On("GetUserByEmail", correctEmail).Return(validUser, nil)
+				m.On("GetUserByEmail", ctx, correctEmail).Return(validUser, nil)
 			},
 			setupBcryptMock: func(m *MockBcryptUtils) {
 				m.On("CompareHashAndPassword", validUser.Password, correctPassword).Return(nil)
@@ -137,7 +140,7 @@ func TestAuthService_SignInUser(t *testing.T) {
 		},
 		"Success_ValidCredentials": {
 			setupUserMock: func(m *MockUserService) {
-				m.On("GetUserByEmail", correctEmail).Return(validUser, nil)
+				m.On("GetUserByEmail", ctx, correctEmail).Return(validUser, nil)
 			},
 			setupBcryptMock: func(m *MockBcryptUtils) {
 				m.On("CompareHashAndPassword", validUser.Password, correctPassword).Return(nil)
@@ -162,7 +165,7 @@ func TestAuthService_SignInUser(t *testing.T) {
 			tt.setupJWTMock(mockJwtSvc)
 
 			authSvc := services.NewAuthService(mockUserSvc, mockJwtSvc, mockBcrypt)
-			response, err := authSvc.SignInUser(tt.input)
+			response, err := authSvc.SignInUser(ctx, tt.input)
 
 			if tt.wantErr != nil {
 				require.Error(t, err)

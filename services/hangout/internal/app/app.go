@@ -50,21 +50,27 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	// Repository Layer
 	userRepo := repository.NewUserRepository(dbConn)
+	hangoutRepo := repository.NewHangoutRepository(dbConn)
 
 	// Service Layer
-	userService := services.NewUserService(userRepo, bcryptUtils)
+	userService := services.NewUserService(dbConn, userRepo, bcryptUtils)
 	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
+	hangoutService := services.NewHangoutService(dbConn, hangoutRepo)
 
 	// handler Layer
 	authhandler := handlers.NewAuthHandler(authService, responseBuilder)
+	hangoutHandler := handlers.NewHangoutHandler(hangoutService, responseBuilder)
 
 	// Server Setup
 	e := echo.New()
 	e.Validator = validator.NewValidator()
+
+	// middleware
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
 	e.Use(middleware.Gzip())
+	e.Use(middleware.Decompress())
 
-	router.NewRouter(e, authhandler)
+	router.NewRouter(e, cfg, responseBuilder, authhandler, hangoutHandler)
 
 	return &App{
 		server: e,

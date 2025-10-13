@@ -1,4 +1,4 @@
-🌍 Hangout Planner — Scalable Go Backend Platform
+# 🌍 Hangout Planner — Scalable Go Backend Platform
 
 A **production-grade backend platform** for planning and managing hangouts — built in **Go** with **Echo**, **GORM**, and **MySQL**.  
 Designed with **clean architecture**, **SOLID principles**, and **future-proof modular design** for microservices scalability.
@@ -88,6 +88,7 @@ make up
 - Standardized JSON response builder
 - Centralized constants & sentinel errors
 - Dependency injection (interfaces for all layers)
+- Context propagation across all layers (for timeouts, cancellation, and future observability/tracing)
 
 ## 🧭 Roadmap
 
@@ -103,15 +104,16 @@ make up
 ### 🌐 Long-Term Vision
 
 - Full Hangout CRUD & collaboration
-- Excel export microservice
-- Notification scheduling
-- AWS S3 integration (LocalStack support)
-- File upload feature (photos attachment for hangout memories!)
+- Excel export service
+  - RabbitMQ service interconnect
+- Notification Emails
+- File service
+  - File upload feature (photos attachment for hangout memories!)
+  - Memcached cluster caching presigned URL
+  - AWS S3 integration (LocalStack support)
+  - gRPC communication between fileservice and hangout service
 - Multi db for microservices
 - shared module in pkg/shared
-- RabbitMQ service interconnect
-- Memcached cluster caching
 - OAuth / federated logins
-- File uploads for hangout memories
 - Nginx API gateway + HTTPS (Let’s Encrypt)
-- Context propagation refactor + Advanced observability: metrics, tracing, logging
+- Advanced observability: metrics, tracing, logging

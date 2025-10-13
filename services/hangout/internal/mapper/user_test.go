@@ -11,13 +11,13 @@ import (
 	mapper "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
 )
 
-func TestCreateuserRequestToModel(t *testing.T) {
-	req := dto.CreateuserRequest{
+func TestCreateUserRequestToModel(t *testing.T) {
+	req := dto.CreateUserRequest{
 		Name:  "Alice",
 		Email: "alice@example.com",
 	}
 
-	user := mapper.CreateuserRequestToModel(req)
+	user := mapper.CreateUserRequestToModel(req)
 
 	assert.Equal(t, req.Name, user.Name)
 	assert.Equal(t, req.Email, user.Email)

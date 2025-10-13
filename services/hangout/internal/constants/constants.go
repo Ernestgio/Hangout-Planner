@@ -24,14 +24,22 @@ const (
 	// Application constants
 	LoggerFormat = "[${time_rfc3339}] ${method} ${host}${uri} ${status} ${latency_human}\n"
 
+	// routes constants
+	HealthCheckRoute = "/healthz"
+	SwaggerRoute     = "/swagger/*"
+	AuthRoutes       = "/auth"
+	HangoutRoutes    = "/hangouts"
+
 	//Status constants
 	SuccessStatus = "success"
 	ErrorStatus   = "error"
 	HealthCheckOK = "OK"
 
 	// message constants
-	UserSignedUpSuccessfully = "User created successfully."
-	UserSignedInSuccessfully = "User signed in successfully."
+	UserSignedUpSuccessfully   = "User created successfully."
+	UserSignedInSuccessfully   = "User signed in successfully."
+	HangoutCreatedSuccessfully = "Hangout created successfully."
+	HangoutUpdatedSuccessfully = "Hangout updated successfully."
 
 	// Error message constants
 	ProdErrorMessage = "An unexpected error occurred. Please try again later."
