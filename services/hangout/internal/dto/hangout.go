@@ -1,9 +1,8 @@
 package dto
 
 import (
-	"time"
-
 	"github.com/Ernestgio/Hangout-Planner/pkg/shared/enums"
+	"github.com/Ernestgio/Hangout-Planner/pkg/shared/types"
 	"github.com/google/uuid"
 )
 
@@ -25,14 +24,14 @@ type HangoutDetailResponse struct {
 	ID          uuid.UUID           `json:"id"`
 	Title       string              `json:"title"`
 	Description *string             `json:"description"`
-	Date        time.Time           `json:"date"`
+	Date        types.JSONTime      `json:"date"`
 	Status      enums.HangoutStatus `json:"status"`
-	CreatedAt   time.Time           `json:"created_at"`
+	CreatedAt   types.JSONTime      `json:"created_at"`
 }
 type HangoutListItemResponse struct {
 	ID        uuid.UUID           `json:"id"`
 	Title     string              `json:"title"`
-	Date      time.Time           `json:"date"`
+	Date      types.JSONTime      `json:"date"`
 	Status    enums.HangoutStatus `json:"status"`
-	CreatedAt time.Time           `json:"created_at"`
+	CreatedAt types.JSONTime      `json:"created_at"`
 }

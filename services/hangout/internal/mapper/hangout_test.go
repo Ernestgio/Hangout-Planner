@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Ernestgio/Hangout-Planner/pkg/shared/enums"
+	"github.com/Ernestgio/Hangout-Planner/pkg/shared/types"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
@@ -133,41 +134,133 @@ func TestHangoutToDetailResponseDTO(t *testing.T) {
 	hangout := &domain.Hangout{
 		ID:          hangoutID,
 		Title:       "Detail View",
-		Description: stringPtr("This is a detailed description."),
+		Description: stringPtr("Detailed description."),
 		Date:        now,
 		Status:      enums.StatusExecuted,
 		CreatedAt:   now,
 	}
 
-	response := mapper.HangoutToDetailResponseDTO(hangout)
+	testCases := []struct {
+		name        string
+		input       *domain.Hangout
+		checkResult func(t *testing.T, res *dto.HangoutDetailResponse)
+	}{
+		{
+			name:  "success",
+			input: hangout,
+			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse) {
+				require.NotNil(t, res)
+				require.Equal(t, hangoutID, res.ID)
+				require.Equal(t, "Detail View", res.Title)
+				require.NotNil(t, res.Description)
+				require.Equal(t, "Detailed description.", *res.Description)
+				require.Equal(t, types.JSONTime(now), res.Date)
+				require.Equal(t, enums.StatusExecuted, res.Status)
+				require.Equal(t, types.JSONTime(now), res.CreatedAt)
+			},
+		},
+		{
+			name:  "nil input",
+			input: nil,
+			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse) {
+				require.Nil(t, res)
+			},
+		},
+	}
 
-	require.NotNil(t, response)
-	require.Equal(t, hangoutID, response.ID)
-	require.Equal(t, "Detail View", response.Title)
-	require.Equal(t, "This is a detailed description.", *response.Description) // Dereference pointer for comparison
-	require.Equal(t, now, response.Date)
-	require.Equal(t, enums.StatusExecuted, response.Status)
-	require.Equal(t, now, response.CreatedAt)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			response := mapper.HangoutToDetailResponseDTO(tc.input)
+			tc.checkResult(t, response)
+		})
+	}
 }
-
 func TestHangoutToListItemResponseDTO(t *testing.T) {
 	hangoutID := uuid.New()
 	now := time.Now()
-	createdAt := now.Add(-1 * time.Hour)
 	hangout := &domain.Hangout{
 		ID:        hangoutID,
 		Title:     "List Item View",
 		Date:      now,
 		Status:    enums.StatusCancelled,
-		CreatedAt: createdAt,
+		CreatedAt: now,
 	}
 
-	response := mapper.HangoutToListItemResponseDTO(hangout)
+	testCases := []struct {
+		name        string
+		input       *domain.Hangout
+		checkResult func(t *testing.T, res *dto.HangoutListItemResponse)
+	}{
+		{
+			name:  "success",
+			input: hangout,
+			checkResult: func(t *testing.T, res *dto.HangoutListItemResponse) {
+				require.NotNil(t, res)
+				require.Equal(t, hangoutID, res.ID)
+				require.Equal(t, "List Item View", res.Title)
+				require.Equal(t, types.JSONTime(now), res.Date)
+				require.Equal(t, enums.StatusCancelled, res.Status)
+				require.Equal(t, types.JSONTime(now), res.CreatedAt)
+			},
+		},
+		{
+			name:  "nil input",
+			input: nil,
+			checkResult: func(t *testing.T, res *dto.HangoutListItemResponse) {
+				require.Nil(t, res)
+			},
+		},
+	}
 
-	require.NotNil(t, response)
-	require.Equal(t, hangoutID, response.ID)
-	require.Equal(t, "List Item View", response.Title)
-	require.Equal(t, now, response.Date)
-	require.Equal(t, enums.StatusCancelled, response.Status)
-	require.Equal(t, createdAt, response.CreatedAt)
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			response := mapper.HangoutToListItemResponseDTO(tc.input)
+			tc.checkResult(t, response)
+		})
+	}
+}
+
+func TestHangoutsToListItemResponseDTOs(t *testing.T) {
+	hangout1 := domain.Hangout{ID: uuid.New(), Title: "First Hangout"}
+	hangout2 := domain.Hangout{ID: uuid.New(), Title: "Second Hangout"}
+
+	testCases := []struct {
+		name          string
+		inputHangouts []domain.Hangout
+		checkResult   func(t *testing.T, res []*dto.HangoutListItemResponse)
+	}{
+		{
+			name:          "non-empty slice",
+			inputHangouts: []domain.Hangout{hangout1, hangout2},
+			checkResult: func(t *testing.T, res []*dto.HangoutListItemResponse) {
+				require.NotNil(t, res)
+				require.Len(t, res, 2)
+				require.Equal(t, hangout1.ID, res[0].ID)
+				require.Equal(t, hangout2.Title, res[1].Title)
+			},
+		},
+		{
+			name:          "empty slice",
+			inputHangouts: []domain.Hangout{},
+			checkResult: func(t *testing.T, res []*dto.HangoutListItemResponse) {
+				require.NotNil(t, res)
+				require.Len(t, res, 0)
+			},
+		},
+		{
+			name:          "nil slice",
+			inputHangouts: nil,
+			checkResult: func(t *testing.T, res []*dto.HangoutListItemResponse) {
+				require.NotNil(t, res)
+				require.Len(t, res, 0)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := mapper.HangoutsToListItemResponseDTOs(tc.inputHangouts)
+			tc.checkResult(t, result)
+		})
+	}
 }
