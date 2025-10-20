@@ -30,4 +30,5 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	hangoutRoutes.Use(middlewares.JWT(cfg, responseBuilder))
 	hangoutRoutes.POST("/", hangoutHandler.CreateHangout)
 	hangoutRoutes.PUT("/:hangout_id", hangoutHandler.UpdateHangout)
+	hangoutRoutes.GET("/:hangout_id", hangoutHandler.GetHangoutByID)
 }

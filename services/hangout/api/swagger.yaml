@@ -7,7 +7,13 @@ definitions:
       description:
         type: string
       status:
-        $ref: '#/definitions/enums.HangoutStatus'
+        allOf:
+        - $ref: '#/definitions/enums.HangoutStatus'
+        enum:
+        - PLANNING
+        - CONFIRMED
+        - EXECUTED
+        - CANCELLED
       title:
         type: string
     required:
@@ -63,7 +69,13 @@ definitions:
       description:
         type: string
       status:
-        $ref: '#/definitions/enums.HangoutStatus'
+        allOf:
+        - $ref: '#/definitions/enums.HangoutStatus'
+        enum:
+        - PLANNING
+        - CONFIRMED
+        - EXECUTED
+        - CANCELLED
       title:
         type: string
     required:
@@ -225,6 +237,49 @@ paths:
       tags:
       - Hangouts
   /hangouts/{hangout_id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a hangout by its ID for the authenticated user.
+      parameters:
+      - description: Hangout ID
+        in: path
+        name: hangout_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Hangout retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.HangoutDetailResponse'
+              type: object
+        "400":
+          description: Invalid Hangout ID
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "404":
+          description: resource not found
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Hangout by ID
+      tags:
+      - Hangouts
     put:
       consumes:
       - application/json

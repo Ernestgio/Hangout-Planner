@@ -213,6 +213,77 @@ const docTemplate = `{
             }
         },
         "/hangouts/{hangout_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a hangout by its ID for the authenticated user.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hangouts"
+                ],
+                "summary": "Get Hangout by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Hangout ID",
+                        "name": "hangout_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Hangout retrieved successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.HangoutDetailResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid Hangout ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "resource not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    }
+                }
+            },
             "put": {
                 "security": [
                     {
@@ -309,7 +380,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/enums.HangoutStatus"
+                    "enum": [
+                        "PLANNING",
+                        "CONFIRMED",
+                        "EXECUTED",
+                        "CANCELLED"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.HangoutStatus"
+                        }
+                    ]
                 },
                 "title": {
                     "type": "string"
@@ -394,7 +475,17 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
-                    "$ref": "#/definitions/enums.HangoutStatus"
+                    "enum": [
+                        "PLANNING",
+                        "CONFIRMED",
+                        "EXECUTED",
+                        "CANCELLED"
+                    ],
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/enums.HangoutStatus"
+                        }
+                    ]
                 },
                 "title": {
                     "type": "string"
