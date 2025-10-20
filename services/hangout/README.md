@@ -37,6 +37,8 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - Dependency injection via interfaces
 - Auto DB migration
 - Context propagation across all layers (for timeouts, cancellation, and future observability/tracing)
+- Full Hangout CRUD
+- Signup and Signin
 
 ### 🧪 Testing & Quality
 
@@ -57,3 +59,6 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - JWT authentication middleware
 - Pagination, filtering, sorting
 - Centralized error handling middleware
+- Redis to prevent concurrent session
+- Activity modules
+- Location tagging
