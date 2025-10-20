@@ -237,6 +237,44 @@ paths:
       tags:
       - Hangouts
   /hangouts/{hangout_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a hangout by its ID for the authenticated user.
+      parameters:
+      - description: Hangout ID
+        in: path
+        name: hangout_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Hangout deleted successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: Invalid Hangout ID
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "404":
+          description: resource not found
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Hangout
+      tags:
+      - Hangouts
     get:
       consumes:
       - application/json

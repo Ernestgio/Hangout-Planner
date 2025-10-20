@@ -41,6 +41,8 @@ const (
 	HangoutCreatedSuccessfully   = "Hangout created successfully."
 	HangoutUpdatedSuccessfully   = "Hangout updated successfully."
 	HangoutRetrievedSuccessfully = "Hangout retrieved successfully."
+	HangoutDeletedSuccessfully   = "Hangout deleted successfully."
+	HangoutsListedSuccessfully   = "Hangouts listed successfully."
 
 	// Error message constants
 	ProdErrorMessage = "An unexpected error occurred. Please try again later."

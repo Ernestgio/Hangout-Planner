@@ -23,6 +23,7 @@ type HangoutHandler interface {
 	CreateHangout(c echo.Context) error
 	UpdateHangout(c echo.Context) error
 	GetHangoutByID(c echo.Context) error
+	DeleteHangout(c echo.Context) error
 }
 
 type hangoutHandler struct {
@@ -159,4 +160,36 @@ func (h *hangoutHandler) GetHangoutByID(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
 	}
 	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.HangoutRetrievedSuccessfully, hangout))
+}
+
+// @Summary      Delete Hangout
+// @Description  Deletes a hangout by its ID for the authenticated user.
+// @Tags         Hangouts
+// @Accept       json
+// @Produce      json
+// @Param        hangout_id path string true "Hangout ID"
+// @Success      200 {object} response.StandardResponse "Hangout deleted successfully"
+// @Failure      400 {object} response.StandardResponse "Invalid Hangout ID"
+// @Failure      401 {object} response.StandardResponse "Unauthorized"
+// @Failure      404 {object} response.StandardResponse "resource not found"
+// @Failure      500 {object} response.StandardResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /hangouts/{hangout_id} [delete]
+func (h *hangoutHandler) DeleteHangout(c echo.Context) error {
+	hangoutId, err := uuid.Parse(c.Param("hangout_id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
+	}
+	ctx := c.Request().Context()
+	userToken := c.Get("userId").(*jwt.Token)
+	claims := userToken.Claims.(*auth.TokenCustomClaims)
+	userID := claims.UserID
+	err = h.hangoutService.DeleteHangout(ctx, hangoutId, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.JSON(http.StatusNotFound, h.responseBuilder.Error(apperrors.ErrNotFound))
+		}
+		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
+	}
+	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.HangoutDeletedSuccessfully, nil))
 }
