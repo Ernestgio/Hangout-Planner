@@ -7,11 +7,28 @@ definitions:
       description:
         type: string
       status:
-        $ref: '#/definitions/enums.HangoutStatus'
+        allOf:
+        - $ref: '#/definitions/enums.HangoutStatus'
+        enum:
+        - PLANNING
+        - CONFIRMED
+        - EXECUTED
+        - CANCELLED
       title:
         type: string
     required:
     - title
+    type: object
+  dto.CursorPagination:
+    properties:
+      after_id:
+        type: string
+      limit:
+        type: integer
+      sort_by:
+        type: string
+      sort_dir:
+        type: string
     type: object
   dto.HangoutDetailResponse:
     properties:
@@ -26,6 +43,30 @@ definitions:
       status:
         $ref: '#/definitions/enums.HangoutStatus'
       title:
+        type: string
+    type: object
+  dto.HangoutListItemResponse:
+    properties:
+      created_at:
+        type: string
+      date:
+        type: string
+      id:
+        type: string
+      status:
+        $ref: '#/definitions/enums.HangoutStatus'
+      title:
+        type: string
+    type: object
+  dto.PaginatedHangouts:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/dto.HangoutListItemResponse'
+        type: array
+      has_more:
+        type: boolean
+      next_cursor:
         type: string
     type: object
   dto.SignInRequest:
@@ -63,7 +104,13 @@ definitions:
       description:
         type: string
       status:
-        $ref: '#/definitions/enums.HangoutStatus'
+        allOf:
+        - $ref: '#/definitions/enums.HangoutStatus'
+        enum:
+        - PLANNING
+        - CONFIRMED
+        - EXECUTED
+        - CANCELLED
       title:
         type: string
     required:
@@ -225,6 +272,87 @@ paths:
       tags:
       - Hangouts
   /hangouts/{hangout_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Deletes a hangout by its ID for the authenticated user.
+      parameters:
+      - description: Hangout ID
+        in: path
+        name: hangout_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Hangout deleted successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: Invalid Hangout ID
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "404":
+          description: resource not found
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Hangout
+      tags:
+      - Hangouts
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a hangout by its ID for the authenticated user.
+      parameters:
+      - description: Hangout ID
+        in: path
+        name: hangout_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Hangout retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.HangoutDetailResponse'
+              type: object
+        "400":
+          description: Invalid Hangout ID
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "404":
+          description: resource not found
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Hangout by ID
+      tags:
+      - Hangouts
     put:
       consumes:
       - application/json
@@ -272,6 +400,48 @@ paths:
       security:
       - BearerAuth: []
       summary: Update Hangout
+      tags:
+      - Hangouts
+  /hangouts/list:
+    post:
+      consumes:
+      - application/json
+      description: Retrieves hangouts for the authenticated user with cursor-based
+        pagination.
+      parameters:
+      - description: Pagination parameters (limit, after_id, sort_by, sort_dir)
+        in: body
+        name: pagination
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CursorPagination'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully retrieved hangouts
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PaginatedHangouts'
+              type: object
+        "400":
+          description: Invalid pagination parameters
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Hangouts by User ID
       tags:
       - Hangouts
 securityDefinitions:

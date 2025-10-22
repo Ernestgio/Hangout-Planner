@@ -36,10 +36,13 @@ const (
 	HealthCheckOK = "OK"
 
 	// message constants
-	UserSignedUpSuccessfully   = "User created successfully."
-	UserSignedInSuccessfully   = "User signed in successfully."
-	HangoutCreatedSuccessfully = "Hangout created successfully."
-	HangoutUpdatedSuccessfully = "Hangout updated successfully."
+	UserSignedUpSuccessfully      = "User created successfully."
+	UserSignedInSuccessfully      = "User signed in successfully."
+	HangoutCreatedSuccessfully    = "Hangout created successfully."
+	HangoutUpdatedSuccessfully    = "Hangout updated successfully."
+	HangoutRetrievedSuccessfully  = "Hangout retrieved successfully."
+	HangoutDeletedSuccessfully    = "Hangout deleted successfully."
+	HangoutsRetrievedSuccessfully = "Hangouts retrieved successfully."
 
 	// Error message constants
 	ProdErrorMessage = "An unexpected error occurred. Please try again later."
@@ -52,7 +55,4 @@ const (
 	SortDirectionDesc = "desc"
 	SortByCreatedAt   = "created_at"
 	SortByDate        = "date"
-
-	// Date format
-	DateFormat = "2006-01-02 15:04:05.000"
 )

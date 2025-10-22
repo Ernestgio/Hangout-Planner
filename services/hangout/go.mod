@@ -4,7 +4,7 @@ module github.com/Ernestgio/Hangout-Planner/services/hangout
 
 require (
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20251005002838-f9a1ee3dd9f5
+	github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20251013132122-435823ff034e
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang-jwt/jwt/v5 v5.3.0

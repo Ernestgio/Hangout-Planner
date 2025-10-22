@@ -62,27 +62,37 @@ func (r *hangoutRepository) DeleteHangout(ctx context.Context, id uuid.UUID) err
 
 func (r *hangoutRepository) GetHangoutsByUserID(ctx context.Context, userID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Hangout, error) {
 	var hangouts []domain.Hangout
+	limitToFetch := pagination.GetLimit() + 1
+	sortByColumn := pagination.GetSortBy()
+	sortDir := pagination.GetSortDir()
 
 	query := r.db.WithContext(ctx).Model(&domain.Hangout{}).Where("user_id = ?", userID)
 
 	if pagination.AfterID != nil {
-		sortByColumn := pagination.GetSortBy()
-		subQuery := r.db.Model(&domain.Hangout{}).Select(sortByColumn).Where("id = ?", *pagination.AfterID)
-
-		comparisonOperator := ">="
-		if pagination.GetSortDir() == constants.SortDirectionDesc {
-			comparisonOperator = "<="
+		var cursorItem domain.Hangout
+		if err := r.db.WithContext(ctx).First(&cursorItem, "id = ?", *pagination.AfterID).Error; err != nil {
+			return nil, fmt.Errorf("cursor item not found: %w", err)
 		}
 
-		query = query.Where(fmt.Sprintf("%s %s (?)", sortByColumn, comparisonOperator), subQuery)
+		cursorValue := cursorItem.CreatedAt
+		if sortByColumn == constants.SortByDate {
+			cursorValue = cursorItem.Date
+		}
 
-		idSubQuery := r.db.Model(&domain.Hangout{}).Select("id").Where(sortByColumn+" = (?)", subQuery)
-		query = query.Where("id NOT IN (?)", idSubQuery)
+		comparisonOp := ">"
+		if sortDir == constants.SortDirectionDesc {
+			comparisonOp = "<"
+		}
+
+		query = query.Where(
+			fmt.Sprintf("(%s %s ?) OR (%s = ? AND id %s ?)", sortByColumn, comparisonOp, sortByColumn, comparisonOp),
+			cursorValue, cursorValue, cursorItem.ID,
+		)
 	}
 
 	err := query.
 		Order(pagination.GetOrderByClause()).
-		Limit(pagination.GetLimit()).
+		Limit(limitToFetch).
 		Find(&hangouts).Error
 
 	if err != nil {

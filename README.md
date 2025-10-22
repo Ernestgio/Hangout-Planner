@@ -94,12 +94,10 @@ make up
 
 ### 🧩 Short-Term Goals
 
-- Graceful shutdown improvements
 - Retryable DB connections
 - Atlas migration (up/down)
-- CORS & JWT middleware
-- Full Hangout CRUD
-- Budget, activity, and location modules
+- CORS middleware
+- Activity modules
 
 ### 🌐 Long-Term Vision
 
@@ -117,3 +115,4 @@ make up
 - OAuth / federated logins
 - Nginx API gateway + HTTPS (Let’s Encrypt)
 - Advanced observability: metrics, tracing, logging
+- Redis caching for File PreSignedURL and preventing concurrent login session
