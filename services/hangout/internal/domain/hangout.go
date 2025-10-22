@@ -20,6 +20,8 @@ type Hangout struct {
 
 	UserID *uuid.UUID `gorm:"type:char(36)"`
 	User   User       `gorm:"foreignKey:UserID"`
+
+	Activities []*Activity `gorm:"many2many:hangout_activities;"`
 }
 
 func (hangout *Hangout) BeforeCreate(tx *gorm.DB) (err error) {

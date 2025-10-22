@@ -32,14 +32,9 @@ func Connect(cfg *config.DBConfig) (*gorm.DB, func() error, error) {
 }
 
 func Migrate(db *gorm.DB) error {
-	err := db.AutoMigrate(&domain.User{})
+	err := db.AutoMigrate(&domain.User{}, &domain.Hangout{}, &domain.Activity{})
 	if err != nil {
 		return err
 	}
-	err = db.AutoMigrate(&domain.Hangout{})
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
