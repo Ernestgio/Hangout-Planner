@@ -29,6 +29,7 @@ const (
 	SwaggerRoute     = "/swagger/*"
 	AuthRoutes       = "/auth"
 	HangoutRoutes    = "/hangouts"
+	ActivityRoutes   = "/activities"
 
 	//Status constants
 	SuccessStatus = "success"

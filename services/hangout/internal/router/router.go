@@ -33,4 +33,8 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	hangoutRoutes.GET("/:hangout_id", hangoutHandler.GetHangoutByID)
 	hangoutRoutes.DELETE("/:hangout_id", hangoutHandler.DeleteHangout)
 	hangoutRoutes.POST("/list", hangoutHandler.GetHangoutsByUserID)
+
+	// activity routes
+	activityRoutes := e.Group(constants.ActivityRoutes)
+	activityRoutes.Use(middlewares.JWT(cfg, responseBuilder))
 }
