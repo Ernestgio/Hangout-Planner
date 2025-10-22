@@ -23,3 +23,5 @@ var ErrNotFound = errors.New("resource not found")
 var ErrSanitizeDescription = errors.New("failed to sanitize description")
 var ErrInvalidHangoutID = errors.New("invalid hangout ID")
 var ErrInvalidPagination = errors.New("invalid pagination")
+
+var ErrInvalidActivityID = errors.New("invalid activity ID")
