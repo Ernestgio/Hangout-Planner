@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Ernestgio/Hangout-Planner/pkg/shared/constants"
 	"github.com/Ernestgio/Hangout-Planner/pkg/shared/enums"
 	"github.com/Ernestgio/Hangout-Planner/pkg/shared/types"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"

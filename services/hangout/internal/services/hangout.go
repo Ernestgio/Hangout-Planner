@@ -114,9 +114,6 @@ func (s *hangoutService) GetHangoutsByUserID(ctx context.Context, userID uuid.UU
 		return nil, err
 	}
 
-	var response []*dto.HangoutListItemResponse
-	for _, hangout := range hangouts {
-		response = append(response, mapper.HangoutToListItemResponseDTO(&hangout))
-	}
+	response := mapper.HangoutsToListItemResponseDTOs(hangouts)
 	return response, nil
 }
