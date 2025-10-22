@@ -16,12 +16,12 @@ type UpdateActivityRequest struct {
 type ActivityListItemResponse struct {
 	ID           uuid.UUID `json:"id"`
 	Name         string    `json:"name"`
-	HangoutCount int       `json:"hangout_count"`
+	HangoutCount int64     `json:"hangout_count"`
 }
 
 type ActivityDetailResponse struct {
 	ID           uuid.UUID      `json:"id"`
 	Name         string         `json:"name"`
-	HangoutCount int            `json:"hangout_count"`
+	HangoutCount int64          `json:"hangout_count"`
 	CreatedAt    types.JSONTime `json:"created_at"`
 }

@@ -415,7 +415,7 @@ func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
 			name:       "success - first page, has more results",
 			pagination: &dto.CursorPagination{Limit: 10},
 			setupMock: func(repo *MockHangoutRepository) {
-				mockHangouts := make([]domain.Hangout, 11) // Fetch limit + 1
+				mockHangouts := make([]domain.Hangout, 11)
 				for i := range mockHangouts {
 					mockHangouts[i] = domain.Hangout{ID: uuid.New()}
 				}
@@ -424,10 +424,9 @@ func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
 			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, res)
-				require.Len(t, res.Data, 10) // Should be trimmed to limit
+				require.Len(t, res.Data, 10)
 				require.True(t, res.HasMore)
 				require.NotNil(t, res.NextCursor)
-				// Cursor should be the ID of the 10th item
 				require.Equal(t, res.Data[9].ID, *res.NextCursor)
 			},
 		},
@@ -435,7 +434,7 @@ func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
 			name:       "success - last page",
 			pagination: &dto.CursorPagination{Limit: 10},
 			setupMock: func(repo *MockHangoutRepository) {
-				mockHangouts := make([]domain.Hangout, 10) // Fetch exactly limit
+				mockHangouts := make([]domain.Hangout, 10)
 				for i := range mockHangouts {
 					mockHangouts[i] = domain.Hangout{ID: uuid.New()}
 				}
