@@ -212,6 +212,75 @@ const docTemplate = `{
                 }
             }
         },
+        "/hangouts/list": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves hangouts for the authenticated user with cursor-based pagination.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Hangouts"
+                ],
+                "summary": "Get Hangouts by User ID",
+                "parameters": [
+                    {
+                        "description": "Pagination parameters (limit, after_id, sort_by, sort_dir)",
+                        "name": "pagination",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CursorPagination"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully retrieved hangouts",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.PaginatedHangouts"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid pagination parameters",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/hangouts/{hangout_id}": {
             "get": {
                 "security": [
@@ -456,6 +525,23 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CursorPagination": {
+            "type": "object",
+            "properties": {
+                "after_id": {
+                    "type": "string"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "sort_by": {
+                    "type": "string"
+                },
+                "sort_dir": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.HangoutDetailResponse": {
             "type": "object",
             "properties": {
@@ -475,6 +561,43 @@ const docTemplate = `{
                     "$ref": "#/definitions/enums.HangoutStatus"
                 },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.HangoutListItemResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/enums.HangoutStatus"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PaginatedHangouts": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.HangoutListItemResponse"
+                    }
+                },
+                "has_more": {
+                    "type": "boolean"
+                },
+                "next_cursor": {
                     "type": "string"
                 }
             }

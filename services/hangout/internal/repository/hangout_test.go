@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql/driver"
 	"errors"
-	"fmt"
 	"testing"
 	"time"
 
@@ -289,57 +288,77 @@ func TestHangoutRepository_DeleteHangout(t *testing.T) {
 func TestHangoutRepository_GetHangoutsByUserID(t *testing.T) {
 	userID := uuid.New()
 	afterID := uuid.New()
+	cursorTime := time.Now().Add(-1 * time.Hour)
 	ctx := context.Background()
+	dbError := errors.New("db error")
 
 	testCases := []struct {
-		name           string
-		pagination     *dto.CursorPagination
-		setupMock      func(mock sqlmock.Sqlmock)
-		expectedResult []domain.Hangout
-		expectError    bool
+		name        string
+		pagination  *dto.CursorPagination
+		setupMock   func(mock sqlmock.Sqlmock)
+		expectError bool
+		expectedLen int
 	}{
 		{
-			name:       "first page default sort",
+			name:       "first page default sort (created_at desc)",
 			pagination: &dto.CursorPagination{},
 			setupMock: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{"id", "title"}).AddRow(uuid.New(), "Hangout 1")
-				expectedSQL := fmt.Sprintf("SELECT * FROM `hangouts` WHERE user_id = ? AND `hangouts`.`deleted_at` IS NULL ORDER BY %s %s, id %s LIMIT ?", constants.SortByCreatedAt, constants.SortDirectionDesc, constants.SortDirectionDesc)
-				mock.ExpectQuery(expectedSQL).WithArgs(userID, constants.DefaultLimit).WillReturnRows(rows)
+				expectedSQL := "SELECT * FROM `hangouts` WHERE user_id = ? AND `hangouts`.`deleted_at` IS NULL ORDER BY created_at desc, id desc LIMIT ?"
+				mock.ExpectQuery(expectedSQL).WithArgs(userID, constants.DefaultLimit+1).WillReturnRows(rows)
 			},
-			expectedResult: []domain.Hangout{{Title: "Hangout 1"}},
-			expectError:    false,
+			expectError: false,
+			expectedLen: 1,
 		},
 		{
 			name:       "second page with cursor sorted by date asc",
-			pagination: &dto.CursorPagination{AfterID: &afterID, SortBy: constants.SortByDate, SortDir: string(constants.SortDirectionAsc)},
+			pagination: &dto.CursorPagination{AfterID: &afterID, SortBy: constants.SortByDate, SortDir: string(constants.SortDirectionAsc), Limit: 15},
 			setupMock: func(mock sqlmock.Sqlmock) {
+				cursorRows := sqlmock.NewRows([]string{"id", "date", "created_at"}).AddRow(afterID, cursorTime, cursorTime)
+				mock.ExpectQuery("SELECT * FROM `hangouts` WHERE id = ? AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?").
+					WithArgs(afterID, 1).WillReturnRows(cursorRows)
+
 				rows := sqlmock.NewRows([]string{"id", "title"}).AddRow(uuid.New(), "Hangout 2")
-				expectedSQL := "SELECT * FROM `hangouts` WHERE user_id = ? AND date >= (SELECT `date` FROM `hangouts` WHERE id = ? AND `hangouts`.`deleted_at` IS NULL) AND id NOT IN (SELECT `id` FROM `hangouts` WHERE date = (SELECT `date` FROM `hangouts` WHERE id = ? AND `hangouts`.`deleted_at` IS NULL) AND `hangouts`.`deleted_at` IS NULL) AND `hangouts`.`deleted_at` IS NULL ORDER BY date asc, id asc LIMIT ?"
-				mock.ExpectQuery(expectedSQL).WithArgs(userID, afterID, afterID, constants.DefaultLimit).WillReturnRows(rows)
+				expectedSQL := "SELECT * FROM `hangouts` WHERE user_id = ? AND ((date > ?) OR (date = ? AND id > ?)) AND `hangouts`.`deleted_at` IS NULL ORDER BY date asc, id asc LIMIT ?"
+				mock.ExpectQuery(expectedSQL).WithArgs(userID, cursorTime, cursorTime, afterID, 15+1).WillReturnRows(rows)
 			},
-			expectedResult: []domain.Hangout{{Title: "Hangout 2"}},
-			expectError:    false,
+			expectError: false,
+			expectedLen: 1,
 		},
 		{
 			name:       "second page with cursor sorted by created_at desc",
-			pagination: &dto.CursorPagination{AfterID: &afterID, SortBy: constants.SortByCreatedAt, SortDir: string(constants.SortDirectionDesc)},
+			pagination: &dto.CursorPagination{AfterID: &afterID, SortBy: constants.SortByCreatedAt, SortDir: string(constants.SortDirectionDesc), Limit: 5},
 			setupMock: func(mock sqlmock.Sqlmock) {
+				cursorRows := sqlmock.NewRows([]string{"id", "date", "created_at"}).AddRow(afterID, cursorTime, cursorTime)
+				mock.ExpectQuery("SELECT * FROM `hangouts` WHERE id = ? AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?").
+					WithArgs(afterID, 1).WillReturnRows(cursorRows)
+
 				rows := sqlmock.NewRows([]string{"id", "title"}).AddRow(uuid.New(), "Hangout 3")
-				expectedSQL := "SELECT * FROM `hangouts` WHERE user_id = ? AND created_at <= (SELECT `created_at` FROM `hangouts` WHERE id = ? AND `hangouts`.`deleted_at` IS NULL) AND id NOT IN (SELECT `id` FROM `hangouts` WHERE created_at = (SELECT `created_at` FROM `hangouts` WHERE id = ? AND `hangouts`.`deleted_at` IS NULL) AND `hangouts`.`deleted_at` IS NULL) AND `hangouts`.`deleted_at` IS NULL ORDER BY created_at desc, id desc LIMIT ?"
-				mock.ExpectQuery(expectedSQL).WithArgs(userID, afterID, afterID, constants.DefaultLimit).WillReturnRows(rows)
+				expectedSQL := "SELECT * FROM `hangouts` WHERE user_id = ? AND ((created_at < ?) OR (created_at = ? AND id < ?)) AND `hangouts`.`deleted_at` IS NULL ORDER BY created_at desc, id desc LIMIT ?"
+				mock.ExpectQuery(expectedSQL).WithArgs(userID, cursorTime, cursorTime, afterID, 5+1).WillReturnRows(rows)
 			},
-			expectedResult: []domain.Hangout{{Title: "Hangout 3"}},
-			expectError:    false,
+			expectError: false,
+			expectedLen: 1,
 		},
 		{
-			name:       "database error",
+			name:       "database error on main query",
 			pagination: &dto.CursorPagination{},
 			setupMock: func(mock sqlmock.Sqlmock) {
-				expectedSQL := fmt.Sprintf("SELECT * FROM `hangouts` WHERE user_id = ? AND `hangouts`.`deleted_at` IS NULL ORDER BY %s %s, id %s LIMIT ?", constants.SortByCreatedAt, constants.SortDirectionDesc, constants.SortDirectionDesc)
-				mock.ExpectQuery(expectedSQL).WithArgs(userID, constants.DefaultLimit).WillReturnError(errors.New("db error"))
+				expectedSQL := "SELECT * FROM `hangouts` WHERE user_id = ? AND `hangouts`.`deleted_at` IS NULL ORDER BY created_at desc, id desc LIMIT ?"
+				mock.ExpectQuery(expectedSQL).WithArgs(userID, constants.DefaultLimit+1).WillReturnError(dbError)
 			},
-			expectedResult: nil,
-			expectError:    true,
+			expectError: true,
+			expectedLen: 0,
+		},
+		{
+			name:       "database error on cursor fetch",
+			pagination: &dto.CursorPagination{AfterID: &afterID},
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT * FROM `hangouts` WHERE id = ? AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?").
+					WithArgs(afterID, 1).WillReturnError(dbError)
+			},
+			expectError: true,
+			expectedLen: 0,
 		},
 	}
 
@@ -353,10 +372,11 @@ func TestHangoutRepository_GetHangoutsByUserID(t *testing.T) {
 
 			if tc.expectError {
 				require.Error(t, err)
+				require.Nil(t, results)
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, results)
-				require.Equal(t, len(tc.expectedResult), len(results))
+				require.Len(t, results, tc.expectedLen)
 			}
 			require.NoError(t, mock.ExpectationsWereMet())
 		})

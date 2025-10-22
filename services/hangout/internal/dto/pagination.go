@@ -9,10 +9,10 @@ import (
 )
 
 type CursorPagination struct {
-	Limit   int        `query:"limit"`
-	AfterID *uuid.UUID `query:"after_id"`
-	SortBy  string     `query:"sort_by"`
-	SortDir string     `query:"sort_dir"`
+	Limit   int        `json:"limit"`
+	AfterID *uuid.UUID `json:"after_id"`
+	SortBy  string     `json:"sort_by"`
+	SortDir string     `json:"sort_dir"`
 }
 
 func (p *CursorPagination) GetLimit() int {
@@ -47,4 +47,10 @@ func (p *CursorPagination) GetSortDir() string {
 
 func (p *CursorPagination) GetOrderByClause() string {
 	return fmt.Sprintf("%s %s, id %s", p.GetSortBy(), p.GetSortDir(), p.GetSortDir())
+}
+
+type PaginatedHangouts struct {
+	Data       []*HangoutListItemResponse `json:"data"`
+	NextCursor *uuid.UUID                 `json:"next_cursor"`
+	HasMore    bool                       `json:"has_more"`
 }

@@ -24,6 +24,7 @@ type HangoutHandler interface {
 	UpdateHangout(c echo.Context) error
 	GetHangoutByID(c echo.Context) error
 	DeleteHangout(c echo.Context) error
+	GetHangoutsByUserID(c echo.Context) error
 }
 
 type hangoutHandler struct {
@@ -192,4 +193,37 @@ func (h *hangoutHandler) DeleteHangout(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
 	}
 	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.HangoutDeletedSuccessfully, nil))
+}
+
+// @Summary      Get Hangouts by User ID
+// @Description  Retrieves hangouts for the authenticated user with cursor-based pagination.
+// @Tags         Hangouts
+// @Accept       json
+// @Produce      json
+// @Param        pagination body dto.CursorPagination true "Pagination parameters (limit, after_id, sort_by, sort_dir)"
+// @Success      200      {object}  response.StandardResponse{data=dto.PaginatedHangouts[dto.HangoutListItemResponse]} "Successfully retrieved hangouts"
+// @Failure      400      {object}  response.StandardResponse "Invalid pagination parameters"
+// @Failure      401      {object}  response.StandardResponse "Unauthorized"
+// @Failure      500      {object}  response.StandardResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /hangouts/list [post]
+func (h *hangoutHandler) GetHangoutsByUserID(c echo.Context) error {
+	pagination, err := request.BindAndValidate[dto.CursorPagination](c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidPagination))
+	}
+
+	ctx := c.Request().Context()
+	userToken := c.Get("userId").(*jwt.Token)
+	claims := userToken.Claims.(*auth.TokenCustomClaims)
+	userID := claims.UserID
+
+	hangouts, err := h.hangoutService.GetHangoutsByUserID(ctx, userID, pagination)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
+	}
+
+	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.HangoutsRetrievedSuccessfully, hangouts))
+
 }

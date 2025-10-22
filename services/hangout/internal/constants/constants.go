@@ -36,13 +36,13 @@ const (
 	HealthCheckOK = "OK"
 
 	// message constants
-	UserSignedUpSuccessfully     = "User created successfully."
-	UserSignedInSuccessfully     = "User signed in successfully."
-	HangoutCreatedSuccessfully   = "Hangout created successfully."
-	HangoutUpdatedSuccessfully   = "Hangout updated successfully."
-	HangoutRetrievedSuccessfully = "Hangout retrieved successfully."
-	HangoutDeletedSuccessfully   = "Hangout deleted successfully."
-	HangoutsListedSuccessfully   = "Hangouts listed successfully."
+	UserSignedUpSuccessfully      = "User created successfully."
+	UserSignedInSuccessfully      = "User signed in successfully."
+	HangoutCreatedSuccessfully    = "Hangout created successfully."
+	HangoutUpdatedSuccessfully    = "Hangout updated successfully."
+	HangoutRetrievedSuccessfully  = "Hangout retrieved successfully."
+	HangoutDeletedSuccessfully    = "Hangout deleted successfully."
+	HangoutsRetrievedSuccessfully = "Hangouts retrieved successfully."
 
 	// Error message constants
 	ProdErrorMessage = "An unexpected error occurred. Please try again later."

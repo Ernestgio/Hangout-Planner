@@ -20,7 +20,7 @@ type HangoutService interface {
 	GetHangoutByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*dto.HangoutDetailResponse, error)
 	UpdateHangout(ctx context.Context, id uuid.UUID, userID uuid.UUID, req *dto.UpdateHangoutRequest) (*dto.HangoutDetailResponse, error)
 	DeleteHangout(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
-	GetHangoutsByUserID(ctx context.Context, userID uuid.UUID, pagination *dto.CursorPagination) ([]*dto.HangoutListItemResponse, error)
+	GetHangoutsByUserID(ctx context.Context, userID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedHangouts, error)
 }
 
 type hangoutService struct {
@@ -108,12 +108,28 @@ func (s *hangoutService) DeleteHangout(ctx context.Context, id uuid.UUID, userID
 	})
 }
 
-func (s *hangoutService) GetHangoutsByUserID(ctx context.Context, userID uuid.UUID, pagination *dto.CursorPagination) ([]*dto.HangoutListItemResponse, error) {
+func (s *hangoutService) GetHangoutsByUserID(ctx context.Context, userID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedHangouts, error) {
 	hangouts, err := s.hangoutRepo.GetHangoutsByUserID(ctx, userID, pagination)
 	if err != nil {
 		return nil, err
 	}
 
-	response := mapper.HangoutsToListItemResponseDTOs(hangouts)
-	return response, nil
+	var nextCursor *uuid.UUID
+	hasMore := false
+	limit := pagination.GetLimit()
+
+	if len(hangouts) > limit {
+		hasMore = true
+		nextCursor = &hangouts[limit-1].ID
+		hangouts = hangouts[:limit]
+	}
+
+	responseDTOs := mapper.HangoutsToListItemResponseDTOs(hangouts)
+
+	return &dto.PaginatedHangouts{
+		Data:       responseDTOs,
+		NextCursor: nextCursor,
+		HasMore:    hasMore,
+	}, nil
+
 }

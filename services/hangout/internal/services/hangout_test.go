@@ -196,54 +196,6 @@ func TestHangoutService_GetHangoutByID(t *testing.T) {
 	}
 }
 
-func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-	pagination := &dto.CursorPagination{}
-	dbError := errors.New("db error")
-
-	testCases := []struct {
-		name        string
-		setupMock   func(repo *MockHangoutRepository)
-		checkResult func(t *testing.T, res []*dto.HangoutListItemResponse, err error)
-	}{
-		{
-			name: "success",
-			setupMock: func(repo *MockHangoutRepository) {
-				repo.On("GetHangoutsByUserID", ctx, userID, pagination).Return([]domain.Hangout{{ID: uuid.New()}, {ID: uuid.New()}}, nil).Once()
-			},
-			checkResult: func(t *testing.T, res []*dto.HangoutListItemResponse, err error) {
-				require.NoError(t, err)
-				require.NotNil(t, res)
-				require.Len(t, res, 2)
-			},
-		},
-		{
-			name: "repository error",
-			setupMock: func(repo *MockHangoutRepository) {
-				repo.On("GetHangoutsByUserID", ctx, userID, pagination).Return(nil, dbError).Once()
-			},
-			checkResult: func(t *testing.T, res []*dto.HangoutListItemResponse, err error) {
-				require.Error(t, err)
-				require.Equal(t, dbError, err)
-				require.Nil(t, res)
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			mockHangoutRepo := new(MockHangoutRepository)
-			hangoutService := services.NewHangoutService(nil, mockHangoutRepo)
-			tc.setupMock(mockHangoutRepo)
-
-			result, err := hangoutService.GetHangoutsByUserID(ctx, userID, pagination)
-			tc.checkResult(t, result, err)
-			mockHangoutRepo.AssertExpectations(t)
-		})
-	}
-}
-
 func TestHangoutService_UpdateHangout(t *testing.T) {
 	ctx := context.Background()
 	hangoutID := uuid.New()
@@ -430,6 +382,110 @@ func TestHangoutService_DeleteHangout(t *testing.T) {
 			}
 			mockRepo.AssertExpectations(t)
 			require.NoError(t, sqlMock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
+	ctx := context.Background()
+	userID := uuid.New()
+	dbError := errors.New("db error")
+
+	testCases := []struct {
+		name        string
+		pagination  *dto.CursorPagination
+		setupMock   func(repo *MockHangoutRepository)
+		checkResult func(t *testing.T, res *dto.PaginatedHangouts, err error)
+	}{
+		{
+			name:       "success - first page, less results than limit",
+			pagination: &dto.CursorPagination{Limit: 10},
+			setupMock: func(repo *MockHangoutRepository) {
+				repo.On("GetHangoutsByUserID", ctx, userID, mock.AnythingOfType("*dto.CursorPagination")).Return([]domain.Hangout{{ID: uuid.New()}, {ID: uuid.New()}}, nil).Once()
+			},
+			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.Len(t, res.Data, 2)
+				require.False(t, res.HasMore)
+				require.Nil(t, res.NextCursor)
+			},
+		},
+		{
+			name:       "success - first page, has more results",
+			pagination: &dto.CursorPagination{Limit: 10},
+			setupMock: func(repo *MockHangoutRepository) {
+				mockHangouts := make([]domain.Hangout, 11) // Fetch limit + 1
+				for i := range mockHangouts {
+					mockHangouts[i] = domain.Hangout{ID: uuid.New()}
+				}
+				repo.On("GetHangoutsByUserID", ctx, userID, mock.AnythingOfType("*dto.CursorPagination")).Return(mockHangouts, nil).Once()
+			},
+			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.Len(t, res.Data, 10) // Should be trimmed to limit
+				require.True(t, res.HasMore)
+				require.NotNil(t, res.NextCursor)
+				// Cursor should be the ID of the 10th item
+				require.Equal(t, res.Data[9].ID, *res.NextCursor)
+			},
+		},
+		{
+			name:       "success - last page",
+			pagination: &dto.CursorPagination{Limit: 10},
+			setupMock: func(repo *MockHangoutRepository) {
+				mockHangouts := make([]domain.Hangout, 10) // Fetch exactly limit
+				for i := range mockHangouts {
+					mockHangouts[i] = domain.Hangout{ID: uuid.New()}
+				}
+				repo.On("GetHangoutsByUserID", ctx, userID, mock.AnythingOfType("*dto.CursorPagination")).Return(mockHangouts, nil).Once()
+			},
+			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.Len(t, res.Data, 10)
+				require.False(t, res.HasMore)
+				require.Nil(t, res.NextCursor)
+			},
+		},
+		{
+			name:       "success - no results",
+			pagination: &dto.CursorPagination{Limit: 10},
+			setupMock: func(repo *MockHangoutRepository) {
+				repo.On("GetHangoutsByUserID", ctx, userID, mock.AnythingOfType("*dto.CursorPagination")).Return([]domain.Hangout{}, nil).Once()
+			},
+			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.Len(t, res.Data, 0)
+				require.False(t, res.HasMore)
+				require.Nil(t, res.NextCursor)
+			},
+		},
+		{
+			name:       "repository error",
+			pagination: &dto.CursorPagination{},
+			setupMock: func(repo *MockHangoutRepository) {
+				repo.On("GetHangoutsByUserID", ctx, userID, mock.AnythingOfType("*dto.CursorPagination")).Return(nil, dbError).Once()
+			},
+			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+				require.Nil(t, res)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			mockHangoutRepo := new(MockHangoutRepository)
+			hangoutService := services.NewHangoutService(nil, mockHangoutRepo)
+			tc.setupMock(mockHangoutRepo)
+
+			result, err := hangoutService.GetHangoutsByUserID(ctx, userID, tc.pagination)
+			tc.checkResult(t, result, err)
+			mockHangoutRepo.AssertExpectations(t)
 		})
 	}
 }
