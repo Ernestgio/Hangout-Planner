@@ -11,8 +11,8 @@ import (
 type ActivityRepository interface {
 	WithTx(tx *gorm.DB) ActivityRepository
 	CreateActivity(ctx context.Context, activity *domain.Activity) (*domain.Activity, error)
-	GetActivityByID(ctx context.Context, id uuid.UUID) (*domain.Activity, int64, error)
-	GetAllActivities(ctx context.Context) ([]ActivityWithCount, error)
+	GetActivityByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Activity, int64, error)
+	GetAllActivities(ctx context.Context, userID uuid.UUID) ([]ActivityWithCount, error)
 	UpdateActivity(ctx context.Context, activity *domain.Activity) (*domain.Activity, error)
 	DeleteActivity(ctx context.Context, id uuid.UUID) error
 }
@@ -41,7 +41,7 @@ func (r *activityRepository) CreateActivity(ctx context.Context, activity *domai
 	return activity, nil
 }
 
-func (r *activityRepository) GetActivityByID(ctx context.Context, id uuid.UUID) (*domain.Activity, int64, error) {
+func (r *activityRepository) GetActivityByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Activity, int64, error) {
 	var result ActivityWithCount
 
 	err := r.db.WithContext(ctx).
@@ -49,6 +49,7 @@ func (r *activityRepository) GetActivityByID(ctx context.Context, id uuid.UUID) 
 		Select("activities.*, COUNT(hangout_activities.hangout_id) as hangout_count").
 		Joins("LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id").
 		Where("activities.id = ?", id).
+		Where("activities.user_id = ?", userID).
 		Group("activities.id").
 		First(&result).Error
 
@@ -61,12 +62,13 @@ func (r *activityRepository) GetActivityByID(ctx context.Context, id uuid.UUID) 
 	return &activity, count, nil
 }
 
-func (r *activityRepository) GetAllActivities(ctx context.Context) ([]ActivityWithCount, error) {
+func (r *activityRepository) GetAllActivities(ctx context.Context, userID uuid.UUID) ([]ActivityWithCount, error) {
 	var results []ActivityWithCount
 
 	err := r.db.WithContext(ctx).
 		Model(&domain.Activity{}).
 		Select("activities.*, COUNT(hangout_activities.hangout_id) as hangout_count").
+		Where("activities.user_id = ?", userID).
 		Joins("LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id").
 		Group("activities.id").
 		Order("activities.name asc").

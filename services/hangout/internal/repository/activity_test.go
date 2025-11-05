@@ -50,7 +50,6 @@ func TestActivityRepository_CreateActivity(t *testing.T) {
 					WillReturnResult(sqlmock.NewResult(1, 1))
 				mock.ExpectCommit()
 			},
-			expectError: false,
 		},
 		{
 			name: "database error",
@@ -90,6 +89,7 @@ func TestActivityRepository_CreateActivity(t *testing.T) {
 
 func TestActivityRepository_GetActivityByID(t *testing.T) {
 	activityID := uuid.New()
+	userID := uuid.New()
 	ctx := context.Background()
 	dbError := errors.New("db error")
 
@@ -103,9 +103,9 @@ func TestActivityRepository_GetActivityByID(t *testing.T) {
 			setupMock: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{"id", "name", "hangout_count"}).
 					AddRow(activityID, "Hiking", 5)
-				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE activities.id = ? AND `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY `activities`.`id` LIMIT ?"
+				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE activities.id = ? AND activities.user_id = ? AND `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY `activities`.`id` LIMIT ?"
 				mock.ExpectQuery(expectedSQL).
-					WithArgs(activityID, 1).
+					WithArgs(activityID, userID, 1).
 					WillReturnRows(rows)
 			},
 			checkResult: func(t *testing.T, act *domain.Activity, count int64, err error) {
@@ -119,9 +119,9 @@ func TestActivityRepository_GetActivityByID(t *testing.T) {
 		{
 			name: "not found",
 			setupMock: func(mock sqlmock.Sqlmock) {
-				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE activities.id = ? AND `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY `activities`.`id` LIMIT ?"
+				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE activities.id = ? AND activities.user_id = ? AND `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY `activities`.`id` LIMIT ?"
 				mock.ExpectQuery(expectedSQL).
-					WithArgs(activityID, 1).
+					WithArgs(activityID, userID, 1).
 					WillReturnError(gorm.ErrRecordNotFound)
 			},
 			checkResult: func(t *testing.T, act *domain.Activity, count int64, err error) {
@@ -134,9 +134,9 @@ func TestActivityRepository_GetActivityByID(t *testing.T) {
 		{
 			name: "database error",
 			setupMock: func(mock sqlmock.Sqlmock) {
-				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE activities.id = ? AND `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY `activities`.`id` LIMIT ?"
+				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE activities.id = ? AND activities.user_id = ? AND `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY `activities`.`id` LIMIT ?"
 				mock.ExpectQuery(expectedSQL).
-					WithArgs(activityID, 1).
+					WithArgs(activityID, userID, 1).
 					WillReturnError(dbError)
 			},
 			checkResult: func(t *testing.T, act *domain.Activity, count int64, err error) {
@@ -154,7 +154,7 @@ func TestActivityRepository_GetActivityByID(t *testing.T) {
 			repo := repository.NewActivityRepository(db)
 			tc.setupMock(mock)
 
-			act, count, err := repo.GetActivityByID(ctx, activityID)
+			act, count, err := repo.GetActivityByID(ctx, activityID, userID)
 			tc.checkResult(t, act, count, err)
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
@@ -163,6 +163,7 @@ func TestActivityRepository_GetActivityByID(t *testing.T) {
 
 func TestActivityRepository_GetAllActivities(t *testing.T) {
 	ctx := context.Background()
+	userID := uuid.New()
 	dbError := errors.New("db error")
 
 	testCases := []struct {
@@ -176,8 +177,8 @@ func TestActivityRepository_GetAllActivities(t *testing.T) {
 				rows := sqlmock.NewRows([]string{"id", "name", "hangout_count"}).
 					AddRow(uuid.New(), "Hiking", 3).
 					AddRow(uuid.New(), "Movies", 10)
-				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY activities.name asc"
-				mock.ExpectQuery(expectedSQL).WillReturnRows(rows)
+				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE activities.user_id = ? AND `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY activities.name asc"
+				mock.ExpectQuery(expectedSQL).WithArgs(userID).WillReturnRows(rows)
 			},
 			checkResult: func(t *testing.T, results []repository.ActivityWithCount, err error) {
 				require.NoError(t, err)
@@ -189,8 +190,8 @@ func TestActivityRepository_GetAllActivities(t *testing.T) {
 			name: "success with no results",
 			setupMock: func(mock sqlmock.Sqlmock) {
 				rows := sqlmock.NewRows([]string{"id", "name", "hangout_count"})
-				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY activities.name asc"
-				mock.ExpectQuery(expectedSQL).WillReturnRows(rows)
+				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE activities.user_id = ? AND `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY activities.name asc"
+				mock.ExpectQuery(expectedSQL).WithArgs(userID).WillReturnRows(rows)
 			},
 			checkResult: func(t *testing.T, results []repository.ActivityWithCount, err error) {
 				require.NoError(t, err)
@@ -201,8 +202,8 @@ func TestActivityRepository_GetAllActivities(t *testing.T) {
 		{
 			name: "database error",
 			setupMock: func(mock sqlmock.Sqlmock) {
-				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY activities.name asc"
-				mock.ExpectQuery(expectedSQL).WillReturnError(dbError)
+				expectedSQL := "SELECT activities.*, COUNT(hangout_activities.hangout_id) as hangout_count FROM `activities` LEFT JOIN hangout_activities ON hangout_activities.activity_id = activities.id WHERE activities.user_id = ? AND `activities`.`deleted_at` IS NULL GROUP BY `activities`.`id` ORDER BY activities.name asc"
+				mock.ExpectQuery(expectedSQL).WithArgs(userID).WillReturnError(dbError)
 			},
 			checkResult: func(t *testing.T, results []repository.ActivityWithCount, err error) {
 				require.Error(t, err)
@@ -218,7 +219,7 @@ func TestActivityRepository_GetAllActivities(t *testing.T) {
 			repo := repository.NewActivityRepository(db)
 			tc.setupMock(mock)
 
-			results, err := repo.GetAllActivities(ctx)
+			results, err := repo.GetAllActivities(ctx, userID)
 			tc.checkResult(t, results, err)
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
@@ -241,7 +242,6 @@ func TestActivityRepository_UpdateActivity(t *testing.T) {
 			name: "success",
 			setupMock: func(mock sqlmock.Sqlmock) {
 				mock.ExpectBegin()
-				// Corrected SQL to match GORM Save() with all fields
 				mock.ExpectExec("UPDATE `activities` SET `name`=?,`created_at`=?,`updated_at`=?,`deleted_at`=?,`user_id`=? WHERE `activities`.`deleted_at` IS NULL AND `id` = ?").
 					WithArgs(activity.Name, activity.CreatedAt, AnyTime{}, nil, nil, activity.ID).
 					WillReturnResult(sqlmock.NewResult(0, 1))

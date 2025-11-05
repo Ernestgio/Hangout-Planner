@@ -14,11 +14,11 @@ import (
 )
 
 type ActivityService interface {
-	CreateActivity(ctx context.Context, req *dto.CreateActivityRequest) (*dto.ActivityDetailResponse, error)
-	GetActivityByID(ctx context.Context, id uuid.UUID) (*dto.ActivityDetailResponse, error)
-	GetAllActivities(ctx context.Context) ([]dto.ActivityListItemResponse, error)
-	UpdateActivity(ctx context.Context, id uuid.UUID, req *dto.UpdateActivityRequest) (*dto.ActivityDetailResponse, error)
-	DeleteActivity(ctx context.Context, id uuid.UUID) error
+	CreateActivity(ctx context.Context, userID uuid.UUID, req *dto.CreateActivityRequest) (*dto.ActivityDetailResponse, error)
+	GetActivityByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*dto.ActivityDetailResponse, error)
+	GetAllActivities(ctx context.Context, userID uuid.UUID) ([]dto.ActivityListItemResponse, error)
+	UpdateActivity(ctx context.Context, id uuid.UUID, userID uuid.UUID, req *dto.UpdateActivityRequest) (*dto.ActivityDetailResponse, error)
+	DeleteActivity(ctx context.Context, id uuid.UUID, userID uuid.UUID) error
 }
 
 type activityService struct {
@@ -33,10 +33,12 @@ func NewActivityService(db *gorm.DB, activityRepo repository.ActivityRepository)
 	}
 }
 
-func (s *activityService) CreateActivity(ctx context.Context, req *dto.CreateActivityRequest) (*dto.ActivityDetailResponse, error) {
+func (s *activityService) CreateActivity(ctx context.Context, userID uuid.UUID, req *dto.CreateActivityRequest) (*dto.ActivityDetailResponse, error) {
 	activityModel := &domain.Activity{
 		Name: req.Name,
 	}
+	activityModel.UserID = &userID
+
 	createdActivity, err := s.activityRepo.CreateActivity(ctx, activityModel)
 	if err != nil {
 		return nil, err
@@ -45,16 +47,16 @@ func (s *activityService) CreateActivity(ctx context.Context, req *dto.CreateAct
 	return mapper.ActivitytoDetailResponseDTO(createdActivity, 0), nil
 }
 
-func (s *activityService) GetActivityByID(ctx context.Context, id uuid.UUID) (*dto.ActivityDetailResponse, error) {
-	activity, hangoutCount, err := s.activityRepo.GetActivityByID(ctx, id)
+func (s *activityService) GetActivityByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*dto.ActivityDetailResponse, error) {
+	activity, hangoutCount, err := s.activityRepo.GetActivityByID(ctx, id, userID)
 	if err != nil {
 		return nil, err
 	}
 	return mapper.ActivitytoDetailResponseDTO(activity, hangoutCount), nil
 }
 
-func (s *activityService) GetAllActivities(ctx context.Context) ([]dto.ActivityListItemResponse, error) {
-	activitiesWithCount, err := s.activityRepo.GetAllActivities(ctx)
+func (s *activityService) GetAllActivities(ctx context.Context, userID uuid.UUID) ([]dto.ActivityListItemResponse, error) {
+	activitiesWithCount, err := s.activityRepo.GetAllActivities(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -62,14 +64,14 @@ func (s *activityService) GetAllActivities(ctx context.Context) ([]dto.ActivityL
 	return mapper.ActivityToListItemResponseDTO(activitiesWithCount), nil
 }
 
-func (s *activityService) UpdateActivity(ctx context.Context, id uuid.UUID, req *dto.UpdateActivityRequest) (*dto.ActivityDetailResponse, error) {
+func (s *activityService) UpdateActivity(ctx context.Context, id uuid.UUID, userID uuid.UUID, req *dto.UpdateActivityRequest) (*dto.ActivityDetailResponse, error) {
 	var updatedActivity *domain.Activity
 	var updatedActivityCount int64
 
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		txRepo := s.activityRepo.WithTx(tx)
 
-		existingActivity, existingCount, err := txRepo.GetActivityByID(ctx, id)
+		existingActivity, existingCount, err := txRepo.GetActivityByID(ctx, id, userID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return apperrors.ErrNotFound
@@ -93,10 +95,10 @@ func (s *activityService) UpdateActivity(ctx context.Context, id uuid.UUID, req 
 	return mapper.ActivitytoDetailResponseDTO(updatedActivity, updatedActivityCount), nil
 }
 
-func (s *activityService) DeleteActivity(ctx context.Context, id uuid.UUID) error {
+func (s *activityService) DeleteActivity(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		txRepo := s.activityRepo.WithTx(tx)
-		_, _, err := txRepo.GetActivityByID(ctx, id)
+		_, _, err := txRepo.GetActivityByID(ctx, id, userID)
 		if err != nil {
 			return err
 		}
