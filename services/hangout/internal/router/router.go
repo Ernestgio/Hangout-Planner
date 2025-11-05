@@ -28,6 +28,7 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	// hangout routes
 	hangoutRoutes := e.Group(constants.HangoutRoutes)
 	hangoutRoutes.Use(middlewares.JWT(cfg, responseBuilder))
+	hangoutRoutes.Use(middlewares.UserContextMiddleware)
 	hangoutRoutes.POST("/", hangoutHandler.CreateHangout)
 	hangoutRoutes.PUT("/:hangout_id", hangoutHandler.UpdateHangout)
 	hangoutRoutes.GET("/:hangout_id", hangoutHandler.GetHangoutByID)

@@ -66,10 +66,8 @@ func (h *hangoutHandler) CreateHangout(c echo.Context) error {
 	req.Title = sanitizedTitle
 	req.Description = &sanitizedDescriptionHTML
 
+	userID := c.Get("user_id").(uuid.UUID)
 	ctx := c.Request().Context()
-	userToken := c.Get("userId").(*jwt.Token)
-	claims := userToken.Claims.(*auth.TokenCustomClaims)
-	userID := claims.UserID
 
 	hangout, err := h.hangoutService.CreateHangout(ctx, userID, req)
 
@@ -109,11 +107,13 @@ func (h *hangoutHandler) UpdateHangout(c echo.Context) error {
 	req.Title = sanitizedTitle
 	req.Description = &sanitizedDescriptionHTML
 
-	ctx := c.Request().Context()
-	userToken := c.Get("userId").(*jwt.Token)
-	claims := userToken.Claims.(*auth.TokenCustomClaims)
-	userID := claims.UserID
 	hangoutId, err := uuid.Parse(c.Param("hangout_id"))
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
+	}
+
+	userID := c.Get("user_id").(uuid.UUID)
+	ctx := c.Request().Context()
 
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
@@ -149,10 +149,10 @@ func (h *hangoutHandler) GetHangoutByID(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
 	}
+
+	userID := c.Get("user_id").(uuid.UUID)
 	ctx := c.Request().Context()
-	userToken := c.Get("userId").(*jwt.Token)
-	claims := userToken.Claims.(*auth.TokenCustomClaims)
-	userID := claims.UserID
+
 	hangout, err := h.hangoutService.GetHangoutByID(ctx, hangoutId, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -181,10 +181,10 @@ func (h *hangoutHandler) DeleteHangout(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
 	}
+
+	userID := c.Get("user_id").(uuid.UUID)
 	ctx := c.Request().Context()
-	userToken := c.Get("userId").(*jwt.Token)
-	claims := userToken.Claims.(*auth.TokenCustomClaims)
-	userID := claims.UserID
+
 	err = h.hangoutService.DeleteHangout(ctx, hangoutId, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
