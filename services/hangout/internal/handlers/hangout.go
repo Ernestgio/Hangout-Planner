@@ -107,14 +107,10 @@ func (h *hangoutHandler) UpdateHangout(c echo.Context) error {
 	req.Title = sanitizedTitle
 	req.Description = &sanitizedDescriptionHTML
 
-	hangoutId, err := uuid.Parse(c.Param("hangout_id"))
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
-	}
-
 	userID := c.Get("user_id").(uuid.UUID)
 	ctx := c.Request().Context()
 
+	hangoutId, err := uuid.Parse(c.Param("hangout_id"))
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
 	}
