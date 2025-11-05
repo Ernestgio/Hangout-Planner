@@ -13,7 +13,7 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler) {
+func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler, activityHandler handlers.ActivityHandler) {
 	e.GET(constants.HealthCheckRoute, func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	})
@@ -28,9 +28,20 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	// hangout routes
 	hangoutRoutes := e.Group(constants.HangoutRoutes)
 	hangoutRoutes.Use(middlewares.JWT(cfg, responseBuilder))
+	hangoutRoutes.Use(middlewares.UserContextMiddleware)
 	hangoutRoutes.POST("/", hangoutHandler.CreateHangout)
 	hangoutRoutes.PUT("/:hangout_id", hangoutHandler.UpdateHangout)
 	hangoutRoutes.GET("/:hangout_id", hangoutHandler.GetHangoutByID)
 	hangoutRoutes.DELETE("/:hangout_id", hangoutHandler.DeleteHangout)
 	hangoutRoutes.POST("/list", hangoutHandler.GetHangoutsByUserID)
+
+	// activity routes
+	activityRoutes := e.Group(constants.ActivityRoutes)
+	activityRoutes.Use(middlewares.JWT(cfg, responseBuilder))
+	activityRoutes.Use(middlewares.UserContextMiddleware)
+	activityRoutes.POST("/", activityHandler.CreateActivity)
+	activityRoutes.PUT("/:activity_id", activityHandler.UpdateActivity)
+	activityRoutes.GET("/:activity_id", activityHandler.GetActivityByID)
+	activityRoutes.DELETE("/:activity_id", activityHandler.DeleteActivity)
+	activityRoutes.GET("/", activityHandler.GetAllActivities)
 }

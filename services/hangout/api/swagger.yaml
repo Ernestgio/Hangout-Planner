@@ -1,5 +1,34 @@
 basePath: /
 definitions:
+  dto.ActivityDetailResponse:
+    properties:
+      created_at:
+        type: string
+      hangout_count:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.ActivityListItemResponse:
+    properties:
+      hangout_count:
+        type: integer
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  dto.CreateActivityRequest:
+    properties:
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
   dto.CreateHangoutRequest:
     properties:
       date:
@@ -97,6 +126,15 @@ definitions:
     - name
     - password
     type: object
+  dto.UpdateActivityRequest:
+    properties:
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
   dto.UpdateHangoutRequest:
     properties:
       date:
@@ -152,6 +190,199 @@ info:
   title: Hangout Planner API
   version: "1.0"
 paths:
+  /activities/:
+    get:
+      description: Retrieves all activities for the authenticated user.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Activities fetched successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/dto.ActivityListItemResponse'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Get All Activities
+      tags:
+      - Activities
+    post:
+      consumes:
+      - application/json
+      description: Creates a new activity for the authenticated user.
+      parameters:
+      - description: Activity creation data
+        in: body
+        name: activity
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateActivityRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Activity created successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ActivityDetailResponse'
+              type: object
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Activity
+      tags:
+      - Activities
+  /activities/{activity_id}:
+    delete:
+      description: Deletes an existing activity for the authenticated user.
+      parameters:
+      - description: Activity ID
+        in: path
+        name: activity_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Activity deleted successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: Invalid activity ID
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "404":
+          description: resource not found
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Activity
+      tags:
+      - Activities
+    get:
+      description: Retrieves an activity by its ID for the authenticated user.
+      parameters:
+      - description: Activity ID
+        in: path
+        name: activity_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Activity fetched successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ActivityDetailResponse'
+              type: object
+        "400":
+          description: Invalid activity ID
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Activity by ID
+      tags:
+      - Activities
+    put:
+      consumes:
+      - application/json
+      description: Updates an existing activity for the authenticated user.
+      parameters:
+      - description: Activity ID
+        in: path
+        name: activity_id
+        required: true
+        type: string
+      - description: Activity update data
+        in: body
+        name: activity
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateActivityRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Activity updated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ActivityDetailResponse'
+              type: object
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "404":
+          description: resource not found
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Activity
+      tags:
+      - Activities
   /auth/signin:
     post:
       consumes:

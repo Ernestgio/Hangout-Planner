@@ -1,7 +1,9 @@
 package repository_test
 
 import (
+	"database/sql/driver"
 	"testing"
+	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/stretchr/testify/require"
@@ -15,4 +17,11 @@ func setupDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	db, err := gorm.Open(mysql.New(mysql.Config{Conn: sqlDB, SkipInitializeWithVersion: true}), &gorm.Config{})
 	require.NoError(t, err)
 	return db, mock
+}
+
+type AnyTime struct{}
+
+func (a AnyTime) Match(v driver.Value) bool {
+	_, ok := v.(time.Time)
+	return ok
 }

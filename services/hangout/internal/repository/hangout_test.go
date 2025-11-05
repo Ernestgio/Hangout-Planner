@@ -2,7 +2,6 @@ package repository_test
 
 import (
 	"context"
-	"database/sql/driver"
 	"errors"
 	"testing"
 	"time"
@@ -16,13 +15,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
-
-type AnyTime struct{}
-
-func (a AnyTime) Match(v driver.Value) bool {
-	_, ok := v.(time.Time)
-	return ok
-}
 
 func TestNewHangoutRepository(t *testing.T) {
 	db, _ := setupDB(t)

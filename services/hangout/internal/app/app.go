@@ -51,15 +51,18 @@ func NewApp(cfg *config.Config) (*App, error) {
 	// Repository Layer
 	userRepo := repository.NewUserRepository(dbConn)
 	hangoutRepo := repository.NewHangoutRepository(dbConn)
+	activityRepo := repository.NewActivityRepository(dbConn)
 
 	// Service Layer
 	userService := services.NewUserService(dbConn, userRepo, bcryptUtils)
 	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
 	hangoutService := services.NewHangoutService(dbConn, hangoutRepo)
+	activityService := services.NewActivityService(dbConn, activityRepo)
 
 	// handler Layer
-	authhandler := handlers.NewAuthHandler(authService, responseBuilder)
+	authHandler := handlers.NewAuthHandler(authService, responseBuilder)
 	hangoutHandler := handlers.NewHangoutHandler(hangoutService, responseBuilder)
+	activityHandler := handlers.NewActivityHandler(activityService, responseBuilder)
 
 	// Server Setup
 	e := echo.New()
@@ -70,7 +73,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	e.Use(middleware.Gzip())
 	e.Use(middleware.Decompress())
 
-	router.NewRouter(e, cfg, responseBuilder, authhandler, hangoutHandler)
+	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler)
 
 	return &App{
 		server: e,

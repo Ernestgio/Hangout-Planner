@@ -29,6 +29,7 @@ const (
 	SwaggerRoute     = "/swagger/*"
 	AuthRoutes       = "/auth"
 	HangoutRoutes    = "/hangouts"
+	ActivityRoutes   = "/activities"
 
 	//Status constants
 	SuccessStatus = "success"
@@ -36,13 +37,20 @@ const (
 	HealthCheckOK = "OK"
 
 	// message constants
-	UserSignedUpSuccessfully      = "User created successfully."
-	UserSignedInSuccessfully      = "User signed in successfully."
+	UserSignedUpSuccessfully = "User created successfully."
+	UserSignedInSuccessfully = "User signed in successfully."
+
 	HangoutCreatedSuccessfully    = "Hangout created successfully."
 	HangoutUpdatedSuccessfully    = "Hangout updated successfully."
 	HangoutRetrievedSuccessfully  = "Hangout retrieved successfully."
 	HangoutDeletedSuccessfully    = "Hangout deleted successfully."
 	HangoutsRetrievedSuccessfully = "Hangouts retrieved successfully."
+
+	ActivityCreatedSuccessfully     = "Activity created successfully."
+	ActivityUpdatedSuccessfully     = "Activity updated successfully."
+	ActivityRetrievedSuccessfully   = "Activity retrieved successfully."
+	ActivityDeletedSuccessfully     = "Activity deleted successfully."
+	ActivitiesRetrievedSuccessfully = "Activities retrieved successfully."
 
 	// Error message constants
 	ProdErrorMessage = "An unexpected error occurred. Please try again later."
