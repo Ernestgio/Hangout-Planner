@@ -92,6 +92,7 @@ func TestHangoutRepository_CreateHangout(t *testing.T) {
 func TestHangoutRepository_GetHangoutByID(t *testing.T) {
 	hangoutID := uuid.New()
 	userID := uuid.New()
+	activityID := uuid.New()
 	ctx := context.Background()
 	dbError := errors.New("db error")
 
@@ -103,25 +104,37 @@ func TestHangoutRepository_GetHangoutByID(t *testing.T) {
 		{
 			name: "success",
 			setupMock: func(mock sqlmock.Sqlmock) {
-				rows := sqlmock.NewRows([]string{"id", "title", "user_id"}).
-					AddRow(hangoutID, "Found Hangout", &userID)
-				expectedSQL := "SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?"
-				mock.ExpectQuery(expectedSQL).
+				hangoutRows := sqlmock.NewRows([]string{"id", "title", "user_id"}).
+					AddRow(hangoutID, "Test Hangout", userID)
+
+				mock.ExpectQuery("SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?").
 					WithArgs(hangoutID, userID, 1).
-					WillReturnRows(rows)
+					WillReturnRows(hangoutRows)
+
+				joinRows := sqlmock.NewRows([]string{"hangout_id", "activity_id"}).
+					AddRow(hangoutID, activityID)
+				mock.ExpectQuery("SELECT * FROM `hangout_activities` WHERE `hangout_activities`.`hangout_id` = ?").
+					WithArgs(hangoutID).
+					WillReturnRows(joinRows)
+
+				activityRows := sqlmock.NewRows([]string{"id", "name"}).
+					AddRow(activityID, "Hiking")
+				mock.ExpectQuery("SELECT * FROM `activities` WHERE `activities`.`id` = ? AND `activities`.`deleted_at` IS NULL").
+					WithArgs(activityID).
+					WillReturnRows(activityRows)
 			},
 			checkResult: func(t *testing.T, result *domain.Hangout, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, result)
 				require.Equal(t, hangoutID, result.ID)
-				require.Equal(t, &userID, result.UserID)
+				require.Len(t, result.Activities, 1)
+				require.Equal(t, activityID, result.Activities[0].ID)
 			},
 		},
 		{
 			name: "not found",
 			setupMock: func(mock sqlmock.Sqlmock) {
-				expectedSQL := "SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?"
-				mock.ExpectQuery(expectedSQL).
+				mock.ExpectQuery("SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?").
 					WithArgs(hangoutID, userID, 1).
 					WillReturnError(gorm.ErrRecordNotFound)
 			},
@@ -134,8 +147,7 @@ func TestHangoutRepository_GetHangoutByID(t *testing.T) {
 		{
 			name: "database error",
 			setupMock: func(mock sqlmock.Sqlmock) {
-				expectedSQL := "SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?"
-				mock.ExpectQuery(expectedSQL).
+				mock.ExpectQuery("SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?").
 					WithArgs(hangoutID, userID, 1).
 					WillReturnError(dbError)
 			},
@@ -152,7 +164,6 @@ func TestHangoutRepository_GetHangoutByID(t *testing.T) {
 			db, mock := setupDB(t)
 			repo := repository.NewHangoutRepository(db)
 			tc.setupMock(mock)
-
 			result, err := repo.GetHangoutByID(ctx, hangoutID, userID)
 			tc.checkResult(t, result, err)
 			require.NoError(t, mock.ExpectationsWereMet())

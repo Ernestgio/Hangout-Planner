@@ -61,6 +61,11 @@ func (m *MockHangoutRepository) UpdateHangout(ctx context.Context, hangout *doma
 	return args.Get(0).(*domain.Hangout), args.Error(1)
 }
 
+func (m *MockHangoutRepository) ReplaceHangoutActivities(ctx context.Context, hangoutID uuid.UUID, activityIDs []uuid.UUID) error {
+	args := m.Called(ctx, hangoutID, activityIDs)
+	return args.Error(0)
+}
+
 func (m *MockHangoutRepository) DeleteHangout(ctx context.Context, id uuid.UUID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)

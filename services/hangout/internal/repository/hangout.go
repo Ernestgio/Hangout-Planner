@@ -18,6 +18,7 @@ type HangoutRepository interface {
 	UpdateHangout(ctx context.Context, hangout *domain.Hangout) (*domain.Hangout, error)
 	DeleteHangout(ctx context.Context, id uuid.UUID) error
 	GetHangoutsByUserID(ctx context.Context, userID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Hangout, error)
+	ReplaceHangoutActivities(ctx context.Context, hangoutID uuid.UUID, activityIDs []uuid.UUID) error
 }
 
 type hangoutRepository struct {
@@ -41,7 +42,7 @@ func (r *hangoutRepository) CreateHangout(ctx context.Context, hangout *domain.H
 
 func (r *hangoutRepository) GetHangoutByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Hangout, error) {
 	var hangout domain.Hangout
-	if err := r.db.WithContext(ctx).First(&hangout, "id = ? AND user_id = ?", id, userID).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Activities").First(&hangout, "id = ? AND user_id = ?", id, userID).Error; err != nil {
 		return nil, err
 	}
 	return &hangout, nil
@@ -52,6 +53,18 @@ func (r *hangoutRepository) UpdateHangout(ctx context.Context, hangout *domain.H
 		return nil, err
 	}
 	return hangout, nil
+}
+
+func (r *hangoutRepository) ReplaceHangoutActivities(ctx context.Context, hangoutID uuid.UUID, activityIDs []uuid.UUID) error {
+	var activities []domain.Activity
+	for _, id := range activityIDs {
+		activities = append(activities, domain.Activity{ID: id})
+	}
+
+	var hangout domain.Hangout
+	hangout.ID = hangoutID
+
+	return r.db.WithContext(ctx).Model(&hangout).Association("Activities").Replace(activities)
 }
 
 func (r *hangoutRepository) DeleteHangout(ctx context.Context, id uuid.UUID) error {
