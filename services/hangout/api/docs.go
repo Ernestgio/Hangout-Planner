@@ -1049,7 +1049,7 @@ const docTemplate = `{
                 "title"
             ],
             "properties": {
-                "activity_ids": {
+                "activities": {
                     "type": "array",
                     "items": {
                         "type": "string"

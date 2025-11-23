@@ -17,17 +17,11 @@ func HangoutCreateRequestToModel(request *dto.CreateHangoutRequest) (*domain.Han
 		return nil, err
 	}
 
-	activities := make([]*domain.Activity, len(request.ActivityIDs))
-	for i, id := range request.ActivityIDs {
-		activities[i] = &domain.Activity{ID: id}
-	}
-
 	return &domain.Hangout{
 		Title:       request.Title,
 		Description: request.Description,
 		Date:        parsedDate,
 		Status:      request.Status,
-		Activities:  activities,
 	}, nil
 }
 

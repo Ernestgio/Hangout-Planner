@@ -152,7 +152,7 @@ definitions:
     type: object
   dto.UpdateHangoutRequest:
     properties:
-      activity_ids:
+      activities:
         items:
           type: string
         type: array

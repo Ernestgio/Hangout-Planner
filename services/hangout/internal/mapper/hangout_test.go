@@ -21,8 +21,6 @@ func stringPtr(s string) *string {
 func TestHangoutCreateRequestToModel(t *testing.T) {
 	validTimeStr := "2025-10-05 15:00:00.000"
 	parsedTime, _ := time.Parse(constants.DateFormat, validTimeStr)
-	activityID1 := uuid.New()
-	activityID2 := uuid.New()
 
 	testCases := []struct {
 		name        string
@@ -31,13 +29,12 @@ func TestHangoutCreateRequestToModel(t *testing.T) {
 		checkResult func(t *testing.T, hangout *domain.Hangout, err error)
 	}{
 		{
-			name: "success with activities",
+			name: "success",
 			request: &dto.CreateHangoutRequest{
 				Title:       "Test Hangout",
 				Description: stringPtr("A cool event."),
 				Date:        validTimeStr,
 				Status:      enums.StatusPlanning,
-				ActivityIDs: []uuid.UUID{activityID1, activityID2},
 			},
 			expectError: false,
 			checkResult: func(t *testing.T, hangout *domain.Hangout, err error) {
@@ -47,25 +44,6 @@ func TestHangoutCreateRequestToModel(t *testing.T) {
 				require.Equal(t, "A cool event.", *hangout.Description)
 				require.Equal(t, parsedTime, hangout.Date)
 				require.Equal(t, enums.StatusPlanning, hangout.Status)
-				require.Len(t, hangout.Activities, 2)
-				require.Equal(t, activityID1, hangout.Activities[0].ID)
-				require.Equal(t, activityID2, hangout.Activities[1].ID)
-			},
-		},
-		{
-			name: "success without activities",
-			request: &dto.CreateHangoutRequest{
-				Title:       "Test Hangout No Activities",
-				Description: stringPtr(""),
-				Date:        validTimeStr,
-				Status:      enums.StatusConfirmed,
-				ActivityIDs: []uuid.UUID{},
-			},
-			expectError: false,
-			checkResult: func(t *testing.T, hangout *domain.Hangout, err error) {
-				require.NoError(t, err)
-				require.NotNil(t, hangout)
-				require.Empty(t, hangout.Activities)
 			},
 		},
 		{
