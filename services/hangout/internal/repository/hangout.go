@@ -68,10 +68,22 @@ func (r *hangoutRepository) ReplaceHangoutActivities(ctx context.Context, hangou
 }
 
 func (r *hangoutRepository) DeleteHangout(ctx context.Context, id uuid.UUID) error {
-	if err := r.db.WithContext(ctx).Delete(&domain.Hangout{}, "id = ?", id).Error; err != nil {
+	tx := r.db.WithContext(ctx).Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	if err := tx.Exec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?", id).Error; err != nil {
+		tx.Rollback()
 		return err
 	}
-	return nil
+
+	if err := tx.Delete(&domain.Hangout{}, "id = ?", id).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit().Error
 }
 
 func (r *hangoutRepository) GetHangoutsByUserID(ctx context.Context, userID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Hangout, error) {

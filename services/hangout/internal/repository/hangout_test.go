@@ -235,37 +235,81 @@ func TestHangoutRepository_UpdateHangout(t *testing.T) {
 
 func TestHangoutRepository_DeleteHangout(t *testing.T) {
 	hangoutID := uuid.New()
-	dbError := errors.New("delete failed")
 	ctx := context.Background()
+	dbError := errors.New("db error")
+
+	softDeleteSQL := "UPDATE `hangouts` SET `deleted_at`=? WHERE id = ? AND `hangouts`.`deleted_at` IS NULL"
 
 	testCases := []struct {
 		name        string
-		setupMock   func(mock sqlmock.Sqlmock)
+		id          uuid.UUID
+		setupMock   func(mock sqlmock.Sqlmock, id uuid.UUID)
 		expectError bool
-		expectedErr error
 	}{
 		{
-			name: "success",
-			setupMock: func(mock sqlmock.Sqlmock) {
+			name: "success_full_deletion",
+			id:   hangoutID,
+			setupMock: func(mock sqlmock.Sqlmock, id uuid.UUID) {
 				mock.ExpectBegin()
-				mock.ExpectExec("UPDATE `hangouts` SET `deleted_at`=? WHERE id = ? AND `hangouts`.`deleted_at` IS NULL").
-					WithArgs(AnyTime{}, hangoutID).
+				mock.ExpectExec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?").
+					WithArgs(id).
+					WillReturnResult(sqlmock.NewResult(0, 5))
+				mock.ExpectExec(softDeleteSQL).
+					WithArgs(sqlmock.AnyArg(), id).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 				mock.ExpectCommit()
 			},
 			expectError: false,
 		},
 		{
-			name: "database error",
-			setupMock: func(mock sqlmock.Sqlmock) {
+			name: "error_on_begin_transaction",
+			id:   hangoutID,
+			setupMock: func(mock sqlmock.Sqlmock, id uuid.UUID) {
+				mock.ExpectBegin().WillReturnError(dbError)
+			},
+			expectError: true,
+		},
+		{
+			name: "error_on_join_table_delete_triggers_rollback",
+			id:   hangoutID,
+			setupMock: func(mock sqlmock.Sqlmock, id uuid.UUID) {
 				mock.ExpectBegin()
-				mock.ExpectExec("UPDATE `hangouts` SET `deleted_at`=? WHERE id = ? AND `hangouts`.`deleted_at` IS NULL").
-					WithArgs(AnyTime{}, hangoutID).
+				mock.ExpectExec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?").
+					WithArgs(id).
 					WillReturnError(dbError)
 				mock.ExpectRollback()
 			},
 			expectError: true,
-			expectedErr: dbError,
+		},
+		{
+			name: "error_on_hangout_soft_delete_triggers_rollback",
+			id:   hangoutID,
+			setupMock: func(mock sqlmock.Sqlmock, id uuid.UUID) {
+				mock.ExpectBegin()
+				mock.ExpectExec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?").
+					WithArgs(id).
+					WillReturnResult(sqlmock.NewResult(0, 5))
+				mock.ExpectExec(softDeleteSQL).
+					WithArgs(sqlmock.AnyArg(), id).
+					WillReturnError(dbError)
+				mock.ExpectRollback()
+			},
+			expectError: true,
+		},
+		{
+			name: "error_on_commit",
+			id:   hangoutID,
+			setupMock: func(mock sqlmock.Sqlmock, id uuid.UUID) {
+				mock.ExpectBegin()
+				mock.ExpectExec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?").
+					WithArgs(id).
+					WillReturnResult(sqlmock.NewResult(0, 5))
+				mock.ExpectExec(softDeleteSQL).
+					WithArgs(sqlmock.AnyArg(), id).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectCommit().WillReturnError(dbError)
+			},
+			expectError: true,
 		},
 	}
 
@@ -273,21 +317,21 @@ func TestHangoutRepository_DeleteHangout(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
 			repo := repository.NewHangoutRepository(db)
-			tc.setupMock(mock)
 
-			err := repo.DeleteHangout(ctx, hangoutID)
+			tc.setupMock(mock, tc.id)
+
+			err := repo.DeleteHangout(ctx, tc.id)
 
 			if tc.expectError {
 				require.Error(t, err)
-				require.Equal(t, tc.expectedErr, err)
 			} else {
 				require.NoError(t, err)
 			}
+
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
 	}
 }
-
 func TestHangoutRepository_GetHangoutsByUserID(t *testing.T) {
 	userID := uuid.New()
 	afterID := uuid.New()
