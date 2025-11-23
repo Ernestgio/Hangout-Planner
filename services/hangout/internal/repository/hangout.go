@@ -53,6 +53,7 @@ func (r *hangoutRepository) UpdateHangout(ctx context.Context, hangout *domain.H
 	}
 	return hangout, nil
 }
+
 func (r *hangoutRepository) DeleteHangout(ctx context.Context, id uuid.UUID) error {
 	if err := r.db.WithContext(ctx).Delete(&domain.Hangout{}, "id = ?", id).Error; err != nil {
 		return err
