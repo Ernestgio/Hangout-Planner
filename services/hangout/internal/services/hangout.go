@@ -24,14 +24,16 @@ type HangoutService interface {
 }
 
 type hangoutService struct {
-	db          *gorm.DB
-	hangoutRepo repository.HangoutRepository
+	db           *gorm.DB
+	hangoutRepo  repository.HangoutRepository
+	activityRepo repository.ActivityRepository
 }
 
-func NewHangoutService(db *gorm.DB, hangoutRepo repository.HangoutRepository) HangoutService {
+func NewHangoutService(db *gorm.DB, hangoutRepo repository.HangoutRepository, activityRepo repository.ActivityRepository) HangoutService {
 	return &hangoutService{
-		db:          db,
-		hangoutRepo: hangoutRepo,
+		db:           db,
+		hangoutRepo:  hangoutRepo,
+		activityRepo: activityRepo,
 	}
 }
 
@@ -43,6 +45,15 @@ func (s *hangoutService) CreateHangout(ctx context.Context, userID uuid.UUID, re
 
 	if req.Status == "" {
 		hangoutModel.Status = enums.StatusPlanning
+	}
+
+	if len(req.ActivityIDs) > 0 {
+		activities, err := s.activityRepo.GetActivitiesByIDs(ctx, req.ActivityIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		hangoutModel.Activities = activities
 	}
 
 	hangoutModel.UserID = &userID
@@ -67,9 +78,10 @@ func (s *hangoutService) UpdateHangout(ctx context.Context, id uuid.UUID, userID
 	var updatedHangout *domain.Hangout
 
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-		txRepo := s.hangoutRepo.WithTx(tx)
+		txHangoutRepo := s.hangoutRepo.WithTx(tx)
+		txActivityRepo := s.activityRepo.WithTx(tx)
 
-		existingHangout, err := txRepo.GetHangoutByID(ctx, id, userID)
+		existingHangout, err := txHangoutRepo.GetHangoutByID(ctx, id, userID)
 		if err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
 				return apperrors.ErrNotFound
@@ -82,7 +94,27 @@ func (s *hangoutService) UpdateHangout(ctx context.Context, id uuid.UUID, userID
 			return err
 		}
 
-		updatedHangout, err = txRepo.UpdateHangout(ctx, existingHangout)
+		ids := req.ActivityIDs
+		if len(ids) > 0 {
+			existingActivities, err := txActivityRepo.GetActivitiesByIDs(ctx, ids)
+			if err != nil {
+				return err
+			}
+			if len(existingActivities) != len(ids) {
+				return apperrors.ErrInvalidActivityIDs
+			}
+		}
+
+		if err := txHangoutRepo.ReplaceHangoutActivities(ctx, existingHangout.ID, ids); err != nil {
+			return err
+		}
+
+		_, err = txHangoutRepo.UpdateHangout(ctx, existingHangout)
+		if err != nil {
+			return err
+		}
+
+		updatedHangout, err = txHangoutRepo.GetHangoutByID(ctx, id, userID)
 		if err != nil {
 			return err
 		}

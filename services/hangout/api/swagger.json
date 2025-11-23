@@ -839,6 +839,17 @@
                 }
             }
         },
+        "dto.ActivityTagResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.CreateActivityRequest": {
             "type": "object",
             "required": [
@@ -858,6 +869,12 @@
                 "title"
             ],
             "properties": {
+                "activity_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "date": {
                     "type": "string"
                 },
@@ -902,6 +919,12 @@
         "dto.HangoutDetailResponse": {
             "type": "object",
             "properties": {
+                "activities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ActivityTagResponse"
+                    }
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -1020,6 +1043,12 @@
                 "title"
             ],
             "properties": {
+                "activity_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "date": {
                     "type": "string"
                 },

@@ -845,6 +845,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.ActivityTagResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.CreateActivityRequest": {
             "type": "object",
             "required": [
@@ -864,6 +875,12 @@ const docTemplate = `{
                 "title"
             ],
             "properties": {
+                "activity_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "date": {
                     "type": "string"
                 },
@@ -908,6 +925,12 @@ const docTemplate = `{
         "dto.HangoutDetailResponse": {
             "type": "object",
             "properties": {
+                "activities": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.ActivityTagResponse"
+                    }
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -1026,6 +1049,12 @@ const docTemplate = `{
                 "title"
             ],
             "properties": {
+                "activity_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
                 "date": {
                     "type": "string"
                 },

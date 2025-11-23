@@ -19,7 +19,7 @@ type UpdateHangoutRequest struct {
 	Description *string             `json:"description"`
 	Date        string              `json:"date" validate:"datetime=2006-01-02 15:04:05.000"`
 	Status      enums.HangoutStatus `json:"status" validate:"oneof=PLANNING CONFIRMED EXECUTED CANCELLED"`
-	ActivityIDs *[]uuid.UUID        `json:"activity_ids" validate:"omitempty,dive,uuid"`
+	ActivityIDs []uuid.UUID         `json:"activity_ids" validate:"dive,uuid"`
 }
 
 type HangoutDetailResponse struct {
@@ -31,6 +31,7 @@ type HangoutDetailResponse struct {
 	CreatedAt   types.JSONTime        `json:"created_at"`
 	Activities  []ActivityTagResponse `json:"activities"`
 }
+
 type HangoutListItemResponse struct {
 	ID        uuid.UUID           `json:"id"`
 	Title     string              `json:"title"`
