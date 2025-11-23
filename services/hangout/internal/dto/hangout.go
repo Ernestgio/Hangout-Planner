@@ -11,6 +11,7 @@ type CreateHangoutRequest struct {
 	Description *string             `json:"description"`
 	Date        string              `json:"date" validate:"datetime=2006-01-02 15:04:05.000"`
 	Status      enums.HangoutStatus `json:"status" validate:"oneof=PLANNING CONFIRMED EXECUTED CANCELLED"`
+	ActivityIDs []uuid.UUID         `json:"activity_ids" validate:"dive,uuid"`
 }
 
 type UpdateHangoutRequest struct {
@@ -18,15 +19,17 @@ type UpdateHangoutRequest struct {
 	Description *string             `json:"description"`
 	Date        string              `json:"date" validate:"datetime=2006-01-02 15:04:05.000"`
 	Status      enums.HangoutStatus `json:"status" validate:"oneof=PLANNING CONFIRMED EXECUTED CANCELLED"`
+	ActivityIDs *[]uuid.UUID        `json:"activity_ids" validate:"omitempty,dive,uuid"`
 }
 
 type HangoutDetailResponse struct {
-	ID          uuid.UUID           `json:"id"`
-	Title       string              `json:"title"`
-	Description *string             `json:"description"`
-	Date        types.JSONTime      `json:"date"`
-	Status      enums.HangoutStatus `json:"status"`
-	CreatedAt   types.JSONTime      `json:"created_at"`
+	ID          uuid.UUID             `json:"id"`
+	Title       string                `json:"title"`
+	Description *string               `json:"description"`
+	Date        types.JSONTime        `json:"date"`
+	Status      enums.HangoutStatus   `json:"status"`
+	CreatedAt   types.JSONTime        `json:"created_at"`
+	Activities  []ActivityTagResponse `json:"activities"`
 }
 type HangoutListItemResponse struct {
 	ID        uuid.UUID           `json:"id"`
