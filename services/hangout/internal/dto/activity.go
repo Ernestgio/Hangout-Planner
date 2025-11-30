@@ -25,3 +25,8 @@ type ActivityDetailResponse struct {
 	HangoutCount int64          `json:"hangout_count"`
 	CreatedAt    types.JSONTime `json:"created_at"`
 }
+
+type ActivityTagResponse struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}

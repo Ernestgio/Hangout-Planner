@@ -56,7 +56,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	// Service Layer
 	userService := services.NewUserService(dbConn, userRepo, bcryptUtils)
 	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
-	hangoutService := services.NewHangoutService(dbConn, hangoutRepo)
+	hangoutService := services.NewHangoutService(dbConn, hangoutRepo, activityRepo)
 	activityService := services.NewActivityService(dbConn, activityRepo)
 
 	// handler Layer

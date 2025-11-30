@@ -340,3 +340,99 @@ func TestActivityRepository_DeleteActivity(t *testing.T) {
 		})
 	}
 }
+
+func TestGormActivityRepository_GetActivitiesByIDs(t *testing.T) {
+	activityID1 := uuid.New()
+	activityID2 := uuid.New()
+	nonExistentID := uuid.New()
+	userID := uuid.New()
+	ctx := context.Background()
+	dbError := errors.New("db error")
+
+	testCases := []struct {
+		name        string
+		inputIDs    []uuid.UUID
+		setupMock   func(mock sqlmock.Sqlmock)
+		checkResult func(t *testing.T, activities []*domain.Activity, err error)
+	}{
+		{
+			name:     "success_multiple_activities",
+			inputIDs: []uuid.UUID{activityID1, activityID2},
+			setupMock: func(mock sqlmock.Sqlmock) {
+				rows := sqlmock.NewRows([]string{"id", "name", "user_id"}).
+					AddRow(activityID1, "Running", userID).
+					AddRow(activityID2, "Cycling", userID)
+
+				expectedSQL := "SELECT * FROM `activities` WHERE id IN (?,?) AND `activities`.`deleted_at` IS NULL"
+				mock.ExpectQuery(expectedSQL).
+					WithArgs(activityID1, activityID2).
+					WillReturnRows(rows)
+			},
+			checkResult: func(t *testing.T, activities []*domain.Activity, err error) {
+				require.NoError(t, err)
+				require.Len(t, activities, 2)
+				require.Equal(t, activityID1, activities[0].ID)
+				require.Equal(t, activityID2, activities[1].ID)
+			},
+		},
+		{
+			name:     "success_some_not_found",
+			inputIDs: []uuid.UUID{activityID1, nonExistentID},
+			setupMock: func(mock sqlmock.Sqlmock) {
+				rows := sqlmock.NewRows([]string{"id", "name", "user_id"}).
+					AddRow(activityID1, "Running", userID)
+
+				expectedSQL := "SELECT * FROM `activities` WHERE id IN (?,?) AND `activities`.`deleted_at` IS NULL"
+				mock.ExpectQuery(expectedSQL).
+					WithArgs(activityID1, nonExistentID).
+					WillReturnRows(rows)
+			},
+			checkResult: func(t *testing.T, activities []*domain.Activity, err error) {
+				require.NoError(t, err)
+				require.Len(t, activities, 1)
+				require.Equal(t, activityID1, activities[0].ID)
+			},
+		},
+		{
+			name:     "success_empty_result",
+			inputIDs: []uuid.UUID{nonExistentID},
+			setupMock: func(mock sqlmock.Sqlmock) {
+				expectedSQL := "SELECT * FROM `activities` WHERE id IN (?) AND `activities`.`deleted_at` IS NULL"
+				mock.ExpectQuery(expectedSQL).
+					WithArgs(nonExistentID).
+					WillReturnRows(sqlmock.NewRows([]string{"id", "name", "user_id"}))
+			},
+			checkResult: func(t *testing.T, activities []*domain.Activity, err error) {
+				require.NoError(t, err)
+				require.Empty(t, activities)
+			},
+		},
+		{
+			name:     "database_error",
+			inputIDs: []uuid.UUID{activityID1},
+			setupMock: func(mock sqlmock.Sqlmock) {
+				expectedSQL := "SELECT * FROM `activities` WHERE id IN (?) AND `activities`.`deleted_at` IS NULL"
+				mock.ExpectQuery(expectedSQL).
+					WithArgs(activityID1).
+					WillReturnError(dbError)
+			},
+			checkResult: func(t *testing.T, activities []*domain.Activity, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+				require.Nil(t, activities)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			db, mock := setupDB(t)
+			repo := repository.NewActivityRepository(db)
+			tc.setupMock(mock)
+
+			activities, err := repo.GetActivitiesByIDs(ctx, tc.inputIDs)
+			tc.checkResult(t, activities, err)
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}

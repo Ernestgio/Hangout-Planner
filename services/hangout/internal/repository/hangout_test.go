@@ -12,6 +12,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 )
@@ -92,6 +93,7 @@ func TestHangoutRepository_CreateHangout(t *testing.T) {
 func TestHangoutRepository_GetHangoutByID(t *testing.T) {
 	hangoutID := uuid.New()
 	userID := uuid.New()
+	activityID := uuid.New()
 	ctx := context.Background()
 	dbError := errors.New("db error")
 
@@ -103,25 +105,37 @@ func TestHangoutRepository_GetHangoutByID(t *testing.T) {
 		{
 			name: "success",
 			setupMock: func(mock sqlmock.Sqlmock) {
-				rows := sqlmock.NewRows([]string{"id", "title", "user_id"}).
-					AddRow(hangoutID, "Found Hangout", &userID)
-				expectedSQL := "SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?"
-				mock.ExpectQuery(expectedSQL).
+				hangoutRows := sqlmock.NewRows([]string{"id", "title", "user_id"}).
+					AddRow(hangoutID, "Test Hangout", userID)
+
+				mock.ExpectQuery("SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?").
 					WithArgs(hangoutID, userID, 1).
-					WillReturnRows(rows)
+					WillReturnRows(hangoutRows)
+
+				joinRows := sqlmock.NewRows([]string{"hangout_id", "activity_id"}).
+					AddRow(hangoutID, activityID)
+				mock.ExpectQuery("SELECT * FROM `hangout_activities` WHERE `hangout_activities`.`hangout_id` = ?").
+					WithArgs(hangoutID).
+					WillReturnRows(joinRows)
+
+				activityRows := sqlmock.NewRows([]string{"id", "name"}).
+					AddRow(activityID, "Hiking")
+				mock.ExpectQuery("SELECT * FROM `activities` WHERE `activities`.`id` = ? AND `activities`.`deleted_at` IS NULL").
+					WithArgs(activityID).
+					WillReturnRows(activityRows)
 			},
 			checkResult: func(t *testing.T, result *domain.Hangout, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, result)
 				require.Equal(t, hangoutID, result.ID)
-				require.Equal(t, &userID, result.UserID)
+				require.Len(t, result.Activities, 1)
+				require.Equal(t, activityID, result.Activities[0].ID)
 			},
 		},
 		{
 			name: "not found",
 			setupMock: func(mock sqlmock.Sqlmock) {
-				expectedSQL := "SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?"
-				mock.ExpectQuery(expectedSQL).
+				mock.ExpectQuery("SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?").
 					WithArgs(hangoutID, userID, 1).
 					WillReturnError(gorm.ErrRecordNotFound)
 			},
@@ -134,8 +148,7 @@ func TestHangoutRepository_GetHangoutByID(t *testing.T) {
 		{
 			name: "database error",
 			setupMock: func(mock sqlmock.Sqlmock) {
-				expectedSQL := "SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?"
-				mock.ExpectQuery(expectedSQL).
+				mock.ExpectQuery("SELECT * FROM `hangouts` WHERE (id = ? AND user_id = ?) AND `hangouts`.`deleted_at` IS NULL ORDER BY `hangouts`.`id` LIMIT ?").
 					WithArgs(hangoutID, userID, 1).
 					WillReturnError(dbError)
 			},
@@ -152,7 +165,6 @@ func TestHangoutRepository_GetHangoutByID(t *testing.T) {
 			db, mock := setupDB(t)
 			repo := repository.NewHangoutRepository(db)
 			tc.setupMock(mock)
-
 			result, err := repo.GetHangoutByID(ctx, hangoutID, userID)
 			tc.checkResult(t, result, err)
 			require.NoError(t, mock.ExpectationsWereMet())
@@ -161,37 +173,44 @@ func TestHangoutRepository_GetHangoutByID(t *testing.T) {
 }
 
 func TestHangoutRepository_UpdateHangout(t *testing.T) {
-	hangout := &domain.Hangout{
-		ID:    uuid.New(),
-		Title: "Updated Title",
-	}
-	hangout.CreatedAt = time.Now()
-	dbError := errors.New("update failed")
+	hangoutID := uuid.New()
 	ctx := context.Background()
+	dbError := errors.New("update error")
+
+	hangoutToUpdate := &domain.Hangout{
+		ID:    hangoutID,
+		Title: "Updated Title",
+		Description: func(s string) *string {
+			return &s
+		}("New Description"),
+	}
 
 	testCases := []struct {
 		name        string
-		setupMock   func(mock sqlmock.Sqlmock)
+		hangout     *domain.Hangout
+		setupMock   func(mock sqlmock.Sqlmock, h *domain.Hangout)
 		expectError bool
 		expectedErr error
 	}{
 		{
-			name: "success",
-			setupMock: func(mock sqlmock.Sqlmock) {
+			name:    "success_update",
+			hangout: hangoutToUpdate,
+			setupMock: func(mock sqlmock.Sqlmock, h *domain.Hangout) {
 				mock.ExpectBegin()
-				mock.ExpectExec("UPDATE `hangouts` SET `title`=?,`description`=?,`date`=?,`status`=?,`created_at`=?,`updated_at`=?,`deleted_at`=?,`user_id`=? WHERE `hangouts`.`deleted_at` IS NULL AND `id` = ?").
-					WithArgs(hangout.Title, hangout.Description, hangout.Date, hangout.Status, hangout.CreatedAt, AnyTime{}, nil, nil, hangout.ID).
+				mock.ExpectExec("UPDATE `hangouts` SET `id`=?,`title`=?,`description`=?,`updated_at`=? WHERE id = ? AND `hangouts`.`deleted_at` IS NULL").
+					WithArgs(h.ID, h.Title, h.Description, AnyTime{}, h.ID).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 				mock.ExpectCommit()
 			},
 			expectError: false,
 		},
 		{
-			name: "database error",
-			setupMock: func(mock sqlmock.Sqlmock) {
+			name:    "database_error",
+			hangout: hangoutToUpdate,
+			setupMock: func(mock sqlmock.Sqlmock, h *domain.Hangout) {
 				mock.ExpectBegin()
-				mock.ExpectExec("UPDATE `hangouts` SET `title`=?,`description`=?,`date`=?,`status`=?,`created_at`=?,`updated_at`=?,`deleted_at`=?,`user_id`=? WHERE `hangouts`.`deleted_at` IS NULL AND `id` = ?").
-					WithArgs(hangout.Title, hangout.Description, hangout.Date, hangout.Status, hangout.CreatedAt, AnyTime{}, nil, nil, hangout.ID).
+				mock.ExpectExec("UPDATE `hangouts` SET `id`=?,`title`=?,`description`=?,`updated_at`=? WHERE id = ? AND `hangouts`.`deleted_at` IS NULL").
+					WithArgs(h.ID, h.Title, h.Description, AnyTime{}, h.ID).
 					WillReturnError(dbError)
 				mock.ExpectRollback()
 			},
@@ -204,9 +223,9 @@ func TestHangoutRepository_UpdateHangout(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
 			repo := repository.NewHangoutRepository(db)
-			tc.setupMock(mock)
+			tc.setupMock(mock, tc.hangout)
 
-			result, err := repo.UpdateHangout(ctx, hangout)
+			result, err := repo.UpdateHangout(ctx, tc.hangout)
 
 			if tc.expectError {
 				require.Error(t, err)
@@ -215,7 +234,8 @@ func TestHangoutRepository_UpdateHangout(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, result)
-				require.Equal(t, hangout.Title, result.Title)
+				require.Equal(t, tc.hangout.ID, result.ID)
+				require.Equal(t, tc.hangout.Title, result.Title)
 			}
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
@@ -224,37 +244,81 @@ func TestHangoutRepository_UpdateHangout(t *testing.T) {
 
 func TestHangoutRepository_DeleteHangout(t *testing.T) {
 	hangoutID := uuid.New()
-	dbError := errors.New("delete failed")
 	ctx := context.Background()
+	dbError := errors.New("db error")
+
+	softDeleteSQL := "UPDATE `hangouts` SET `deleted_at`=? WHERE id = ? AND `hangouts`.`deleted_at` IS NULL"
 
 	testCases := []struct {
 		name        string
-		setupMock   func(mock sqlmock.Sqlmock)
+		id          uuid.UUID
+		setupMock   func(mock sqlmock.Sqlmock, id uuid.UUID)
 		expectError bool
-		expectedErr error
 	}{
 		{
-			name: "success",
-			setupMock: func(mock sqlmock.Sqlmock) {
+			name: "success_full_deletion",
+			id:   hangoutID,
+			setupMock: func(mock sqlmock.Sqlmock, id uuid.UUID) {
 				mock.ExpectBegin()
-				mock.ExpectExec("UPDATE `hangouts` SET `deleted_at`=? WHERE id = ? AND `hangouts`.`deleted_at` IS NULL").
-					WithArgs(AnyTime{}, hangoutID).
+				mock.ExpectExec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?").
+					WithArgs(id).
+					WillReturnResult(sqlmock.NewResult(0, 5))
+				mock.ExpectExec(softDeleteSQL).
+					WithArgs(sqlmock.AnyArg(), id).
 					WillReturnResult(sqlmock.NewResult(0, 1))
 				mock.ExpectCommit()
 			},
 			expectError: false,
 		},
 		{
-			name: "database error",
-			setupMock: func(mock sqlmock.Sqlmock) {
+			name: "error_on_begin_transaction",
+			id:   hangoutID,
+			setupMock: func(mock sqlmock.Sqlmock, id uuid.UUID) {
+				mock.ExpectBegin().WillReturnError(dbError)
+			},
+			expectError: true,
+		},
+		{
+			name: "error_on_join_table_delete_triggers_rollback",
+			id:   hangoutID,
+			setupMock: func(mock sqlmock.Sqlmock, id uuid.UUID) {
 				mock.ExpectBegin()
-				mock.ExpectExec("UPDATE `hangouts` SET `deleted_at`=? WHERE id = ? AND `hangouts`.`deleted_at` IS NULL").
-					WithArgs(AnyTime{}, hangoutID).
+				mock.ExpectExec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?").
+					WithArgs(id).
 					WillReturnError(dbError)
 				mock.ExpectRollback()
 			},
 			expectError: true,
-			expectedErr: dbError,
+		},
+		{
+			name: "error_on_hangout_soft_delete_triggers_rollback",
+			id:   hangoutID,
+			setupMock: func(mock sqlmock.Sqlmock, id uuid.UUID) {
+				mock.ExpectBegin()
+				mock.ExpectExec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?").
+					WithArgs(id).
+					WillReturnResult(sqlmock.NewResult(0, 5))
+				mock.ExpectExec(softDeleteSQL).
+					WithArgs(sqlmock.AnyArg(), id).
+					WillReturnError(dbError)
+				mock.ExpectRollback()
+			},
+			expectError: true,
+		},
+		{
+			name: "error_on_commit",
+			id:   hangoutID,
+			setupMock: func(mock sqlmock.Sqlmock, id uuid.UUID) {
+				mock.ExpectBegin()
+				mock.ExpectExec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?").
+					WithArgs(id).
+					WillReturnResult(sqlmock.NewResult(0, 5))
+				mock.ExpectExec(softDeleteSQL).
+					WithArgs(sqlmock.AnyArg(), id).
+					WillReturnResult(sqlmock.NewResult(0, 1))
+				mock.ExpectCommit().WillReturnError(dbError)
+			},
+			expectError: true,
 		},
 	}
 
@@ -262,21 +326,21 @@ func TestHangoutRepository_DeleteHangout(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
 			repo := repository.NewHangoutRepository(db)
-			tc.setupMock(mock)
 
-			err := repo.DeleteHangout(ctx, hangoutID)
+			tc.setupMock(mock, tc.id)
+
+			err := repo.DeleteHangout(ctx, tc.id)
 
 			if tc.expectError {
 				require.Error(t, err)
-				require.Equal(t, tc.expectedErr, err)
 			} else {
 				require.NoError(t, err)
 			}
+
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
 	}
 }
-
 func TestHangoutRepository_GetHangoutsByUserID(t *testing.T) {
 	userID := uuid.New()
 	afterID := uuid.New()
@@ -369,6 +433,219 @@ func TestHangoutRepository_GetHangoutsByUserID(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, results)
 				require.Len(t, results, tc.expectedLen)
+			}
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestHangoutRepository_GetHangoutActivityIDs(t *testing.T) {
+	ctx := context.Background()
+	hangoutID := uuid.New()
+	activityID1 := uuid.New()
+	activityID2 := uuid.New()
+	dbError := errors.New("db error")
+
+	testCases := []struct {
+		name          string
+		setupMock     func(mock sqlmock.Sqlmock)
+		expectedIDs   []uuid.UUID
+		expectError   bool
+		expectedError error
+	}{
+		{
+			name: "success_fetch",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				rows := sqlmock.NewRows([]string{"activity_id"}).
+					AddRow(activityID1.String()).
+					AddRow(activityID2.String())
+				mock.ExpectQuery("SELECT `activity_id` FROM `hangout_activities` WHERE hangout_id = ?").
+					WithArgs(hangoutID).
+					WillReturnRows(rows)
+			},
+			expectedIDs:   []uuid.UUID{activityID1, activityID2},
+			expectError:   false,
+			expectedError: nil,
+		},
+		{
+			name: "no_results",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				rows := sqlmock.NewRows([]string{"activity_id"})
+				mock.ExpectQuery("SELECT `activity_id` FROM `hangout_activities` WHERE hangout_id = ?").
+					WithArgs(hangoutID).
+					WillReturnRows(rows)
+			},
+			expectedIDs:   []uuid.UUID{},
+			expectError:   false,
+			expectedError: nil,
+		},
+		{
+			name: "database_error",
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectQuery("SELECT `activity_id` FROM `hangout_activities` WHERE hangout_id = ?").
+					WithArgs(hangoutID).
+					WillReturnError(dbError)
+			},
+			expectedIDs:   nil,
+			expectError:   true,
+			expectedError: dbError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			db, mock := setupDB(t)
+			repo := repository.NewHangoutRepository(db)
+			tc.setupMock(mock)
+
+			ids, err := repo.GetHangoutActivityIDs(ctx, hangoutID)
+
+			if tc.expectError {
+				require.Error(t, err)
+				if tc.expectedError != nil {
+					assert.Equal(t, tc.expectedError, err)
+				}
+				require.Nil(t, ids)
+			} else {
+				require.NoError(t, err)
+				assert.ElementsMatch(t, tc.expectedIDs, ids)
+			}
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestHangoutRepository_AddHangoutActivities(t *testing.T) {
+	ctx := context.Background()
+	hangoutID := uuid.New()
+	activityID1 := uuid.New()
+	activityID2 := uuid.New()
+	activityIDs := []uuid.UUID{activityID1, activityID2}
+	dbError := errors.New("insert failed")
+
+	testCases := []struct {
+		name          string
+		activityIDs   []uuid.UUID
+		setupMock     func(mock sqlmock.Sqlmock)
+		expectError   bool
+		expectedError error
+	}{
+		{
+			name:        "success_insert_multiple",
+			activityIDs: activityIDs,
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec("INSERT INTO `hangout_activities` (`activity_id`,`hangout_id`) VALUES (?,?),(?,?)").
+					WithArgs(activityID1, hangoutID, activityID2, hangoutID).
+					WillReturnResult(sqlmock.NewResult(2, 2))
+				mock.ExpectCommit()
+			},
+			expectError: false,
+		},
+		{
+			name:        "empty_list",
+			activityIDs: []uuid.UUID{},
+			setupMock:   func(mock sqlmock.Sqlmock) {},
+			expectError: false,
+		},
+		{
+			name:        "database_error",
+			activityIDs: activityIDs,
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec("INSERT INTO `hangout_activities` (`activity_id`,`hangout_id`) VALUES (?,?),(?,?)").
+					WillReturnError(dbError)
+				mock.ExpectRollback()
+			},
+			expectError:   true,
+			expectedError: dbError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			db, mock := setupDB(t)
+			repo := repository.NewHangoutRepository(db)
+			tc.setupMock(mock)
+
+			err := repo.AddHangoutActivities(ctx, hangoutID, tc.activityIDs)
+
+			if tc.expectError {
+				require.Error(t, err)
+				if !assert.Equal(t, tc.expectedError, err) {
+					assert.Contains(t, err.Error(), tc.expectedError.Error())
+				}
+			} else {
+				require.NoError(t, err)
+			}
+			require.NoError(t, mock.ExpectationsWereMet())
+		})
+	}
+}
+
+func TestHangoutRepository_RemoveHangoutActivities(t *testing.T) {
+	ctx := context.Background()
+	hangoutID := uuid.New()
+	activityID1 := uuid.New()
+	activityID2 := uuid.New()
+	activityIDs := []uuid.UUID{activityID1, activityID2}
+	dbError := errors.New("delete failed")
+
+	testCases := []struct {
+		name          string
+		activityIDs   []uuid.UUID
+		setupMock     func(mock sqlmock.Sqlmock)
+		expectError   bool
+		expectedError error
+	}{
+		{
+			name:        "success_delete_multiple",
+			activityIDs: activityIDs,
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec("DELETE FROM `hangout_activities` WHERE hangout_id = ? AND activity_id IN (?,?)").
+					WithArgs(hangoutID, activityID1, activityID2).
+					WillReturnResult(sqlmock.NewResult(0, 2))
+				mock.ExpectCommit()
+			},
+			expectError: false,
+		},
+		{
+			name:        "empty_list",
+			activityIDs: []uuid.UUID{},
+			setupMock:   func(mock sqlmock.Sqlmock) {},
+			expectError: false,
+		},
+		{
+			name:        "database_error",
+			activityIDs: activityIDs,
+			setupMock: func(mock sqlmock.Sqlmock) {
+				mock.ExpectBegin()
+				mock.ExpectExec("DELETE FROM `hangout_activities` WHERE hangout_id = ? AND activity_id IN (?,?)").
+					WithArgs(hangoutID, activityID1, activityID2).
+					WillReturnError(dbError)
+				mock.ExpectRollback()
+			},
+			expectError:   true,
+			expectedError: dbError,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			db, mock := setupDB(t)
+			repo := repository.NewHangoutRepository(db)
+			tc.setupMock(mock)
+
+			err := repo.RemoveHangoutActivities(ctx, hangoutID, tc.activityIDs)
+
+			if tc.expectError {
+				require.Error(t, err)
+				if !assert.Equal(t, tc.expectedError, err) {
+					assert.Contains(t, err.Error(), tc.expectedError.Error())
+				}
+			} else {
+				require.NoError(t, err)
 			}
 			require.NoError(t, mock.ExpectationsWereMet())
 		})

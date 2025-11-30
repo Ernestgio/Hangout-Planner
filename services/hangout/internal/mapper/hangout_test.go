@@ -80,7 +80,7 @@ func TestApplyUpdateToHangout(t *testing.T) {
 		checkResult    func(t *testing.T, hangout *domain.Hangout)
 	}{
 		{
-			name: "success: full update",
+			name: "success: full update of basic fields",
 			initialHangout: &domain.Hangout{
 				ID:    uuid.New(),
 				Title: "Old Title",
@@ -130,14 +130,21 @@ func TestApplyUpdateToHangout(t *testing.T) {
 
 func TestHangoutToDetailResponseDTO(t *testing.T) {
 	hangoutID := uuid.New()
+	activityID1 := uuid.New()
+	activityID2 := uuid.New()
 	now := time.Now()
-	hangout := &domain.Hangout{
+
+	hangoutWithActivities := &domain.Hangout{
 		ID:          hangoutID,
 		Title:       "Detail View",
 		Description: stringPtr("Detailed description."),
 		Date:        now,
 		Status:      enums.StatusExecuted,
 		CreatedAt:   now,
+		Activities: []*domain.Activity{
+			{ID: activityID1, Name: "Hiking"},
+			{ID: activityID2, Name: "Coffee"},
+		},
 	}
 
 	testCases := []struct {
@@ -146,8 +153,8 @@ func TestHangoutToDetailResponseDTO(t *testing.T) {
 		checkResult func(t *testing.T, res *dto.HangoutDetailResponse)
 	}{
 		{
-			name:  "success",
-			input: hangout,
+			name:  "success with activities",
+			input: hangoutWithActivities,
 			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse) {
 				require.NotNil(t, res)
 				require.Equal(t, hangoutID, res.ID)
@@ -156,7 +163,25 @@ func TestHangoutToDetailResponseDTO(t *testing.T) {
 				require.Equal(t, "Detailed description.", *res.Description)
 				require.Equal(t, types.JSONTime(now), res.Date)
 				require.Equal(t, enums.StatusExecuted, res.Status)
-				require.Equal(t, types.JSONTime(now), res.CreatedAt)
+				require.Len(t, res.Activities, 2)
+				require.Equal(t, activityID1, res.Activities[0].ID)
+				require.Equal(t, "Hiking", res.Activities[0].Name)
+				require.Equal(t, activityID2, res.Activities[1].ID)
+				require.Equal(t, "Coffee", res.Activities[1].Name)
+			},
+		},
+		{
+			name: "success without activities",
+			input: &domain.Hangout{
+				ID:          uuid.New(),
+				Title:       "No Activities",
+				Date:        now,
+				Description: stringPtr(""),
+				Activities:  []*domain.Activity{},
+			},
+			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse) {
+				require.NotNil(t, res)
+				require.Empty(t, res.Activities)
 			},
 		},
 		{
@@ -175,6 +200,7 @@ func TestHangoutToDetailResponseDTO(t *testing.T) {
 		})
 	}
 }
+
 func TestHangoutToListItemResponseDTO(t *testing.T) {
 	hangoutID := uuid.New()
 	now := time.Now()

@@ -20,6 +20,13 @@ definitions:
       name:
         type: string
     type: object
+  dto.ActivityTagResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   dto.CreateActivityRequest:
     properties:
       name:
@@ -31,6 +38,10 @@ definitions:
     type: object
   dto.CreateHangoutRequest:
     properties:
+      activity_ids:
+        items:
+          type: string
+        type: array
       date:
         type: string
       description:
@@ -61,6 +72,10 @@ definitions:
     type: object
   dto.HangoutDetailResponse:
     properties:
+      activities:
+        items:
+          $ref: '#/definitions/dto.ActivityTagResponse'
+        type: array
       created_at:
         type: string
       date:
@@ -137,6 +152,10 @@ definitions:
     type: object
   dto.UpdateHangoutRequest:
     properties:
+      activities:
+        items:
+          type: string
+        type: array
       date:
         type: string
       description:

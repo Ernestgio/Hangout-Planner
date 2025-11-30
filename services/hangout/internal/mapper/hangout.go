@@ -48,6 +48,14 @@ func HangoutToDetailResponseDTO(hangout *domain.Hangout) *dto.HangoutDetailRespo
 		return nil
 	}
 
+	activityDTOs := make([]dto.ActivityTagResponse, len(hangout.Activities))
+	for i, act := range hangout.Activities {
+		activityDTOs[i] = dto.ActivityTagResponse{
+			ID:   act.ID,
+			Name: act.Name,
+		}
+	}
+
 	return &dto.HangoutDetailResponse{
 		ID:          hangout.ID,
 		Title:       hangout.Title,
@@ -55,6 +63,7 @@ func HangoutToDetailResponseDTO(hangout *domain.Hangout) *dto.HangoutDetailRespo
 		Date:        types.JSONTime(hangout.Date),
 		Status:      hangout.Status,
 		CreatedAt:   types.JSONTime(hangout.CreatedAt),
+		Activities:  activityDTOs,
 	}
 }
 

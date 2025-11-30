@@ -15,6 +15,7 @@ type ActivityRepository interface {
 	GetAllActivities(ctx context.Context, userID uuid.UUID) ([]ActivityWithCount, error)
 	UpdateActivity(ctx context.Context, activity *domain.Activity) (*domain.Activity, error)
 	DeleteActivity(ctx context.Context, id uuid.UUID) error
+	GetActivitiesByIDs(ctx context.Context, ids []uuid.UUID) ([]*domain.Activity, error)
 }
 
 type activityRepository struct {
@@ -89,4 +90,13 @@ func (r *activityRepository) UpdateActivity(ctx context.Context, activity *domai
 
 func (r *activityRepository) DeleteActivity(ctx context.Context, id uuid.UUID) error {
 	return r.db.WithContext(ctx).Where("id = ?", id).Delete(&domain.Activity{}).Error
+}
+
+func (r *activityRepository) GetActivitiesByIDs(ctx context.Context, ids []uuid.UUID) ([]*domain.Activity, error) {
+	var activities []*domain.Activity
+	err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&activities).Error
+	if err != nil {
+		return nil, err
+	}
+	return activities, nil
 }
