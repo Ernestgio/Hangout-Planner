@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Ernestgio/Hangout-Planner/pkg/shared/enums"
@@ -61,11 +60,6 @@ func (m *MockHangoutRepository) UpdateHangout(ctx context.Context, hangout *doma
 	return args.Get(0).(*domain.Hangout), args.Error(1)
 }
 
-func (m *MockHangoutRepository) ReplaceHangoutActivities(ctx context.Context, hangoutID uuid.UUID, activityIDs []uuid.UUID) error {
-	args := m.Called(ctx, hangoutID, activityIDs)
-	return args.Error(0)
-}
-
 func (m *MockHangoutRepository) DeleteHangout(ctx context.Context, id uuid.UUID) error {
 	args := m.Called(ctx, id)
 	return args.Error(0)
@@ -79,6 +73,24 @@ func (m *MockHangoutRepository) GetHangoutsByUserID(ctx context.Context, userID 
 	return args.Get(0).([]domain.Hangout), args.Error(1)
 }
 
+func (m *MockHangoutRepository) GetHangoutActivityIDs(ctx context.Context, hangoutID uuid.UUID) ([]uuid.UUID, error) {
+	args := m.Called(ctx, hangoutID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]uuid.UUID), args.Error(1)
+}
+
+func (m *MockHangoutRepository) AddHangoutActivities(ctx context.Context, hangoutID uuid.UUID, activityIDs []uuid.UUID) error {
+	args := m.Called(ctx, hangoutID, activityIDs)
+	return args.Error(0)
+}
+
+func (m *MockHangoutRepository) RemoveHangoutActivities(ctx context.Context, hangoutID uuid.UUID, activityIDs []uuid.UUID) error {
+	args := m.Called(ctx, hangoutID, activityIDs)
+	return args.Error(0)
+}
+
 func TestHangoutService_CreateHangout(t *testing.T) {
 	ctx := context.Background()
 	userID := uuid.New()
@@ -87,22 +99,38 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 	activityID1 := uuid.New()
 	activityID2 := uuid.New()
 
+	type MockSetup func(
+		hRepo *MockHangoutRepository,
+		aRepo *MockActivityRepository,
+		sqlMock sqlmock.Sqlmock,
+	)
+
 	testCases := []struct {
-		name              string
-		request           *dto.CreateHangoutRequest
-		setupActivityMock func(repo *MockActivityRepository)
-		setupHangoutMock  func(repo *MockHangoutRepository)
-		checkResult       func(t *testing.T, res *dto.HangoutDetailResponse, err error)
+		name        string
+		request     *dto.CreateHangoutRequest
+		setupMock   MockSetup
+		checkResult func(t *testing.T, res *dto.HangoutDetailResponse, err error)
 	}{
 		{
-			name: "success without activities",
+			name: "success_without_activities",
 			request: &dto.CreateHangoutRequest{
-				Title: "Test Hangout", Date: validTimeStr, Status: enums.StatusPlanning,
+				Title:  "Test Hangout",
+				Date:   validTimeStr,
+				Status: enums.StatusPlanning,
 			},
-			setupActivityMock: func(repo *MockActivityRepository) {
-			},
-			setupHangoutMock: func(repo *MockHangoutRepository) {
-				repo.On("CreateHangout", ctx, mock.AnythingOfType("*domain.Hangout")).Return(&domain.Hangout{ID: uuid.New(), Title: "Test Hangout"}, nil).Once()
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				createdHangout := &domain.Hangout{ID: uuid.New(), Title: "Test Hangout"}
+				hRepo.On("CreateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool {
+					return h.Title == "Test Hangout" && h.Status == enums.StatusPlanning
+				})).Return(createdHangout, nil).Once()
+
+				hRepo.On("GetHangoutByID", ctx, createdHangout.ID, userID).Return(createdHangout, nil).Once()
+
+				sqlMock.ExpectCommit()
 			},
 			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
 				require.NoError(t, err)
@@ -111,51 +139,71 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 			},
 		},
 		{
-			name: "success with activities",
+			name: "success_with_empty_activity_slice",
+			request: &dto.CreateHangoutRequest{
+				Title:       "Empty Activities",
+				Date:        validTimeStr,
+				ActivityIDs: []uuid.UUID{},
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				createdHangout := &domain.Hangout{ID: uuid.New(), Title: "Empty Activities"}
+				hRepo.On("CreateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool {
+					return h.Title == "Empty Activities"
+				})).Return(createdHangout, nil).Once()
+
+				hRepo.On("GetHangoutByID", ctx, createdHangout.ID, userID).Return(createdHangout, nil).Once()
+
+				sqlMock.ExpectCommit()
+			},
+			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.Equal(t, "Empty Activities", res.Title)
+			},
+		},
+		{
+			name: "success_with_activities",
 			request: &dto.CreateHangoutRequest{
 				Title:       "Hangout with activities",
 				Date:        validTimeStr,
 				ActivityIDs: []uuid.UUID{activityID1, activityID2},
 			},
-			setupActivityMock: func(repo *MockActivityRepository) {
-				mockActivities := []*domain.Activity{
-					{ID: activityID1, Name: "Activity 1"},
-					{ID: activityID2, Name: "Activity 2"},
-				}
-				repo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return(mockActivities, nil).Once()
-			},
-			setupHangoutMock: func(repo *MockHangoutRepository) {
-				repo.On("CreateHangout",
-					ctx,
-					mock.MatchedBy(func(h *domain.Hangout) bool {
-						return len(h.Activities) == 2 && *h.UserID == userID
-					}),
-				).Return(&domain.Hangout{ID: uuid.New(), Title: "Hangout with activities"}, nil).Once()
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				mockActivities := []*domain.Activity{{ID: activityID1}, {ID: activityID2}}
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return(mockActivities, nil).Once()
+
+				createdHangout := &domain.Hangout{ID: uuid.New(), Title: "Hangout with activities"}
+				hRepo.On("CreateHangout", ctx, mock.Anything).Return(createdHangout, nil).Once()
+
+				hRepo.On("AddHangoutActivities", ctx, createdHangout.ID, []uuid.UUID{activityID1, activityID2}).Return(nil).Once()
+
+				finalHangout := &domain.Hangout{ID: createdHangout.ID, Title: "Hangout with activities", Activities: []*domain.Activity{{ID: activityID1}, {ID: activityID2}}}
+				hRepo.On("GetHangoutByID", ctx, createdHangout.ID, userID).Return(finalHangout, nil).Once()
+
+				sqlMock.ExpectCommit()
 			},
 			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
 				require.NoError(t, err)
 				require.NotNil(t, res)
 				require.Equal(t, "Hangout with activities", res.Title)
+				require.Len(t, res.Activities, 2)
 			},
 		},
 		{
-			name:    "success with default status",
-			request: &dto.CreateHangoutRequest{Title: "Test Hangout", Date: validTimeStr},
-			setupActivityMock: func(repo *MockActivityRepository) {
+			name: "mapper_fails_on_invalid_date",
+			request: &dto.CreateHangoutRequest{
+				Title: "Invalid Date",
+				Date:  "invalid-date",
 			},
-			setupHangoutMock: func(repo *MockHangoutRepository) {
-				repo.On("CreateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool { return h.Status == enums.StatusPlanning })).Return(&domain.Hangout{}, nil).Once()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.NoError(t, err)
-			},
-		},
-		{
-			name:    "mapper fails on invalid date",
-			request: &dto.CreateHangoutRequest{Date: "invalid-date"},
-			setupActivityMock: func(repo *MockActivityRepository) {
-			},
-			setupHangoutMock: func(repo *MockHangoutRepository) {
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
 			},
 			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
 				require.Error(t, err)
@@ -163,12 +211,42 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 			},
 		},
 		{
-			name:    "repository fails",
-			request: &dto.CreateHangoutRequest{Date: validTimeStr},
-			setupActivityMock: func(repo *MockActivityRepository) {
+			name: "activity_validation_fails_invalid_ids",
+			request: &dto.CreateHangoutRequest{
+				Title:       "Bad IDs",
+				Date:        validTimeStr,
+				ActivityIDs: []uuid.UUID{activityID1, activityID2},
 			},
-			setupHangoutMock: func(repo *MockHangoutRepository) {
-				repo.On("CreateHangout", ctx, mock.AnythingOfType("*domain.Hangout")).Return(nil, dbError).Once()
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).
+					Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+
+				sqlMock.ExpectRollback()
+			},
+			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.ErrorIs(t, err, apperrors.ErrInvalidActivityIDs)
+			},
+		},
+		{
+			name: "activity_repo_error",
+			request: &dto.CreateHangoutRequest{
+				Title:       "Repo Error",
+				Date:        validTimeStr,
+				ActivityIDs: []uuid.UUID{activityID1},
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return(nil, dbError).Once()
+
+				sqlMock.ExpectRollback()
 			},
 			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
 				require.Error(t, err)
@@ -177,49 +255,92 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 			},
 		},
 		{
-			name:    "activity repository fails",
-			request: &dto.CreateHangoutRequest{Date: validTimeStr, ActivityIDs: []uuid.UUID{activityID1}},
-			setupActivityMock: func(repo *MockActivityRepository) {
-				repo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return(nil, dbError).Once()
+			name: "repository_create_fails",
+			request: &dto.CreateHangoutRequest{
+				Title: "DB Error",
+				Date:  validTimeStr,
 			},
-			setupHangoutMock: func(repo *MockHangoutRepository) {
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				hRepo.On("CreateHangout", ctx, mock.Anything).Return(nil, dbError).Once()
+
+				sqlMock.ExpectRollback()
+			},
+			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+			},
+		},
+		{
+			name: "add_activities_fails",
+			request: &dto.CreateHangoutRequest{
+				Title:       "Add Activity Fail",
+				Date:        validTimeStr,
+				ActivityIDs: []uuid.UUID{activityID1},
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				mockActivities := []*domain.Activity{{ID: activityID1}}
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return(mockActivities, nil).Once()
+
+				createdHangout := &domain.Hangout{ID: uuid.New()}
+				hRepo.On("CreateHangout", ctx, mock.Anything).Return(createdHangout, nil).Once()
+
+				hRepo.On("AddHangoutActivities", ctx, createdHangout.ID, []uuid.UUID{activityID1}).Return(dbError).Once()
+
+				sqlMock.ExpectRollback()
+			},
+			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+			},
+		},
+		{
+			name: "get_after_create_fails",
+			request: &dto.CreateHangoutRequest{
+				Title: "After Create Fail",
+				Date:  validTimeStr,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				createdHangout := &domain.Hangout{ID: uuid.New()}
+				hRepo.On("CreateHangout", ctx, mock.Anything).Return(createdHangout, nil).Once()
+				hRepo.On("GetHangoutByID", ctx, createdHangout.ID, userID).Return(nil, dbError).Once()
+
+				sqlMock.ExpectRollback()
 			},
 			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
 				require.Error(t, err)
 				require.Equal(t, dbError, err)
 				require.Nil(t, res)
-			},
-		},
-		{
-			name:    "activity repository returns empty list",
-			request: &dto.CreateHangoutRequest{Date: validTimeStr, ActivityIDs: []uuid.UUID{activityID1}},
-			setupActivityMock: func(repo *MockActivityRepository) {
-				repo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{}, apperrors.ErrInvalidActivityID).Once()
-			},
-			setupHangoutMock: func(repo *MockHangoutRepository) {
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.Error(t, err)
 			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			db, sqlMock := setupDB(t)
 			mockHangoutRepo := new(MockHangoutRepository)
 			mockActivityRepo := new(MockActivityRepository)
-			hangoutService := services.NewHangoutService(nil, mockHangoutRepo, mockActivityRepo)
+			service := services.NewHangoutService(db, mockHangoutRepo, mockActivityRepo)
 
-			tc.setupHangoutMock(mockHangoutRepo)
-			if tc.setupActivityMock != nil {
-				tc.setupActivityMock(mockActivityRepo)
-			}
+			tc.setupMock(mockHangoutRepo, mockActivityRepo, sqlMock)
 
-			result, err := hangoutService.CreateHangout(ctx, userID, tc.request)
+			result, err := service.CreateHangout(ctx, userID, tc.request)
 			tc.checkResult(t, result, err)
 
 			mockHangoutRepo.AssertExpectations(t)
 			mockActivityRepo.AssertExpectations(t)
+			require.NoError(t, sqlMock.ExpectationsWereMet())
 		})
 	}
 }
@@ -269,278 +390,6 @@ func TestHangoutService_GetHangoutByID(t *testing.T) {
 			result, err := hangoutService.GetHangoutByID(ctx, hangoutID, tc.userID)
 			tc.checkResult(t, result, err)
 			mockHangoutRepo.AssertExpectations(t)
-		})
-	}
-}
-func TestHangoutService_UpdateHangout(t *testing.T) {
-	ctx := context.Background()
-	hangoutID := uuid.New()
-	userID := uuid.New()
-	newTitle := "New Title"
-	newDateStr := "2025-12-25 18:00:00.000"
-	dbError := errors.New("db error")
-	activityID1 := uuid.New()
-	activityID2 := uuid.New()
-
-	type MockSetup func(
-		hangoutRepo *MockHangoutRepository,
-		activityRepo *MockActivityRepository,
-		sqlMock sqlmock.Sqlmock,
-	)
-
-	testCases := []struct {
-		name        string
-		request     *dto.UpdateHangoutRequest
-		setupMock   MockSetup
-		checkResult func(t *testing.T, res *dto.HangoutDetailResponse, err error)
-	}{
-		{
-			name: "success_only_metadata_update_activities_cleared",
-			request: &dto.UpdateHangoutRequest{
-				Title:       newTitle,
-				Date:        newDateStr,
-				Status:      enums.StatusConfirmed,
-				ActivityIDs: []uuid.UUID{},
-			},
-			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
-				sqlMock.ExpectBegin()
-				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
-				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old Title"}, nil).Once()
-
-				hRepo.On("ReplaceHangoutActivities", ctx, hangoutID, []uuid.UUID{}).Return(nil).Once()
-
-				hRepo.On("UpdateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool { return h.Title == newTitle })).Return(&domain.Hangout{ID: hangoutID, Title: newTitle}, nil).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, Title: newTitle, Status: enums.StatusConfirmed, Activities: []*domain.Activity{}}, nil).Once()
-
-				sqlMock.ExpectCommit()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.NoError(t, err)
-				require.NotNil(t, res)
-				require.Equal(t, newTitle, res.Title)
-				require.Len(t, res.Activities, 0)
-			},
-		},
-		{
-			name: "success_with_activities_update",
-			request: &dto.UpdateHangoutRequest{
-				Title:       newTitle,
-				ActivityIDs: []uuid.UUID{activityID1, activityID2},
-				Date:        newDateStr,
-			},
-			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
-				sqlMock.ExpectBegin()
-				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
-				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old Title"}, nil).Once()
-
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}, {ID: activityID2}}, nil).Once()
-
-				hRepo.On("ReplaceHangoutActivities", ctx, hangoutID, []uuid.UUID{activityID1, activityID2}).Return(nil).Once()
-
-				hRepo.On("UpdateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool { return h.Title == newTitle })).Return(&domain.Hangout{ID: hangoutID, Title: newTitle}, nil).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{
-					ID:         hangoutID,
-					Title:      newTitle,
-					Activities: []*domain.Activity{{ID: activityID1}, {ID: activityID2}},
-				}, nil).Once()
-
-				sqlMock.ExpectCommit()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.NoError(t, err)
-				require.NotNil(t, res)
-				require.Equal(t, newTitle, res.Title)
-				require.Len(t, res.Activities, 2)
-			},
-		},
-		{
-			name: "error_invalid_activity_ids",
-			request: &dto.UpdateHangoutRequest{
-				ActivityIDs: []uuid.UUID{activityID1, activityID2},
-				Date:        newDateStr,
-			},
-			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
-				sqlMock.ExpectBegin()
-				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
-				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
-
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
-
-				sqlMock.ExpectRollback()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.Error(t, err)
-				require.ErrorIs(t, err, apperrors.ErrInvalidActivityIDs)
-			},
-		},
-		{
-			name: "error_activity_fetch_db_failure",
-			request: &dto.UpdateHangoutRequest{
-				ActivityIDs: []uuid.UUID{activityID1},
-				Date:        newDateStr,
-			},
-			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
-				sqlMock.ExpectBegin()
-				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
-				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
-
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{}, dbError).Once()
-
-				sqlMock.ExpectRollback()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.Error(t, err)
-				require.Equal(t, dbError, err)
-			},
-		},
-		{
-			name: "error_replace_activities_fails",
-			request: &dto.UpdateHangoutRequest{
-				ActivityIDs: []uuid.UUID{activityID1},
-				Date:        newDateStr,
-			},
-			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
-				sqlMock.ExpectBegin()
-				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
-				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
-
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
-
-				hRepo.On("ReplaceHangoutActivities", ctx, hangoutID, []uuid.UUID{activityID1}).Return(dbError).Once()
-
-				sqlMock.ExpectRollback()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.Error(t, err)
-				require.Equal(t, dbError, err)
-			},
-		},
-		{
-			name:    "hangout not found",
-			request: &dto.UpdateHangoutRequest{Title: newTitle, Date: newDateStr},
-			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
-				sqlMock.ExpectBegin()
-				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
-				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, gorm.ErrRecordNotFound).Once()
-				sqlMock.ExpectRollback()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.Error(t, err)
-				require.ErrorIs(t, err, apperrors.ErrNotFound)
-			},
-		},
-		{
-			name:    "get hangout by id returns generic db error",
-			request: &dto.UpdateHangoutRequest{Title: newTitle, Date: newDateStr},
-			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
-				sqlMock.ExpectBegin()
-				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
-				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, dbError).Once()
-				sqlMock.ExpectRollback()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.Error(t, err)
-				require.Equal(t, dbError, err)
-			},
-		},
-		{
-			name: "mapper fails on invalid date format",
-			request: &dto.UpdateHangoutRequest{
-				Title: newTitle,
-				Date:  "invalid-date",
-			},
-			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
-				sqlMock.ExpectBegin()
-				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
-				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
-				sqlMock.ExpectRollback()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.Error(t, err)
-				var parseErr *time.ParseError
-				require.ErrorAs(t, err, &parseErr)
-			},
-		},
-		{
-			name:    "update fails",
-			request: &dto.UpdateHangoutRequest{Title: newTitle, Date: newDateStr},
-			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
-				sqlMock.ExpectBegin()
-				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
-				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
-
-				hRepo.On("ReplaceHangoutActivities", ctx, hangoutID, ([]uuid.UUID)(nil)).Return(nil).Once()
-
-				hRepo.On("UpdateHangout", ctx, mock.AnythingOfType("*domain.Hangout")).Return(nil, dbError).Once()
-				sqlMock.ExpectRollback()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.Error(t, err)
-				require.Equal(t, dbError, err)
-			},
-		},
-		{
-			name:    "error_fetch_after_update_fails",
-			request: &dto.UpdateHangoutRequest{Title: newTitle, Date: newDateStr},
-			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
-				sqlMock.ExpectBegin()
-				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
-				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
-
-				hRepo.On("ReplaceHangoutActivities", ctx, hangoutID, ([]uuid.UUID)(nil)).Return(nil).Once()
-
-				hRepo.On("UpdateHangout", ctx, mock.AnythingOfType("*domain.Hangout")).Return(&domain.Hangout{ID: hangoutID, Title: newTitle}, nil).Once()
-
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, dbError).Once()
-
-				sqlMock.ExpectRollback()
-			},
-			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
-				require.Error(t, err)
-				require.Equal(t, dbError, err)
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			db, sqlMock := setupDB(t)
-
-			mockHangoutRepo := new(MockHangoutRepository)
-			mockActivityRepo := new(MockActivityRepository)
-
-			service := services.NewHangoutService(db, mockHangoutRepo, mockActivityRepo)
-
-			tc.setupMock(mockHangoutRepo, mockActivityRepo, sqlMock)
-
-			result, err := service.UpdateHangout(ctx, hangoutID, userID, tc.request)
-			tc.checkResult(t, result, err)
-
-			mockHangoutRepo.AssertExpectations(t)
-			mockActivityRepo.AssertExpectations(t)
-			require.NoError(t, sqlMock.ExpectationsWereMet())
 		})
 	}
 }
@@ -712,6 +561,335 @@ func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
 			result, err := hangoutService.GetHangoutsByUserID(ctx, userID, tc.pagination)
 			tc.checkResult(t, result, err)
 			mockHangoutRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestHangoutService_UpdateHangout(t *testing.T) {
+	ctx := context.Background()
+	hangoutID := uuid.New()
+	userID := uuid.New()
+	dbError := errors.New("db error")
+	date := "2025-12-01 18:30:00.000"
+
+	activityID1 := uuid.New()
+	activityID2 := uuid.New()
+
+	testCases := []struct {
+		name      string
+		req       *dto.UpdateHangoutRequest
+		setupMock func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock)
+		check     func(t *testing.T, res *dto.HangoutDetailResponse, err error)
+	}{
+		{
+			name: "success_no_activity_change",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Updated Title",
+				ActivityIDs: []uuid.UUID{activityID1},
+				Date:        date,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+
+				hRepo.On("UpdateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool {
+					return h.ID == hangoutID && h.Title == "Updated Title"
+				})).Return(existing, nil).Once()
+
+				final := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Updated Title", Activities: []*domain.Activity{{ID: activityID1}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(final, nil).Once()
+				sqlMock.ExpectCommit()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.Equal(t, "Updated Title", res.Title)
+				require.Len(t, res.Activities, 1)
+			},
+		},
+		{
+			name: "success_add_activity",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Updated Title",
+				ActivityIDs: []uuid.UUID{activityID1, activityID2},
+				Date:        date,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}, {ID: activityID2}}, nil).Once()
+
+				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(existing, nil).Once()
+
+				hRepo.On("AddHangoutActivities", ctx, hangoutID, []uuid.UUID{activityID2}).Return(nil).Once()
+
+				final := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Updated Title", Activities: []*domain.Activity{{ID: activityID1}, {ID: activityID2}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(final, nil).Once()
+				sqlMock.ExpectCommit()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.Len(t, res.Activities, 2)
+			},
+		},
+		{
+			name: "invalid_activity_ids",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Updated Title",
+				ActivityIDs: []uuid.UUID{activityID1, activityID2},
+				Date:        date,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+
+				sqlMock.ExpectRollback()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.ErrorIs(t, err, apperrors.ErrInvalidActivityIDs)
+				require.Nil(t, res)
+			},
+		},
+		{
+			name: "not_found",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Updated Title",
+				ActivityIDs: []uuid.UUID{activityID1},
+				Date:        date,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, gorm.ErrRecordNotFound).Once()
+				sqlMock.ExpectRollback()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.ErrorIs(t, err, gorm.ErrRecordNotFound)
+				require.Nil(t, res)
+			},
+		},
+		{
+			name: "remove_activity",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Updated Title",
+				ActivityIDs: []uuid.UUID{activityID1},
+				Date:        date,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}, {ID: activityID2}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+
+				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(existing, nil).Once()
+
+				hRepo.On("RemoveHangoutActivities", ctx, hangoutID, []uuid.UUID{activityID2}).Return(nil).Once()
+
+				final := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Updated Title", Activities: []*domain.Activity{{ID: activityID1}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(final, nil).Once()
+				sqlMock.ExpectCommit()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.NoError(t, err)
+				require.NotNil(t, res)
+				require.Len(t, res.Activities, 1)
+			},
+		},
+		{
+			name: "update_repo_error",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Updated Title",
+				ActivityIDs: []uuid.UUID{activityID1},
+				Date:        date,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+
+				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(nil, dbError).Once()
+				sqlMock.ExpectRollback()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+				require.Nil(t, res)
+			},
+		},
+		{
+			name: "remove_activities_fails",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Remove Fail",
+				ActivityIDs: []uuid.UUID{activityID1},
+				Date:        date,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}, {ID: activityID2}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+
+				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(existing, nil).Once()
+				hRepo.On("RemoveHangoutActivities", ctx, hangoutID, []uuid.UUID{activityID2}).Return(dbError).Once()
+				sqlMock.ExpectRollback()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+				require.Nil(t, res)
+			},
+		},
+		{
+			name: "add_activities_fails_update",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Add Fail",
+				ActivityIDs: []uuid.UUID{activityID1, activityID2},
+				Date:        date,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}, {ID: activityID2}}, nil).Once()
+
+				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(existing, nil).Once()
+				hRepo.On("AddHangoutActivities", ctx, hangoutID, []uuid.UUID{activityID2}).Return(dbError).Once()
+				sqlMock.ExpectRollback()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+				require.Nil(t, res)
+			},
+		},
+		{
+			name: "final_gethangout_error",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Final Get Fail",
+				ActivityIDs: []uuid.UUID{activityID1},
+				Date:        date,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, dbError).Once()
+				sqlMock.ExpectRollback()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+				require.Nil(t, res)
+			},
+		},
+		{
+			name: "activity_repo_error",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Updated Title",
+				ActivityIDs: []uuid.UUID{activityID1},
+				Date:        date,
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+
+				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return(nil, dbError).Once()
+
+				sqlMock.ExpectRollback()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.Equal(t, dbError, err)
+				require.Nil(t, res)
+			},
+		},
+		{
+			name: "mapper_fails_on_invalid_date",
+			req: &dto.UpdateHangoutRequest{
+				Title:       "Bad Date",
+				ActivityIDs: []uuid.UUID{activityID1},
+				Date:        "not-a-date",
+			},
+			setupMock: func(hRepo *MockHangoutRepository, aRepo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
+				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
+
+				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
+				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+
+				sqlMock.ExpectRollback()
+			},
+			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
+				require.Error(t, err)
+				require.Nil(t, res)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			db, sqlMock := setupDB(t)
+			mockHangoutRepo := new(MockHangoutRepository)
+			mockActivityRepo := new(MockActivityRepository)
+			service := services.NewHangoutService(db, mockHangoutRepo, mockActivityRepo)
+
+			tc.setupMock(mockHangoutRepo, mockActivityRepo, sqlMock)
+
+			res, err := service.UpdateHangout(ctx, hangoutID, userID, tc.req)
+			tc.check(t, res, err)
+
+			mockHangoutRepo.AssertExpectations(t)
+			mockActivityRepo.AssertExpectations(t)
+			require.NoError(t, sqlMock.ExpectationsWereMet())
 		})
 	}
 }

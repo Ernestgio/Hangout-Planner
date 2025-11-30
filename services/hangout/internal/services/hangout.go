@@ -2,9 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
-
-	"github.com/Ernestgio/Hangout-Planner/pkg/shared/enums"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
@@ -42,27 +39,48 @@ func (s *hangoutService) CreateHangout(ctx context.Context, userID uuid.UUID, re
 	if err != nil {
 		return nil, err
 	}
+	hangoutModel.UserID = &userID
 
-	if req.Status == "" {
-		hangoutModel.Status = enums.StatusPlanning
-	}
+	var created *domain.Hangout
+	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		txHangoutRepo := s.hangoutRepo.WithTx(tx)
+		txActivityRepo := s.activityRepo.WithTx(tx)
 
-	if len(req.ActivityIDs) > 0 {
-		activities, err := s.activityRepo.GetActivitiesByIDs(ctx, req.ActivityIDs)
-		if err != nil {
-			return nil, err
+		if len(req.ActivityIDs) > 0 {
+			acts, err := txActivityRepo.GetActivitiesByIDs(ctx, req.ActivityIDs)
+			if err != nil {
+				return err
+			}
+
+			if len(acts) != len(req.ActivityIDs) {
+				return apperrors.ErrInvalidActivityIDs
+			}
 		}
 
-		hangoutModel.Activities = activities
-	}
+		h, err := txHangoutRepo.CreateHangout(ctx, hangoutModel)
+		if err != nil {
+			return err
+		}
+		created = h
 
-	hangoutModel.UserID = &userID
-	createdHangout, err := s.hangoutRepo.CreateHangout(ctx, hangoutModel)
+		if len(req.ActivityIDs) > 0 {
+			if err := txHangoutRepo.AddHangoutActivities(ctx, created.ID, req.ActivityIDs); err != nil {
+				return err
+			}
+		}
+
+		created, err = txHangoutRepo.GetHangoutByID(ctx, created.ID, userID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	return mapper.HangoutToDetailResponseDTO(createdHangout), nil
+	return mapper.HangoutToDetailResponseDTO(created), nil
 }
 
 func (s *hangoutService) GetHangoutByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*dto.HangoutDetailResponse, error) {
@@ -83,9 +101,6 @@ func (s *hangoutService) UpdateHangout(ctx context.Context, id uuid.UUID, userID
 
 		existingHangout, err := txHangoutRepo.GetHangoutByID(ctx, id, userID)
 		if err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return apperrors.ErrNotFound
-			}
 			return err
 		}
 
@@ -94,24 +109,60 @@ func (s *hangoutService) UpdateHangout(ctx context.Context, id uuid.UUID, userID
 			return err
 		}
 
-		ids := req.ActivityIDs
-		if len(ids) > 0 {
-			existingActivities, err := txActivityRepo.GetActivitiesByIDs(ctx, ids)
+		if req.ActivityIDs != nil {
+			acts, err := txActivityRepo.GetActivitiesByIDs(ctx, req.ActivityIDs)
 			if err != nil {
 				return err
 			}
-			if len(existingActivities) != len(ids) {
+
+			if len(acts) != len(req.ActivityIDs) {
 				return apperrors.ErrInvalidActivityIDs
 			}
-		}
-
-		if err := txHangoutRepo.ReplaceHangoutActivities(ctx, existingHangout.ID, ids); err != nil {
-			return err
 		}
 
 		_, err = txHangoutRepo.UpdateHangout(ctx, existingHangout)
 		if err != nil {
 			return err
+		}
+
+		if req.ActivityIDs != nil {
+			newIDs := req.ActivityIDs
+
+			currentMap := make(map[uuid.UUID]bool)
+			for _, act := range existingHangout.Activities {
+				currentMap[act.ID] = true
+			}
+
+			newMap := make(map[uuid.UUID]bool)
+			for _, id := range newIDs {
+				newMap[id] = true
+			}
+
+			var toRemove []uuid.UUID
+			for id := range currentMap {
+				if !newMap[id] {
+					toRemove = append(toRemove, id)
+				}
+			}
+
+			var toAdd []uuid.UUID
+			for id := range newMap {
+				if !currentMap[id] {
+					toAdd = append(toAdd, id)
+				}
+			}
+
+			if len(toRemove) > 0 {
+				if err := txHangoutRepo.RemoveHangoutActivities(ctx, existingHangout.ID, toRemove); err != nil {
+					return err
+				}
+			}
+
+			if len(toAdd) > 0 {
+				if err := txHangoutRepo.AddHangoutActivities(ctx, existingHangout.ID, toAdd); err != nil {
+					return err
+				}
+			}
 		}
 
 		updatedHangout, err = txHangoutRepo.GetHangoutByID(ctx, id, userID)
