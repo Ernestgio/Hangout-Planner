@@ -75,7 +75,7 @@ func TestBcryptUtils(t *testing.T) {
 				require.Error(t, err)
 
 				if tt.name == "GenerateFromPassword_Failure_InvalidCost" {
-					require.Contains(t, err.Error(), "outside allowed range", "Expected invalid cost error, but got: %v", err)
+					require.Contains(t, err.Error(), "outside allowed inclusive range", "Expected invalid cost error, but got: %v", err)
 				} else {
 					require.False(t, errors.Is(err, apperrors.ErrInvalidCredentials))
 					require.Contains(t, err.Error(), "bcrypt:", "Expected generic bcrypt error, but got: %v", err)
