@@ -48,5 +48,19 @@ up:
 down:
 	docker-compose down -v
 
+## Air live reload
 air:
 	air -c .air.toml
+
+## Atlas diff - Usage: make diff NAME=migration_name
+diff:
+ifndef NAME
+	$(error NAME is required. Usage: make diff NAME=migration_name)
+endif
+	atlas migrate diff $(NAME) --env local
+
+migrate:
+	atlas migrate apply --env local
+
+migrate-status:
+	atlas migrate status --env local 

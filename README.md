@@ -21,12 +21,13 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 - 🧾 Swag (OpenAPI documentation)
 - 🪝 Lefthook (pre-commit & pre-push hooks)
 - 🧪 CodeQL & GitHub Actions (CI/CD)
+- Atlas for DB auto migration
 
 ## 🏃‍♂️ Local Development
 
 ### Prerequisites
 
-- Go 1.23+
+- Go 1.24.11
 - Docker & Docker Compose
 - MySQL (local or via Docker)
 - Swag CLI for API docs
@@ -34,6 +35,7 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 - Make (Makefile)
 - ☁️ Air - Live reload for Go apps
 - Lefthook - git hooks for pre-commit / pre-push actions
+- Atlas for db auto migration
 
 ### Mysql Environment Variables
 
@@ -58,6 +60,10 @@ make run
 make up
 ```
 
+### DB Auto Migration
+
+Each services will have its own database, please setup your local environment / system variable to have the connection string value of your db with the variable name `{SERVICE}_DB_URL`. We then can generate diff by executing `make diff NAME={Migration_name}` and apply migration by executing `make migrate`
+
 ---
 
 ## ⚡ Existing Features
@@ -68,6 +74,7 @@ make up
 - Health checks and container restart policies
 - GitHub Actions CI/CD
 - Lefthook for local Git workflow automation
+- Atlas for db auto migration
 
 ### 💬 Hangout Service
 
@@ -76,12 +83,12 @@ make up
 - Test coverage reports (HTML)
 - GolangCI-Lint, Air reload
 - Makefile automation
+- Auth, Hangout, and Activity modules
 
 ### 💾 Database
 
-- Auto migration
+- Auto migration with atlas and gorm
 - Graceful shutdown
-- Future migration tooling ready (Atlas)
 
 ### 🌐 Server
 
@@ -95,13 +102,10 @@ make up
 ### 🧩 Short-Term Goals
 
 - Retryable DB connections
-- Atlas migration (up/down)
 - CORS middleware
-- Activity modules
 
 ### 🌐 Long-Term Vision
 
-- Full Hangout CRUD & collaboration
 - Excel export service
   - RabbitMQ service interconnect
 - Notification Emails
