@@ -1,4 +1,4 @@
-basePath: /
+basePath: /rp-api/hangout-service
 definitions:
   dto.ActivityDetailResponse:
     properties:
@@ -202,7 +202,7 @@ definitions:
       status:
         type: string
     type: object
-host: localhost:9000
+host: localhost
 info:
   contact: {}
   description: API documentation for the Hangout Planner service

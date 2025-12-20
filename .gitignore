@@ -7,3 +7,13 @@
 
 # tmp files
 services/hangout/tmp/**
+
+# nginx logs (generated at runtime)
+components/nginx/logs/**
+
+# SSL certificates (sensitive, should not be committed)
+components/nginx/ssl/**
+
+# Keep directory structure but ignore contents
+!components/nginx/logs/.gitkeep
+!components/nginx/ssl/.gitkeep

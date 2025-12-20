@@ -66,7 +66,6 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	// middleware
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
-	e.Use(middleware.Gzip())
 	e.Use(middleware.Decompress())
 
 	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler)

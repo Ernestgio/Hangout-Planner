@@ -12,6 +12,7 @@ services:
     command: --init-file /data/application/init.sql
     networks:
       - default
+
   hangout:
     build:
       context: ./services/hangout
@@ -20,8 +21,8 @@ services:
     container_name: hangout
     env_file:
       - ./services/hangout/.env
-    ports:
-      - "9000:9000"
+    expose:
+      - "9000"
     depends_on:
       - mysql
     networks:
@@ -32,6 +33,27 @@ services:
       timeout: 5s
       retries: 3
       start_period: 30s
+
+  nginx:
+    image: nginx:alpine
+    container_name: hangout-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./components/nginx/conf/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./components/nginx/conf/conf.d:/etc/nginx/conf.d:ro
+      - ./components/nginx/logs:/var/log/nginx
+    depends_on:
+      - hangout
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:80/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
 networks:
   default:

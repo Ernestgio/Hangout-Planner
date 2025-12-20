@@ -57,6 +57,7 @@ make run
 -- Set DB_HOST to mysql -- utlizing docker network
 
 ```sh
+make mysql-run (run the database first)
 make up
 ```
 
@@ -101,8 +102,7 @@ Each services will have its own database, please setup your local environment / 
 
 ### 🧩 Short-Term Goals
 
-- Retryable DB connections
-- CORS middleware
+- Nginx API gateway, Reverse-proxy, Rate Limiter, and Load balancer + HTTPS
 
 ### 🌐 Long-Term Vision
 
@@ -111,12 +111,11 @@ Each services will have its own database, please setup your local environment / 
 - Notification Emails
 - File service
   - File upload feature (photos attachment for hangout memories!)
-  - Memcached cluster caching presigned URL
   - AWS S3 integration (LocalStack support)
   - gRPC communication between fileservice and hangout service
 - Multi db for microservices
 - shared module in pkg/shared
 - OAuth / federated logins
-- Nginx API gateway + HTTPS (Let’s Encrypt)
+
 - Advanced observability: metrics, tracing, logging
-- Redis caching for File PreSignedURL and preventing concurrent login session
+- Redis caching for preventing concurrent login session
