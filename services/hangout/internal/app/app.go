@@ -39,10 +39,6 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	if err := db.Migrate(dbConn); err != nil {
-		return nil, err
-	}
-
 	// Initialize utils
 	responseBuilder := response.NewBuilder(cfg.Env == constants.ProductionEnv)
 	jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
