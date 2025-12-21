@@ -10,8 +10,8 @@ import (
 // @title 			Hangout Planner API
 // @version 		1.0
 // @description 	API documentation for the Hangout Planner service
-// @host 			localhost:9000
-// @BasePath 		/
+// @host 			localhost
+// @BasePath 		/rp-api/hangout-service
 
 // @securityDefinitions.apikey BearerAuth
 // @in header

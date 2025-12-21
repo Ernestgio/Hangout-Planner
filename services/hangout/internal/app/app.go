@@ -39,10 +39,6 @@ func NewApp(cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	if err := db.Migrate(dbConn); err != nil {
-		return nil, err
-	}
-
 	// Initialize utils
 	responseBuilder := response.NewBuilder(cfg.Env == constants.ProductionEnv)
 	jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
@@ -70,7 +66,6 @@ func NewApp(cfg *config.Config) (*App, error) {
 
 	// middleware
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
-	e.Use(middleware.Gzip())
 	e.Use(middleware.Decompress())
 
 	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler)

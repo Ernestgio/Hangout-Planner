@@ -6,8 +6,8 @@
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:9000",
-    "basePath": "/",
+    "host": "localhost",
+    "basePath": "/rp-api/hangout-service",
     "paths": {
         "/activities/": {
             "get": {
@@ -866,6 +866,7 @@
         "dto.CreateHangoutRequest": {
             "type": "object",
             "required": [
+                "date",
                 "title"
             ],
             "properties": {
@@ -1040,6 +1041,8 @@
         "dto.UpdateHangoutRequest": {
             "type": "object",
             "required": [
+                "date",
+                "status",
                 "title"
             ],
             "properties": {

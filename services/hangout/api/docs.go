@@ -872,6 +872,7 @@ const docTemplate = `{
         "dto.CreateHangoutRequest": {
             "type": "object",
             "required": [
+                "date",
                 "title"
             ],
             "properties": {
@@ -1046,6 +1047,8 @@ const docTemplate = `{
         "dto.UpdateHangoutRequest": {
             "type": "object",
             "required": [
+                "date",
+                "status",
                 "title"
             ],
             "properties": {
@@ -1134,8 +1137,8 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:9000",
-	BasePath:         "/",
+	Host:             "localhost",
+	BasePath:         "/rp-api/hangout-service",
 	Schemes:          []string{},
 	Title:            "Hangout Planner API",
 	Description:      "API documentation for the Hangout Planner service",

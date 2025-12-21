@@ -9,7 +9,7 @@ import (
 type CreateHangoutRequest struct {
 	Title       string              `json:"title" validate:"required"`
 	Description *string             `json:"description"`
-	Date        string              `json:"date" validate:"datetime=2006-01-02 15:04:05.000, required"`
+	Date        string              `json:"date" validate:"required,datetime=2006-01-02 15:04:05.000"`
 	Status      enums.HangoutStatus `json:"status" validate:"oneof=PLANNING CONFIRMED EXECUTED CANCELLED"`
 	ActivityIDs []uuid.UUID         `json:"activity_ids" validate:"dive,uuid"`
 }
@@ -17,8 +17,8 @@ type CreateHangoutRequest struct {
 type UpdateHangoutRequest struct {
 	Title       string              `json:"title" validate:"required"`
 	Description *string             `json:"description"`
-	Date        string              `json:"date" validate:"datetime=2006-01-02 15:04:05.000, required"`
-	Status      enums.HangoutStatus `json:"status" validate:"oneof=PLANNING CONFIRMED EXECUTED CANCELLED, required"`
+	Date        string              `json:"date" validate:"required,datetime=2006-01-02 15:04:05.000"`
+	Status      enums.HangoutStatus `json:"status" validate:"required,oneof=PLANNING CONFIRMED EXECUTED CANCELLED"`
 	ActivityIDs []uuid.UUID         `json:"activities" validate:"dive,uuid"`
 }
 

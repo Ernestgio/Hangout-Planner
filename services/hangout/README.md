@@ -3,33 +3,49 @@
 The **core backend service** responsible for creating, managing, and listing hangouts.  
 Implements clean architecture principles and production-ready practices using Go, Echo, and GORM.
 
-## ⚙️ Tech Stack
+## Tech Stack
 
-- 🟦 Go 1.24.11
-- ⚙️ Echo (HTTP Web Framework)
-- 🗄️ GORM (ORM)
-- 💾 MySQL (8.0)
-- 🧪 GolangCI-Lint
-- 🧰 Air (Live reload)
-- 🧾 Swag (API documentation)
-- Atlas for DB auto migration
+- Go (module: `services/hangout`)
+- Echo + echo-jwt
+- GORM + MySQL
+- go-playground/validator (request validation)
+- Swagger/OpenAPI via swag + echo-swagger
+- Atlas migrations
+- golangci-lint
+- Air (Live reload)
 
-## 🏃‍♂️ Local Development
+## Architecture
+
+The service follows a layered, standard-convention dependency-inverted structure:
+
+- `handlers/`: HTTP handlers (request binding/validation, response mapping)
+- `services/`: application use-cases
+- `repository/`: persistence boundaries
+- `domain/`: entities and core types
+- `dto/` + `mapper/`: transport models and mapping
+- `middlewares/`: auth + request context wiring
+- `internal/http/`: shared request/response utilities (validator, sanitizer, response envelope)
+
+The edge gateway terminates TLS/HTTP/2 and forwards requests to this service over the Docker network (HTTP).
+
+## Running Locally
 
 ### Prerequisites
 
-- Go 1.23+
+- Docker Desktop
+- Make (optional but recommended)
+- Go 1.24.11
 - Docker & Docker Compose
 - golangci-lint
-- Make (Makefile)
-- ☁️ Air - Live reload for Go apps
+- Air - Live reload for Go apps
+- Swag (API documentation)
 - Atlas
 
-### Environment Variables
+### Environment
 
 Copy `.env.example` to `.env` and fill in your configuration.
 
-## ✅ Features
+## Features
 
 ### Modules
 
@@ -37,7 +53,7 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - Hangout Modules
 - Activity modules
 
-### 💡 Core
+### Core
 
 - RESTful API built on Echo
 - Swagger API documentation
@@ -48,7 +64,7 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - Full Hangout CRUD
 - Signup and Signin
 
-### 🧪 Testing & Quality
+### Testing & Quality
 
 - Unit tests (table-driven + mocks)
 - HTML test coverage reports
@@ -56,7 +72,7 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - Makefile automation
 - Live reload with Air
 
-🧰 Server Layer
+### Server Layer
 
 - Standard JSON response format
 - Sentinel error design
@@ -64,8 +80,9 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - JWT authentication middleware
 - Centralized error handling middleware
 
-🧭 Future Enhancements
+### Future Enhancements
 
 - Redis to prevent concurrent session
 - Location tagging
 - Hangout memories
+- Share hangout features

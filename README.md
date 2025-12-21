@@ -1,49 +1,75 @@
-# 🌍 Hangout Planner — Scalable Go Backend Platform
+# Hangout Planner — Scalable Go Backend Platform
 
-A **production-grade backend platform** for planning and managing hangouts — built in **Go** with **Echo**, **GORM**, and **MySQL**.  
+Hangout Planner is a Go-based backend platform for planning and managing hangouts. The repo is structured as a monorepo with a core service (`hangout`) and shared packages, fronted by an NGINX edge gateway that handles TLS termination, HTTP/2, and path-based routing.
+
+This project is built to demonstrate production-minded backend engineering: layered architecture, automated database migrations, CI, and a local environment that mirrors common deployment topology (gateway → services → database).
+
 Designed with **clean architecture**, **SOLID principles**, and **future-proof modular design** for microservices scalability.
 
-## 🚀 Tech Stack
+## Tech Stack
 
-**Core:**
+**Backend**
 
-- 🟦 Language: Go 1.23+
-- ⚙️ Framework: Echo (HTTP)
-- 🗄️ ORM: GORM
-- 💾 Database: MySQL 8.0
+- Go (services/hangout)
+- Echo (HTTP server, routing, middleware)
+- JWT auth (echo-jwt)
+- go-playground/validator (request validation)
+- GORM + MySQL driver
+- MySQL 8.0
 
-**Infra & Dev Tooling:**
+**API & Documentation**
 
-- 🐳 Docker & Docker Compose
-- 🧰 Makefile (automated scripts)
-- 🌀 Air (live reload)
-- 🧹 GolangCI-Lint (code linting)
-- 🧾 Swag (OpenAPI documentation)
-- 🪝 Lefthook (pre-commit & pre-push hooks)
-- 🧪 CodeQL & GitHub Actions (CI/CD)
-- Atlas for DB auto migration
+- OpenAPI/Swagger via swag + echo-swagger
 
-## 🏃‍♂️ Local Development
+**Infrastructure**
+
+- Docker + Docker Compose (local orchestration)
+- NGINX (reverse proxy, TLS termination, HTTP/2, gzip compression, header forwarding)
+
+**Engineering Practices**
+
+- GitHub Actions CI (lint + tests + coverage artifact)
+- golangci-lint
+- Lefthook (local git hooks)
+- Atlas migrations (schema diff/apply)
+- Make (scripting)
+
+## Repository Layout
+
+- `services/hangout/`: core HTTP API service
+- `components/nginx/`: edge gateway (reverse proxy, HTTPS, HTTP/2)
+- `components/database/`: local database bootstrap (init script, env)
+- `pkg/shared/`: shared Go module (types/constants)
+
+## Local Development
 
 ### Prerequisites
 
 - Go 1.24.11
 - Docker & Docker Compose
 - MySQL (local or via Docker)
+- Nginx (local or via Docker)
 - Swag CLI for API docs
 - golangci-lint
 - Make (Makefile)
-- ☁️ Air - Live reload for Go apps
+- Air - Live reload for Go apps
 - Lefthook - git hooks for pre-commit / pre-push actions
 - Atlas for db auto migration
+- mkcert (one-time certificate generation)
 
-### Mysql Environment Variables
+### Environment variables
 
-Copy `components/database/.env.example` to `components/database/.env.example` and fill in your configuration
+1. Database env
 
-### Application Environment Variables
+- Copy `components/database/.env.example` to `components/database/.env`
 
-Copy `services/hangout/.env.example` to `services/hangout/.env` and fill in your configuration.
+2. Service env
+
+- Copy `services/hangout/.env.example` to `services/hangout/.env`
+
+3. TLS certs for localhost (one-time)
+
+- See `components/nginx/README.md`
 
 ### Local deployment with mysql from docker compose and go run
 
@@ -52,11 +78,19 @@ make mysql-run
 make run
 ```
 
+or use air for auto reload
+
+```sh
+make mysql-run
+make air
+```
+
 ### Local deployment fully with docker compose
 
 -- Set DB_HOST to mysql -- utlizing docker network
 
 ```sh
+make mysql-run (run the database first)
 make up
 ```
 
@@ -66,57 +100,54 @@ Each services will have its own database, please setup your local environment / 
 
 ---
 
-## ⚡ Existing Features
+## Existing Features
 
-### 🔧 Project Infrastructure
+### Project Infrastructure
 
 - Docker Compose orchestration
 - Health checks and container restart policies
 - GitHub Actions CI/CD
 - Lefthook for local Git workflow automation
-- Atlas for db auto migration
 
-### 💬 Hangout Service
+### Hangout Service
 
+- Auth, Hangout, and Activity modules
 - Swagger auto-docs with echoswagger
 - Unit tests (mocking, table-driven)
 - Test coverage reports (HTML)
 - GolangCI-Lint, Air reload
 - Makefile automation
-- Auth, Hangout, and Activity modules
+- More details on [Hangout Service Documentation](./services/hangout/README.md).
 
-### 💾 Database
+### Database
 
-- Auto migration with atlas and gorm
+- Auto migration with atlas
 - Graceful shutdown
 
-### 🌐 Server
+### API Gateway
 
-- Standardized JSON response builder
-- Centralized constants & sentinel errors
-- Dependency injection (interfaces for all layers)
-- Context propagation across all layers (for timeouts, cancellation, and future observability/tracing)
+- Nginx with HTTPS
+- Nginx as an API gateway, reverse-proxy, and rate limiter
 
-## 🧭 Roadmap
+## Roadmap
 
-### 🧩 Short-Term Goals
+### Short-Term Goals
 
-- Retryable DB connections
-- CORS middleware
-
-### 🌐 Long-Term Vision
-
-- Excel export service
-  - RabbitMQ service interconnect
-- Notification Emails
+- Nginx API gateway, Reverse-proxy, Rate Limiter, and Load balancer + HTTPS
 - File service
   - File upload feature (photos attachment for hangout memories!)
-  - Memcached cluster caching presigned URL
   - AWS S3 integration (LocalStack support)
   - gRPC communication between fileservice and hangout service
 - Multi db for microservices
 - shared module in pkg/shared
+
+### Long-Term Vision
+
+- Excel export service
+  - RabbitMQ service interconnect
+  - background worker service
+- Notification Emails + SMTP
 - OAuth / federated logins
-- Nginx API gateway + HTTPS (Let’s Encrypt)
 - Advanced observability: metrics, tracing, logging
-- Redis caching for File PreSignedURL and preventing concurrent login session
+- Redis caching for preventing concurrent login session
+- Implement file scanning using opengovsg [lambda-virus-scanner](https://github.com/opengovsg/lambda-virus-scanner) + 2 S3 bucket architecture (dirty and clean bucket)

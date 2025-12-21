@@ -1,4 +1,4 @@
-basePath: /
+basePath: /rp-api/hangout-service
 definitions:
   dto.ActivityDetailResponse:
     properties:
@@ -57,6 +57,7 @@ definitions:
       title:
         type: string
     required:
+    - date
     - title
     type: object
   dto.CursorPagination:
@@ -171,6 +172,8 @@ definitions:
       title:
         type: string
     required:
+    - date
+    - status
     - title
     type: object
   dto.UserResponse:
@@ -202,7 +205,7 @@ definitions:
       status:
         type: string
     type: object
-host: localhost:9000
+host: localhost
 info:
   contact: {}
   description: API documentation for the Hangout Planner service

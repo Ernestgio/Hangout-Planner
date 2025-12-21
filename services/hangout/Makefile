@@ -46,7 +46,19 @@ up:
 
 ## Stop docker-compose services
 down:
-	docker-compose down -v
+	docker-compose down
+
+## Restart NGINX only (after config changes)
+nginx-reload:
+	docker exec hangout-nginx nginx -s reload
+
+## Test NGINX configuration
+nginx-test:
+	docker exec hangout-nginx nginx -t
+
+## View NGINX logs
+nginx-logs:
+	docker logs hangout-nginx -f
 
 ## Air live reload
 air:
