@@ -1,28 +1,45 @@
 # Hangout Planner — Scalable Go Backend Platform
 
-A **production-grade backend platform** for planning and managing hangouts — built in **Go** with **Echo**, **GORM**, and **MySQL**.  
+Hangout Planner is a Go-based backend platform for planning and managing hangouts. The repo is structured as a monorepo with a core service (`hangout`) and shared packages, fronted by an NGINX edge gateway that handles TLS termination, HTTP/2, and path-based routing.
+
+This project is built to demonstrate production-minded backend engineering: layered architecture, automated database migrations, CI, and a local environment that mirrors common deployment topology (gateway → services → database).
+
 Designed with **clean architecture**, **SOLID principles**, and **future-proof modular design** for microservices scalability.
 
 ## Tech Stack
 
-**Core:**
+**Backend**
 
-- Language: Go 1.24.11
-- Framework: Echo (HTTP)
-- ORM: GORM
-- Database: MySQL 8.0
-- API Gateway: Nginx
+- Go (services/hangout)
+- Echo (HTTP server, routing, middleware)
+- JWT auth (echo-jwt)
+- go-playground/validator (request validation)
+- GORM + MySQL driver
+- MySQL 8.0
 
-**Infra & Dev Tooling:**
+**API & Documentation**
 
-- Docker & Docker Compose
-- Makefile (automated scripts)
-- Air (live reload)
-- GolangCI-Lint (code linting)
-- Swag (OpenAPI documentation)
-- Lefthook (pre-commit & pre-push hooks)
-- CodeQL & GitHub Actions (CI/CD)
-- Atlas for DB auto migration
+- OpenAPI/Swagger via swag + echo-swagger
+
+**Infrastructure**
+
+- Docker + Docker Compose (local orchestration)
+- NGINX (reverse proxy, TLS termination, HTTP/2, gzip compression, header forwarding)
+
+**Engineering Practices**
+
+- GitHub Actions CI (lint + tests + coverage artifact)
+- golangci-lint
+- Lefthook (local git hooks)
+- Atlas migrations (schema diff/apply)
+- Make (scripting)
+
+## Repository Layout
+
+- `services/hangout/`: core HTTP API service
+- `components/nginx/`: edge gateway (reverse proxy, HTTPS, HTTP/2)
+- `components/database/`: local database bootstrap (init script, env)
+- `pkg/shared/`: shared Go module (types/constants)
 
 ## Local Development
 
@@ -38,14 +55,21 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 - Air - Live reload for Go apps
 - Lefthook - git hooks for pre-commit / pre-push actions
 - Atlas for db auto migration
+- mkcert (one-time certificate generation)
 
-### Mysql Environment Variables
+### Environment variables
 
-Copy `components/database/.env.example` to `components/database/.env.example` and fill in your configuration
+1. Database env
 
-### Application Environment Variables
+- Copy `components/database/.env.example` to `components/database/.env`
 
-Copy `services/hangout/.env.example` to `services/hangout/.env` and fill in your configuration.
+2. Service env
+
+- Copy `services/hangout/.env.example` to `services/hangout/.env`
+
+3. TLS certs for localhost (one-time)
+
+- See `components/nginx/README.md`
 
 ### Local deployment with mysql from docker compose and go run
 
@@ -117,7 +141,7 @@ Each services will have its own database, please setup your local environment / 
 - Multi db for microservices
 - shared module in pkg/shared
 
-### 🌐 Long-Term Vision
+### Long-Term Vision
 
 - Excel export service
   - RabbitMQ service interconnect
