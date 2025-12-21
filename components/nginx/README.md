@@ -59,7 +59,10 @@ If certificates need to be regenerated:
 ```powershell
 cd components/nginx/ssl
 mkcert localhost 127.0.0.1 ::1
-# Rename generated files to localhost.pem and localhost-key.pem
+# mkcert generates localhost+2.pem and localhost+2-key.pem
+# Rename them to match nginx configuration:
+mv localhost+2.pem localhost.pem
+mv localhost+2-key.pem localhost-key.pem
 ```
 
 ## Operational Commands
