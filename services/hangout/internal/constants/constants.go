@@ -63,4 +63,21 @@ const (
 	SortDirectionDesc = "desc"
 	SortByCreatedAt   = "created_at"
 	SortByDate        = "date"
+
+	// File upload constants
+	MaxFileSize           = 10 * 1024 * 1024
+	MaxRequestSize        = 10 * 1024 * 1024
+	PresignedURLExpiry    = 15
+	AllowedImageExtension = ".jpg,.jpeg,.png,.gif,.webp"
+
+	// Memory message constants
+	MemoryCreatedSuccessfully     = "Memory created successfully."
+	MemoryRetrievedSuccessfully   = "Memory retrieved successfully."
+	MemoriesRetrievedSuccessfully = "Memories retrieved successfully."
+	MemoryDeletedSuccessfully     = "Memory deleted successfully."
+
+	// S3 Config - Default environment variable values constants
+	DefaultS3Endpoint = "http://localhost:4566"
+	DefaultS3Region   = "ap-southeast-1"
+	DefaultS3Bucket   = "hangout-files"
 )

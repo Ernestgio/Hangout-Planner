@@ -44,4 +44,6 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	activityRoutes.GET("/:activity_id", activityHandler.GetActivityByID)
 	activityRoutes.DELETE("/:activity_id", activityHandler.DeleteActivity)
 	activityRoutes.GET("/", activityHandler.GetAllActivities)
+
+	// hangout memories routes
 }

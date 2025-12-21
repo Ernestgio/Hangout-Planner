@@ -7,6 +7,7 @@
 
 # tmp files
 services/hangout/tmp/**
+tmp/**
 
 # nginx logs (generated at runtime)
 components/nginx/logs/**
@@ -17,3 +18,8 @@ components/nginx/ssl/**
 # Keep directory structure but ignore contents
 !components/nginx/logs/.gitkeep
 !components/nginx/ssl/.gitkeep
+
+# Localstack data (keep folder structure and init scripts)
+components/localstack/**
+!components/localstack/.gitkeep
+!components/localstack/init-aws.sh

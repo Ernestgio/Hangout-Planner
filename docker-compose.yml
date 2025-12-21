@@ -64,6 +64,23 @@ services:
       retries: 3
       start_period: 10s
 
+  localstack:
+    image: localstack/localstack:latest
+    container_name: hangout-localstack
+    restart: on-failure
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/var/lib/localstack
+      - PERSISTENCE=1
+    volumes:
+      - ./components/localstack:/var/lib/localstack
+      - ./components/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+    networks:
+      - default
+
 networks:
   default:
     driver: bridge

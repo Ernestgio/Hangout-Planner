@@ -127,13 +127,12 @@ Each services will have its own database, please setup your local environment / 
 ### API Gateway
 
 - Nginx with HTTPS
-- Nginx as an API gateway, reverse-proxy, and rate limiter
+- Nginx as an API gateway, reverse-proxy, rate limiter and load balancer
 
 ## Roadmap
 
 ### Short-Term Goals
 
-- Nginx API gateway, Reverse-proxy, Rate Limiter, and Load balancer + HTTPS
 - File service
   - File upload feature (photos attachment for hangout memories!)
   - AWS S3 integration (LocalStack support)
