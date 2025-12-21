@@ -7,10 +7,11 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 
 **Core:**
 
-- Language: Go 1.23+
+- Language: Go 1.24.11
 - Framework: Echo (HTTP)
 - ORM: GORM
 - Database: MySQL 8.0
+- API Gateway: Nginx
 
 **Infra & Dev Tooling:**
 
@@ -30,6 +31,7 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 - Go 1.24.11
 - Docker & Docker Compose
 - MySQL (local or via Docker)
+- Nginx (local or via Docker)
 - Swag CLI for API docs
 - golangci-lint
 - Make (Makefile)
@@ -50,6 +52,13 @@ Copy `services/hangout/.env.example` to `services/hangout/.env` and fill in your
 ```sh
 make mysql-run
 make run
+```
+
+or use air for auto reload
+
+```sh
+make mysql-run
+make air
 ```
 
 ### Local deployment fully with docker compose
@@ -75,46 +84,45 @@ Each services will have its own database, please setup your local environment / 
 - Health checks and container restart policies
 - GitHub Actions CI/CD
 - Lefthook for local Git workflow automation
-- Atlas for db auto migration
 
 ### Hangout Service
 
+- Auth, Hangout, and Activity modules
 - Swagger auto-docs with echoswagger
 - Unit tests (mocking, table-driven)
 - Test coverage reports (HTML)
 - GolangCI-Lint, Air reload
 - Makefile automation
-- Auth, Hangout, and Activity modules
+- More details on [Hangout Service Documentation](./services/hangout/README.md).
 
 ### Database
 
-- Auto migration with atlas and gorm
+- Auto migration with atlas
 - Graceful shutdown
 
-### Server
+### API Gateway
 
-- Standardized JSON response builder
-- Centralized constants & sentinel errors
-- Dependency injection (interfaces for all layers)
-- Context propagation across all layers (for timeouts, cancellation, and future observability/tracing)
+- Nginx with HTTPS
+- Nginx as an API gateway, reverse-proxy, and rate limiter
 
 ## Roadmap
 
 ### Short-Term Goals
 
 - Nginx API gateway, Reverse-proxy, Rate Limiter, and Load balancer + HTTPS
-
-### 🌐 Long-Term Vision
-
-- Excel export service
-  - RabbitMQ service interconnect
-- Notification Emails + SMTP
 - File service
   - File upload feature (photos attachment for hangout memories!)
   - AWS S3 integration (LocalStack support)
   - gRPC communication between fileservice and hangout service
 - Multi db for microservices
 - shared module in pkg/shared
+
+### 🌐 Long-Term Vision
+
+- Excel export service
+  - RabbitMQ service interconnect
+  - background worker service
+- Notification Emails + SMTP
 - OAuth / federated logins
 - Advanced observability: metrics, tracing, logging
 - Redis caching for preventing concurrent login session
