@@ -1,29 +1,29 @@
-# 🌍 Hangout Planner — Scalable Go Backend Platform
+# Hangout Planner — Scalable Go Backend Platform
 
 A **production-grade backend platform** for planning and managing hangouts — built in **Go** with **Echo**, **GORM**, and **MySQL**.  
 Designed with **clean architecture**, **SOLID principles**, and **future-proof modular design** for microservices scalability.
 
-## 🚀 Tech Stack
+## Tech Stack
 
 **Core:**
 
-- 🟦 Language: Go 1.23+
-- ⚙️ Framework: Echo (HTTP)
-- 🗄️ ORM: GORM
-- 💾 Database: MySQL 8.0
+- Language: Go 1.23+
+- Framework: Echo (HTTP)
+- ORM: GORM
+- Database: MySQL 8.0
 
 **Infra & Dev Tooling:**
 
-- 🐳 Docker & Docker Compose
-- 🧰 Makefile (automated scripts)
-- 🌀 Air (live reload)
-- 🧹 GolangCI-Lint (code linting)
-- 🧾 Swag (OpenAPI documentation)
-- 🪝 Lefthook (pre-commit & pre-push hooks)
-- 🧪 CodeQL & GitHub Actions (CI/CD)
+- Docker & Docker Compose
+- Makefile (automated scripts)
+- Air (live reload)
+- GolangCI-Lint (code linting)
+- Swag (OpenAPI documentation)
+- Lefthook (pre-commit & pre-push hooks)
+- CodeQL & GitHub Actions (CI/CD)
 - Atlas for DB auto migration
 
-## 🏃‍♂️ Local Development
+## Local Development
 
 ### Prerequisites
 
@@ -33,7 +33,7 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 - Swag CLI for API docs
 - golangci-lint
 - Make (Makefile)
-- ☁️ Air - Live reload for Go apps
+- Air - Live reload for Go apps
 - Lefthook - git hooks for pre-commit / pre-push actions
 - Atlas for db auto migration
 
@@ -67,9 +67,9 @@ Each services will have its own database, please setup your local environment / 
 
 ---
 
-## ⚡ Existing Features
+## Existing Features
 
-### 🔧 Project Infrastructure
+### Project Infrastructure
 
 - Docker Compose orchestration
 - Health checks and container restart policies
@@ -77,7 +77,7 @@ Each services will have its own database, please setup your local environment / 
 - Lefthook for local Git workflow automation
 - Atlas for db auto migration
 
-### 💬 Hangout Service
+### Hangout Service
 
 - Swagger auto-docs with echoswagger
 - Unit tests (mocking, table-driven)
@@ -86,21 +86,21 @@ Each services will have its own database, please setup your local environment / 
 - Makefile automation
 - Auth, Hangout, and Activity modules
 
-### 💾 Database
+### Database
 
 - Auto migration with atlas and gorm
 - Graceful shutdown
 
-### 🌐 Server
+### Server
 
 - Standardized JSON response builder
 - Centralized constants & sentinel errors
 - Dependency injection (interfaces for all layers)
 - Context propagation across all layers (for timeouts, cancellation, and future observability/tracing)
 
-## 🧭 Roadmap
+## Roadmap
 
-### 🧩 Short-Term Goals
+### Short-Term Goals
 
 - Nginx API gateway, Reverse-proxy, Rate Limiter, and Load balancer + HTTPS
 
@@ -108,7 +108,7 @@ Each services will have its own database, please setup your local environment / 
 
 - Excel export service
   - RabbitMQ service interconnect
-- Notification Emails
+- Notification Emails + SMTP
 - File service
   - File upload feature (photos attachment for hangout memories!)
   - AWS S3 integration (LocalStack support)
@@ -116,6 +116,6 @@ Each services will have its own database, please setup your local environment / 
 - Multi db for microservices
 - shared module in pkg/shared
 - OAuth / federated logins
-
 - Advanced observability: metrics, tracing, logging
 - Redis caching for preventing concurrent login session
+- Implement file scanning using opengovsg [lambda-virus-scanner](https://github.com/opengovsg/lambda-virus-scanner) + 2 S3 bucket architecture (dirty and clean bucket)

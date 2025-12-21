@@ -29,7 +29,7 @@ Implements clean architecture principles and production-ready practices using Go
 
 Copy `.env.example` to `.env` and fill in your configuration.
 
-## ✅ Features
+## Features
 
 ### Modules
 
@@ -37,7 +37,7 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - Hangout Modules
 - Activity modules
 
-### 💡 Core
+### Core
 
 - RESTful API built on Echo
 - Swagger API documentation
@@ -48,7 +48,7 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - Full Hangout CRUD
 - Signup and Signin
 
-### 🧪 Testing & Quality
+### Testing & Quality
 
 - Unit tests (table-driven + mocks)
 - HTML test coverage reports
@@ -64,8 +64,9 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - JWT authentication middleware
 - Centralized error handling middleware
 
-🧭 Future Enhancements
+Future Enhancements
 
 - Redis to prevent concurrent session
 - Location tagging
 - Hangout memories
+- Share hangout features
