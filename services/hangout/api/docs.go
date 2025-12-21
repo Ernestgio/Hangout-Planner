@@ -872,6 +872,7 @@ const docTemplate = `{
         "dto.CreateHangoutRequest": {
             "type": "object",
             "required": [
+                "date",
                 "title"
             ],
             "properties": {
@@ -1046,6 +1047,8 @@ const docTemplate = `{
         "dto.UpdateHangoutRequest": {
             "type": "object",
             "required": [
+                "date",
+                "status",
                 "title"
             ],
             "properties": {

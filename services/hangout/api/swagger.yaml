@@ -57,6 +57,7 @@ definitions:
       title:
         type: string
     required:
+    - date
     - title
     type: object
   dto.CursorPagination:
@@ -171,6 +172,8 @@ definitions:
       title:
         type: string
     required:
+    - date
+    - status
     - title
     type: object
   dto.UserResponse:

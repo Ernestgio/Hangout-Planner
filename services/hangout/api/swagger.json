@@ -866,6 +866,7 @@
         "dto.CreateHangoutRequest": {
             "type": "object",
             "required": [
+                "date",
                 "title"
             ],
             "properties": {
@@ -1040,6 +1041,8 @@
         "dto.UpdateHangoutRequest": {
             "type": "object",
             "required": [
+                "date",
+                "status",
                 "title"
             ],
             "properties": {
