@@ -9,9 +9,16 @@ import (
 )
 
 func main() {
-	_, err := gormschema.New("mysql").Load(&domain.User{}, &domain.Hangout{}, &domain.Activity{})
+	stmts, err := gormschema.New("mysql").Load(
+		&domain.User{},
+		&domain.Hangout{},
+		&domain.Activity{},
+		&domain.Memory{},
+		&domain.MemoryFile{},
+	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to load gorm schema: %v\n", err)
 		os.Exit(1)
 	}
+	fmt.Println(stmts)
 }
