@@ -26,3 +26,16 @@ var ErrInvalidPagination = errors.New("invalid pagination")
 var ErrInvalidActivityIDs = errors.New("one or more activity IDs are invalid or not found")
 
 var ErrInvalidActivityID = errors.New("invalid activity ID")
+
+// file & memory errors
+var ErrFileTooLarge = errors.New("file size exceeds maximum allowed")
+var ErrInvalidFileType = errors.New("invalid file type")
+var ErrFileNotFound = errors.New("file not found")
+var ErrDuplicateFileName = errors.New("file with this name already exists in this hangout")
+var ErrInvalidMemoryID = errors.New("invalid memory ID")
+
+// s3 errors
+var ErrFailedCreateS3Client = errors.New("failed to create S3 client")
+var ErrFileUploadFailed = errors.New("file upload failed")
+var ErrFileDeleteFailed = errors.New("file deletion failed")
+var ErrGetPresignedURLFailed = errors.New("failed to get presigned URL")
