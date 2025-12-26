@@ -39,3 +39,9 @@ type HangoutListItemResponse struct {
 	Status    enums.HangoutStatus `json:"status"`
 	CreatedAt types.JSONTime      `json:"created_at"`
 }
+
+type PaginatedHangouts struct {
+	Data       []*HangoutListItemResponse `json:"data"`
+	NextCursor *uuid.UUID                 `json:"next_cursor"`
+	HasMore    bool                       `json:"has_more"`
+}

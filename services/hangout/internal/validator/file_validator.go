@@ -2,7 +2,6 @@ package validator
 
 import (
 	"fmt"
-	"mime/multipart"
 	"path/filepath"
 	"strings"
 
@@ -28,19 +27,18 @@ func NewFileValidator() *FileValidator {
 	}
 }
 
-func (fv *FileValidator) ValidateFile(file *multipart.FileHeader) error {
-	if file.Size > fv.maxFileSize {
-		return fmt.Errorf("%w: file size %d exceeds maximum %d bytes", apperrors.ErrFileTooLarge, file.Size, fv.maxFileSize)
+func (fv *FileValidator) ValidateFileMetadata(filename string, size int64, mimeType string) error {
+	if size > fv.maxFileSize {
+		return fmt.Errorf("%w: file size %d exceeds maximum %d bytes", apperrors.ErrFileTooLarge, size, fv.maxFileSize)
 	}
 
-	ext := strings.ToLower(filepath.Ext(file.Filename))
+	ext := strings.ToLower(filepath.Ext(filename))
 	if !fv.allowedExtensions[ext] {
 		return fmt.Errorf("%w: extension %s not allowed. Allowed: %s", apperrors.ErrInvalidFileType, ext, constants.AllowedImageExtension)
 	}
 
-	contentType := file.Header.Get("Content-Type")
-	if !fv.isValidMimeType(contentType, ext) {
-		return fmt.Errorf("%w: MIME type %s doesn't match extension %s", apperrors.ErrInvalidFileType, contentType, ext)
+	if !fv.isValidMimeType(mimeType, ext) {
+		return fmt.Errorf("%w: MIME type %s doesn't match extension %s", apperrors.ErrInvalidFileType, mimeType, ext)
 	}
 
 	return nil

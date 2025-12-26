@@ -48,9 +48,3 @@ func (p *CursorPagination) GetSortDir() string {
 func (p *CursorPagination) GetOrderByClause() string {
 	return fmt.Sprintf("%s %s, id %s", p.GetSortBy(), p.GetSortDir(), p.GetSortDir())
 }
-
-type PaginatedHangouts struct {
-	Data       []*HangoutListItemResponse `json:"data"`
-	NextCursor *uuid.UUID                 `json:"next_cursor"`
-	HasMore    bool                       `json:"has_more"`
-}
