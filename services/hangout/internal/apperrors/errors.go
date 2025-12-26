@@ -17,6 +17,9 @@ var ErrInvalidCredentials = errors.New("invalid credentials")
 var ErrUserNotFound = errors.New("user not found")
 var ErrUnauthorized = errors.New("Unauthorized")
 
+//pagination error
+var ErrInvalidCursorPagination = errors.New("invalid cursor pagination")
+
 // hangout
 var ErrForbidden = errors.New("forbidden")
 var ErrNotFound = errors.New("resource not found")
