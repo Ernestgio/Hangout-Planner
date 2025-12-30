@@ -5,8 +5,11 @@
 # vs code
 .vscode/*
 
+# Test Coverage HTML files
+**/test/*.html
+
 # tmp files
-services/hangout/tmp/**
+**/tmp/**
 tmp/**
 
 # nginx logs (generated at runtime)

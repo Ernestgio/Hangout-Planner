@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
@@ -47,7 +48,7 @@ func NewActivityHandler(activityService services.ActivityService, responseBuilde
 func (h *activityHandler) CreateActivity(c echo.Context) error {
 	req, err := request.BindAndValidate[dto.CreateActivityRequest](c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(err))
+		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
 
 	userID := c.Get("user_id").(uuid.UUID)
@@ -74,12 +75,15 @@ func (h *activityHandler) GetActivityByID(c echo.Context) error {
 	activityIDParam := c.Param("activity_id")
 	activityID, err := uuid.Parse(activityIDParam)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(err))
+		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidActivityID))
 	}
 	userID := c.Get("user_id").(uuid.UUID)
 	ctx := c.Request().Context()
 	activity, err := h.activityService.GetActivityByID(ctx, activityID, userID)
 	if err != nil {
+		if err == apperrors.ErrNotFound {
+			return c.JSON(http.StatusNotFound, h.responseBuilder.Error(err))
+		}
 		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
 	}
 	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.ActivityRetrievedSuccessfully, activity))
@@ -122,16 +126,19 @@ func (h *activityHandler) UpdateActivity(c echo.Context) error {
 	activityIDParam := c.Param("activity_id")
 	activityID, err := uuid.Parse(activityIDParam)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(err))
+		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidActivityID))
 	}
 	req, err := request.BindAndValidate[dto.UpdateActivityRequest](c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(err))
+		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
 	userID := c.Get("user_id").(uuid.UUID)
 	ctx := c.Request().Context()
 	activity, err := h.activityService.UpdateActivity(ctx, activityID, userID, req)
 	if err != nil {
+		if err == apperrors.ErrNotFound {
+			return c.JSON(http.StatusNotFound, h.responseBuilder.Error(err))
+		}
 		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
 	}
 	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.ActivityUpdatedSuccessfully, activity))
@@ -153,12 +160,15 @@ func (h *activityHandler) DeleteActivity(c echo.Context) error {
 	activityIDParam := c.Param("activity_id")
 	activityID, err := uuid.Parse(activityIDParam)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(err))
+		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidActivityID))
 	}
 	userID := c.Get("user_id").(uuid.UUID)
 	ctx := c.Request().Context()
 	err = h.activityService.DeleteActivity(ctx, activityID, userID)
 	if err != nil {
+		if err == apperrors.ErrNotFound {
+			return c.JSON(http.StatusNotFound, h.responseBuilder.Error(err))
+		}
 		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
 	}
 	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.ActivityDeletedSuccessfully, nil))
