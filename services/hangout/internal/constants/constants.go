@@ -72,8 +72,11 @@ const (
 	MaxFilePerUpload             = 10
 
 	// Memory message constants
+	MemoriesUploadedSuccessfully  = "Memories uploaded successfully."
 	MemoryCreatedSuccessfully     = "Memory created successfully."
+	MemoryFetchedSuccessfully     = "Memory fetched successfully."
 	MemoryRetrievedSuccessfully   = "Memory retrieved successfully."
+	MemoriesListedSuccessfully    = "Memories listed successfully."
 	MemoriesRetrievedSuccessfully = "Memories retrieved successfully."
 	MemoryDeletedSuccessfully     = "Memory deleted successfully."
 

@@ -6,14 +6,12 @@ import (
 	"strings"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/auth"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/sanitizer"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"gorm.io/gorm"
@@ -210,9 +208,7 @@ func (h *hangoutHandler) GetHangoutsByUserID(c echo.Context) error {
 	}
 
 	ctx := c.Request().Context()
-	userToken := c.Get("userId").(*jwt.Token)
-	claims := userToken.Claims.(*auth.TokenCustomClaims)
-	userID := claims.UserID
+	userID := c.Get("user_id").(uuid.UUID)
 
 	hangouts, err := h.hangoutService.GetHangoutsByUserID(ctx, userID, pagination)
 
