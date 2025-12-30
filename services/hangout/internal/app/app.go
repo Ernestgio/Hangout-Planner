@@ -19,7 +19,9 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/storage"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
+	filevalidator "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/validator"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/crypto/bcrypt"
@@ -44,21 +46,33 @@ func NewApp(cfg *config.Config) (*App, error) {
 	jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
 	bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
 
+	// Storage Layer
+	s3Client, err := storage.NewS3Client(context.Background(), cfg.S3Config)
+	if err != nil {
+		return nil, err
+	}
+	fileValidator := filevalidator.NewFileValidator()
+
 	// Repository Layer
 	userRepo := repository.NewUserRepository(dbConn)
 	hangoutRepo := repository.NewHangoutRepository(dbConn)
 	activityRepo := repository.NewActivityRepository(dbConn)
+	memoryRepo := repository.NewMemoryRepository(dbConn)
+	memoryFileRepo := repository.NewMemoryFileRepository(dbConn)
 
 	// Service Layer
 	userService := services.NewUserService(dbConn, userRepo, bcryptUtils)
 	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
 	hangoutService := services.NewHangoutService(dbConn, hangoutRepo, activityRepo)
 	activityService := services.NewActivityService(dbConn, activityRepo)
+	memoryFileService := services.NewMemoryFileService(s3Client, memoryFileRepo, fileValidator)
+	memoryService := services.NewMemoryService(dbConn, memoryRepo, hangoutRepo, memoryFileService)
 
 	// handler Layer
 	authHandler := handlers.NewAuthHandler(authService, responseBuilder)
 	hangoutHandler := handlers.NewHangoutHandler(hangoutService, responseBuilder)
 	activityHandler := handlers.NewActivityHandler(activityService, responseBuilder)
+	memoryHandler := handlers.NewMemoryHandler(memoryService, responseBuilder)
 
 	// Server Setup
 	e := echo.New()
@@ -68,7 +82,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
 	e.Use(middleware.Decompress())
 
-	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler)
+	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler, memoryHandler)
 
 	return &App{
 		server: e,

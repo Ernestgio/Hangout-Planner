@@ -30,6 +30,7 @@ const (
 	AuthRoutes       = "/auth"
 	HangoutRoutes    = "/hangouts"
 	ActivityRoutes   = "/activities"
+	MemoryRoutes     = "/memories"
 
 	//Status constants
 	SuccessStatus = "success"
