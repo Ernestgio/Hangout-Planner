@@ -18,8 +18,9 @@ import (
 )
 
 type S3Client struct {
-	client     *s3.Client
-	bucketName string
+	client             *s3.Client
+	bucketName         string
+	presignedURLExpiry time.Duration
 }
 
 func NewS3Client(ctx context.Context, cfg *config.S3Config) (*S3Client, error) {
@@ -42,8 +43,9 @@ func NewS3Client(ctx context.Context, cfg *config.S3Config) (*S3Client, error) {
 	})
 
 	return &S3Client{
-		client:     client,
-		bucketName: cfg.BucketName,
+		client:             client,
+		bucketName:         cfg.BucketName,
+		presignedURLExpiry: cfg.GetPresignedURLExpiry(),
 	}, nil
 }
 
@@ -89,14 +91,14 @@ func (s *S3Client) Delete(ctx context.Context, path string) error {
 	return nil
 }
 
-func (s *S3Client) GeneratePresignedURL(ctx context.Context, path string, expiry time.Duration) (string, error) {
+func (s *S3Client) GeneratePresignedURL(ctx context.Context, path string) (string, error) {
 	presignClient := s3.NewPresignClient(s.client)
 
 	req, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(path),
 	}, func(opts *s3.PresignOptions) {
-		opts.Expires = expiry
+		opts.Expires = s.presignedURLExpiry
 	})
 
 	if err != nil {

@@ -15,7 +15,7 @@ import (
 type MemoryRepository interface {
 	WithTx(tx *gorm.DB) MemoryRepository
 	CreateMemory(ctx context.Context, memory *domain.Memory) (*domain.Memory, error)
-	GetMemoryByID(ctx context.Context, id uuid.UUID) (*domain.Memory, error)
+	GetMemoryByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Memory, error)
 	GetMemoriesByHangoutID(ctx context.Context, hangoutID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Memory, error)
 	DeleteMemory(ctx context.Context, id uuid.UUID) error
 }
@@ -39,9 +39,9 @@ func (r *memoryRepository) CreateMemory(ctx context.Context, memory *domain.Memo
 	return memory, nil
 }
 
-func (r *memoryRepository) GetMemoryByID(ctx context.Context, id uuid.UUID) (*domain.Memory, error) {
+func (r *memoryRepository) GetMemoryByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Memory, error) {
 	var memory domain.Memory
-	if err := r.db.WithContext(ctx).First(&memory, "id = ?", id).Error; err != nil {
+	if err := r.db.WithContext(ctx).First(&memory, "id = ? AND user_id = ?", id, userID).Error; err != nil {
 		return nil, err
 	}
 	return &memory, nil

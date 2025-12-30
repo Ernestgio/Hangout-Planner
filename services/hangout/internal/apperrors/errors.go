@@ -36,6 +36,10 @@ var ErrInvalidFileType = errors.New("invalid file type")
 var ErrFileNotFound = errors.New("file not found")
 var ErrDuplicateFileName = errors.New("file with this name already exists in this hangout")
 var ErrInvalidMemoryID = errors.New("invalid memory ID")
+var ErrTooManyFiles = errors.New("too many files")
+var ErrAllFilesUploadFailed = errors.New("all files upload failed")
+
+var ErrMemoryNotFound = errors.New("memory not found")
 
 // s3 errors
 var ErrFailedCreateS3Client = errors.New("failed to create S3 client")

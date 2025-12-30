@@ -65,10 +65,11 @@ const (
 	SortByDate        = "date"
 
 	// File upload constants
-	MaxFileSize           = 10 * 1024 * 1024
-	MaxRequestSize        = 10 * 1024 * 1024
-	PresignedURLExpiry    = 15
-	AllowedImageExtension = ".jpg,.jpeg,.png,.gif,.webp"
+	MaxFileSize                  = 10 * 1024 * 1024
+	MaxRequestSize               = 10 * 1024 * 1024
+	DefaultPresignedURLExpiryMin = 15
+	AllowedImageExtension        = ".jpg,.jpeg,.png,.gif,.webp"
+	MaxFilePerUpload             = 10
 
 	// Memory message constants
 	MemoryCreatedSuccessfully     = "Memory created successfully."
