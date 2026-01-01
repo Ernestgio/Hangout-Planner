@@ -82,7 +82,8 @@ const (
 	MemoryDeletedSuccessfully     = "Memory deleted successfully."
 
 	// S3 Config - Default environment variable values constants
-	DefaultS3Endpoint = "http://localhost:4566"
-	DefaultS3Region   = "ap-southeast-1"
-	DefaultS3Bucket   = "hangout-files"
+	DefaultS3Endpoint         = "http://localhost:4566"
+	DefaultS3ExternalEndpoint = "http://localhost:4566"
+	DefaultS3Region           = "ap-southeast-1"
+	DefaultS3Bucket           = "hangout-files"
 )

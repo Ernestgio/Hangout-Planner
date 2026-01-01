@@ -41,7 +41,7 @@ localstack-up:
 
 ## Run AWS CLI commands against LocalStack - Usage: make awslocal ARGS="s3 ls" or ARGS="s3 cp file.txt s3://bucket/"
 awslocal:
-	aws --endpoint-url=http://localhost:4566 --profile localstack
+	aws --endpoint-url=http://localhost:4566 --profile localstack $(ARGS)
 
 ## Run inside docker container (go run .)
 mysql-run:
