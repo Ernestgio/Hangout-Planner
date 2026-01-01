@@ -19,6 +19,14 @@ func setupDB(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
 	return db, mock
 }
 
+func newDBWithRegexp(t *testing.T) (*gorm.DB, sqlmock.Sqlmock) {
+	sqlDB, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
+	require.NoError(t, err)
+	db, err := gorm.Open(mysql.New(mysql.Config{Conn: sqlDB, SkipInitializeWithVersion: true}), &gorm.Config{})
+	require.NoError(t, err)
+	return db, mock
+}
+
 type AnyTime struct{}
 
 func (a AnyTime) Match(v driver.Value) bool {

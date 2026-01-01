@@ -1,8 +1,8 @@
 # Hangout Planner — Scalable Go Backend Platform
 
-Hangout Planner is a Go-based backend platform for planning and managing hangouts. The repo is structured as a monorepo with a core service (`hangout`) and shared packages, fronted by an NGINX edge gateway that handles TLS termination, HTTP/2, and path-based routing.
+Hangout Planner is a Go-based backend platform for planning and managing hangouts with photo memory uploads. The repo is structured as a monorepo with a core service (`hangout`) and shared packages, fronted by an NGINX edge gateway that handles TLS termination, HTTP/2, and path-based routing.
 
-This project is built to demonstrate production-minded backend engineering: layered architecture, automated database migrations, CI, and a local environment that mirrors common deployment topology (gateway → services → database).
+This project is built to demonstrate production-minded backend engineering: layered architecture, automated database migrations, CI, file upload with S3-compatible storage, and a local environment that mirrors common deployment topology (gateway → services → database → object storage).
 
 Designed with **clean architecture**, **SOLID principles**, and **future-proof modular design** for microservices scalability.
 
@@ -25,6 +25,8 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 
 - Docker + Docker Compose (local orchestration)
 - NGINX (reverse proxy, TLS termination, HTTP/2, gzip compression, header forwarding)
+- LocalStack (local AWS S3 emulation for development)
+- AWS SDK for Go v2 (S3 client, presigned URLs)
 
 **Engineering Practices**
 
@@ -56,6 +58,7 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 - Lefthook - git hooks for pre-commit / pre-push actions
 - Atlas for db auto migration
 - mkcert (one-time certificate generation)
+- AWS CLI (for LocalStack S3 verification and debugging)
 
 ### Environment variables
 
@@ -117,6 +120,7 @@ Each services will have its own database, please setup your local environment / 
 - Test coverage reports (HTML)
 - GolangCI-Lint, Air reload
 - Makefile automation
+- Hangout memory file uploads (photos and alike)
 - More details on [Hangout Service Documentation](./services/hangout/README.md).
 
 ### Database
@@ -128,6 +132,18 @@ Each services will have its own database, please setup your local environment / 
 
 - Nginx with HTTPS
 - Nginx as an API gateway, reverse-proxy, rate limiter and load balancer
+
+### LocalStack & File Storage
+
+- **LocalStack S3** for local development (AWS-compatible object storage)
+- **File upload feature** for hangout memories (photos)
+- **Concurrent upload** processing with goroutines (6-10x faster)
+- **Partial success** pattern (Instagram/Facebook style)
+- **AES-256 encryption** + MD5 checksums for uploaded files
+- **Presigned URLs** for secure file access (15-minute expiry)
+- **Dual endpoint configuration** (internal Docker network + external localhost)
+- Max 10 files per upload, 10MB per file
+- Supported formats: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`
 
 ## Roadmap
 
