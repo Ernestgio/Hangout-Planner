@@ -811,6 +811,301 @@ const docTemplate = `{
                     }
                 }
             }
+        },
+        "/hangouts/{hangout_id}/memories": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Lists all memories for a hangout with cursor pagination",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Memories"
+                ],
+                "summary": "List Memories",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Hangout ID",
+                        "name": "hangout_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Number of items to return (default 10, max 100)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Cursor for pagination (Memory ID)",
+                        "name": "after_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort direction: asc or desc (default desc)",
+                        "name": "sort_dir",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Memories listed successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.PaginatedMemories"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Hangout not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Uploads multiple photos/memories for a hangout with concurrent processing.\n\n**Constraints:**\n- Maximum 10 files per request\n- Maximum 10MB per file\n- Allowed formats: .jpg, .jpeg, .png, .gif, .webp\n- MIME types: image/jpeg, image/png, image/gif, image/webp\n\n**Upload Behavior:**\n- Files are processed concurrently for faster upload\n- Returns partial success if some files succeed and others fail\n- Each file gets its own transaction (atomic per file)\n- If all files fail, returns error\n\n**Form Field:**\n- Use field name \"files\" in multipart/form-data\n- Can attach multiple files to the same field",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Memories"
+                ],
+                "summary": "Upload Memories",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Hangout ID",
+                        "name": "hangout_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Files to upload (use same field name for multiple files)",
+                        "name": "files",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Memories uploaded successfully (partial success possible)",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/dto.MemoryResponse"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Too many files, file too large, invalid format, or no files provided",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Hangout not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error or all files failed",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/memories/{memory_id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Retrieves a memory by its ID with presigned file URL",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Memories"
+                ],
+                "summary": "Get Memory by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Memory ID",
+                        "name": "memory_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Memory fetched successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.MemoryResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid memory ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Memory not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Deletes a memory and its associated file",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Memories"
+                ],
+                "summary": "Delete Memory",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Memory ID",
+                        "name": "memory_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Memory deleted successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid memory ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Memory not found",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
@@ -972,6 +1267,32 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.MemoryResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "file_size": {
+                    "type": "integer"
+                },
+                "file_url": {
+                    "type": "string"
+                },
+                "hangout_id": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "mime_type": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "dto.PaginatedHangouts": {
             "type": "object",
             "properties": {
@@ -979,6 +1300,23 @@ const docTemplate = `{
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/dto.HangoutListItemResponse"
+                    }
+                },
+                "has_more": {
+                    "type": "boolean"
+                },
+                "next_cursor": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PaginatedMemories": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.MemoryResponse"
                     }
                 },
                 "has_more": {

@@ -13,7 +13,7 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler, activityHandler handlers.ActivityHandler) {
+func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler, activityHandler handlers.ActivityHandler, memoryHandler handlers.MemoryHandler) {
 	e.GET(constants.HealthCheckRoute, func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	})
@@ -44,4 +44,15 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	activityRoutes.GET("/:activity_id", activityHandler.GetActivityByID)
 	activityRoutes.DELETE("/:activity_id", activityHandler.DeleteActivity)
 	activityRoutes.GET("/", activityHandler.GetAllActivities)
+
+	// memory routes (nested under hangouts for create/list)
+	hangoutRoutes.POST("/:hangout_id/memories", memoryHandler.CreateMemories)
+	hangoutRoutes.GET("/:hangout_id/memories", memoryHandler.ListMemories)
+
+	// memory routes (flat for single resource operations)
+	memoryRoutes := e.Group(constants.MemoryRoutes)
+	memoryRoutes.Use(middlewares.JWT(cfg, responseBuilder))
+	memoryRoutes.Use(middlewares.UserContextMiddleware)
+	memoryRoutes.GET("/:memory_id", memoryHandler.GetMemory)
+	memoryRoutes.DELETE("/:memory_id", memoryHandler.DeleteMemory)
 }

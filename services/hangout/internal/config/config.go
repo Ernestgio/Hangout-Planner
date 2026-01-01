@@ -16,6 +16,7 @@ type Config struct {
 	AppPort    string
 	DBConfig   *DBConfig
 	JwtConfig  *JwtConfig
+	S3Config   *S3Config
 	BcryptCost int
 }
 
@@ -30,6 +31,7 @@ func Load() (*Config, error) {
 		AppPort:    getEnv("APP_PORT", constants.DefaultAppPort),
 		DBConfig:   NewDBConfig(),
 		JwtConfig:  NewJwtConfig(),
+		S3Config:   NewS3Config(),
 		BcryptCost: bcrypt.DefaultCost,
 	}
 

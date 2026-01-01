@@ -13,6 +13,8 @@ Implements clean architecture principles and production-ready practices using Go
 - Atlas migrations
 - golangci-lint
 - Air (Live reload)
+- AWS SDK for Go v2 (S3 client)
+- LocalStack (local S3 emulation)
 
 ## Architecture
 
@@ -52,6 +54,12 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - Auth Modules
 - Hangout Modules
 - Activity modules
+- **Memory Modules** — Photo upload system with concurrent processing and S3 storage
+  - Concurrent file processing with goroutines (6-10x faster than sequential)
+  - Partial success handling for better user experience
+  - S3-compatible storage with AES-256 encryption and MD5 checksums
+  - Presigned URLs for secure file access (15-minute expiry)
+  - Cursor-based pagination for memory listing
 
 ### Core
 
@@ -63,6 +71,12 @@ Copy `.env.example` to `.env` and fill in your configuration.
 - Context propagation across all layers (for timeouts, cancellation, and future observability/tracing)
 - Full Hangout CRUD
 - Signup and Signin
+- **File Upload System**
+  - Multipart/form-data handling
+  - Transport-agnostic validation layer
+  - Thread-safe concurrent uploads
+  - Atomic per-file transactions
+  - Designed for future microservice extraction
 
 ### Testing & Quality
 
@@ -84,5 +98,4 @@ Copy `.env.example` to `.env` and fill in your configuration.
 
 - Redis to prevent concurrent session
 - Location tagging
-- Hangout memories
 - Share hangout features

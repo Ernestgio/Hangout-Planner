@@ -8,8 +8,8 @@ data "external_schema" "gorm" {
 }
 env "local" {
   src = data.external_schema.gorm.url
-  dev = "docker://mysql/8/dev"
   url = getenv("HANGOUT_DB_URL")
+  dev = "docker://mysql/8/dev"
   migration {
     dir = "file://migrations"
   }

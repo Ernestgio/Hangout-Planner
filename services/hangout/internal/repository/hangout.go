@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	domain "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
@@ -91,7 +92,7 @@ func (r *hangoutRepository) GetHangoutsByUserID(ctx context.Context, userID uuid
 	if pagination.AfterID != nil {
 		var cursorItem domain.Hangout
 		if err := r.db.WithContext(ctx).First(&cursorItem, "id = ?", *pagination.AfterID).Error; err != nil {
-			return nil, fmt.Errorf("cursor item not found: %w", err)
+			return nil, apperrors.ErrInvalidCursorPagination
 		}
 
 		cursorValue := cursorItem.CreatedAt

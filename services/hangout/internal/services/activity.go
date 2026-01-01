@@ -50,6 +50,9 @@ func (s *activityService) CreateActivity(ctx context.Context, userID uuid.UUID, 
 func (s *activityService) GetActivityByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*dto.ActivityDetailResponse, error) {
 	activity, hangoutCount, err := s.activityRepo.GetActivityByID(ctx, id, userID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, apperrors.ErrNotFound
+		}
 		return nil, err
 	}
 	return mapper.ActivitytoDetailResponseDTO(activity, hangoutCount), nil
@@ -100,6 +103,9 @@ func (s *activityService) DeleteActivity(ctx context.Context, id uuid.UUID, user
 		txRepo := s.activityRepo.WithTx(tx)
 		_, _, err := txRepo.GetActivityByID(ctx, id, userID)
 		if err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return apperrors.ErrNotFound
+			}
 			return err
 		}
 		return txRepo.DeleteActivity(ctx, id)

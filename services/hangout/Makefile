@@ -3,8 +3,9 @@
 APP_NAME=hangout
 COVERAGE_FILE=test/coverage
 COVERAGE_HTML_FILE=test/coverage.html
+AWSLOCAL=aws --endpoint-url=http://localhost:4566 --profile localstack
 
-.PHONY: all test lint swag build run clean docker-build docker-run up down air
+.PHONY: all test coverage lint swag build run localstack-up awslocal mysql-run up down nginx-reload nginx-test nginx-logs air diff migrate migrate-status
 
 all: lint test build
 
@@ -34,6 +35,13 @@ build:
 run: 
 	go run .
 
+## Localstack
+localstack-up:
+	docker compose up -d localstack
+
+## Run AWS CLI commands against LocalStack - Usage: make awslocal ARGS="s3 ls" or ARGS="s3 cp file.txt s3://bucket/"
+awslocal:
+	aws --endpoint-url=http://localhost:4566 --profile localstack $(ARGS)
 
 ## Run inside docker container (go run .)
 mysql-run:
@@ -69,7 +77,10 @@ diff:
 ifndef NAME
 	$(error NAME is required. Usage: make diff NAME=migration_name)
 endif
-	atlas migrate diff $(NAME) --env local
+	atlas migrate diff $(NAME) \
+  		--to file://migrations \
+  		--dev-url "docker://mysql/8/dev" \
+  		--format '{{ sql . "  " }}'
 
 migrate:
 	atlas migrate apply --env local

@@ -155,7 +155,7 @@ func TestActivityService_GetActivityByID(t *testing.T) {
 			},
 			checkResult: func(t *testing.T, res *dto.ActivityDetailResponse, err error) {
 				require.Error(t, err)
-				require.ErrorIs(t, err, gorm.ErrRecordNotFound)
+				require.ErrorIs(t, err, apperrors.ErrNotFound)
 				require.Nil(t, res)
 			},
 		},
@@ -390,7 +390,20 @@ func TestActivityService_DeleteActivity(t *testing.T) {
 
 				sqlMock.ExpectRollback()
 			},
-			expectedErr: gorm.ErrRecordNotFound,
+			expectedErr: apperrors.ErrNotFound,
+		},
+		{
+			name: "get fails",
+			setupMock: func(repo *MockActivityRepository, sqlMock sqlmock.Sqlmock) {
+				sqlMock.ExpectBegin()
+				repo.On("WithTx", mock.Anything).Return(repo).Once()
+
+				repo.On("GetActivityByID", ctx, activityID, userID).
+					Return(nil, 0, dbError).Once()
+
+				sqlMock.ExpectRollback()
+			},
+			expectedErr: dbError,
 		},
 		{
 			name: "delete fails",
