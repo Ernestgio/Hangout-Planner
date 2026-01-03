@@ -1,0 +1,93 @@
+syntax = "proto3";
+
+package file.v1;
+
+option go_package = "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file;filepb";
+
+import "google/protobuf/timestamp.proto";
+
+message FileWithURL {
+  string id = 1;
+  string original_name = 2;
+  int64 file_size = 3;
+  string mime_type = 4;
+  google.protobuf.Timestamp created_at = 5;
+  string download_url = 6;
+  int64 url_expires_at = 7;
+}
+
+// ============================================
+// Generate Upload URLs
+// ============================================
+
+message FileUploadIntent {
+  string filename = 1;
+  int64 size = 2;
+  string mime_type = 3;
+}
+
+message GenerateUploadURLsRequest {
+  string base_storage_path = 1;
+  repeated FileUploadIntent files = 2;
+}
+
+message GenerateUploadURLsResponse {
+  repeated PresignedUploadURL urls = 1;
+}
+
+message PresignedUploadURL {
+  string file_id = 1;
+  string filename = 2;
+  string upload_url = 3;
+  int64 expires_at = 4;
+}
+
+// ============================================
+// Generate Upload URLs (Confirm upload)
+// ============================================
+
+message ConfirmUploadRequest {
+  repeated string file_ids = 1;
+}
+
+message ConfirmUploadResponse {
+  bool success = 1;
+}
+
+// ============================================
+// Get File (Single)
+// ============================================
+
+message GetFileByMemoryIDRequest {
+  string memory_id = 1;
+}
+
+message GetFileByMemoryIDResponse {
+  FileWithURL file = 1;
+}
+
+// ============================================
+// Get Files (Batch)
+// ============================================
+
+message GetFilesByMemoryIDsRequest {
+  repeated string memory_ids = 1;
+}
+
+message GetFilesByMemoryIDsResponse {
+  map<string, FileWithURL> files = 1;
+}
+
+// ============================================
+// Delete File (Single)
+// ============================================
+
+message DeleteFileRequest {
+  string memory_id = 1;
+}
+
+message DeleteFileResponse {
+  bool success = 1;
+}
+
+
