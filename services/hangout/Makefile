@@ -5,7 +5,10 @@ COVERAGE_FILE=test/coverage
 COVERAGE_HTML_FILE=test/coverage.html
 AWSLOCAL=aws --endpoint-url=http://localhost:4566 --profile localstack
 
-.PHONY: all test coverage lint swag build run localstack-up awslocal mysql-run up down nginx-reload nginx-test nginx-logs air diff migrate migrate-status
+.PHONY: all test coverage lint swag build run help
+.PHONY: localstack-up awslocal mysql-run up down
+.PHONY: nginx-reload nginx-test nginx-logs
+.PHONY: air diff migrate migrate-status
 
 all: lint test build
 
@@ -87,3 +90,8 @@ migrate:
 
 migrate-status:
 	atlas migrate status --env local 
+
+## Show available targets
+help:
+	@echo "Available targets:"
+	@grep -E '^##' Makefile | sed 's/## //'
