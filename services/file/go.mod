@@ -4,9 +4,12 @@ go 1.24.11
 
 require (
 	ariga.io/atlas-provider-gorm v0.6.0
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/joho/godotenv v1.5.1
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.78.0
+	gorm.io/driver/mysql v1.5.7
+	gorm.io/gorm v1.30.1
 )
 
 require (
@@ -32,7 +35,6 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.3 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-sql-driver/mysql v1.8.1 // indirect
 	github.com/golang-sql/civil v0.0.0-20220223132316-b832511892a9 // indirect
 	github.com/golang-sql/sqlexp v0.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20241129210726-2c02b8208cf8 // indirect
@@ -77,9 +79,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/mysql v1.5.7 // indirect
 	gorm.io/driver/postgres v1.5.11 // indirect
 	gorm.io/driver/sqlite v1.5.7 // indirect
 	gorm.io/driver/sqlserver v1.5.4 // indirect
-	gorm.io/gorm v1.30.1 // indirect
 )
