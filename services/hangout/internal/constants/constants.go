@@ -2,7 +2,7 @@ package constants
 
 const (
 
-	// Application Config - Devault environment variable values constants
+	// Application Config - Default environment variable values constants
 	ProductionEnv  = "PROD"
 	DevEnv         = "DEV"
 	DefaultAppName = "hangout"

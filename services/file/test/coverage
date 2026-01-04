@@ -1,0 +1,11 @@
+mode: set
+github.com/Ernestgio/Hangout-Planner/services/file/internal/config/config.go:8.37,9.34 1 1
+github.com/Ernestgio/Hangout-Planner/services/file/internal/config/config.go:9.34,11.3 1 1
+github.com/Ernestgio/Hangout-Planner/services/file/internal/config/config.go:12.2,12.12 1 1
+github.com/Ernestgio/Hangout-Planner/services/file/internal/config/config.go:15.41,16.34 1 1
+github.com/Ernestgio/Hangout-Planner/services/file/internal/config/config.go:16.34,17.44 1 1
+github.com/Ernestgio/Hangout-Planner/services/file/internal/config/config.go:17.44,19.4 1 1
+github.com/Ernestgio/Hangout-Planner/services/file/internal/config/config.go:21.2,21.12 1 1
+github.com/Ernestgio/Hangout-Planner/services/file/internal/config/db.go:13.30,21.2 1 1
+github.com/Ernestgio/Hangout-Planner/services/file/internal/config/s3.go:20.30,31.2 1 1
+github.com/Ernestgio/Hangout-Planner/services/file/internal/config/s3.go:33.58,35.2 1 1
