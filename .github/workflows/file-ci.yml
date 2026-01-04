@@ -1,4 +1,4 @@
-name: Hangout Service CI
+name: File Service CI
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
   pull_request:
     paths:
-      - "services/hangout/**"
+      - "services/file/**"
     branches:
       - main
   workflow_dispatch:
@@ -17,12 +17,12 @@ on:
         default: "Manual test"
 
 jobs:
-  hangout-service-ci:
+  file-service-ci:
     runs-on: ubuntu-latest
 
     defaults:
       run:
-        working-directory: services/hangout
+        working-directory: services/file
 
     steps:
       - name: Checkout code
@@ -37,7 +37,7 @@ jobs:
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v4
         with:
-          working-directory: services/hangout
+          working-directory: services/file
           args: --timeout=5m ./...
 
       - name: Run Tests with Coverage
@@ -50,5 +50,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report-html
-          path: services/hangout/coverage.html
+          path: services/file/coverage.html
           retention-days: 7

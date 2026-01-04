@@ -1,5 +1,5 @@
 pre-commit:
-  parallel: true
+  parallel: false
   commands:
     hangout-service-go-mod-tidy:
       run: cd services/hangout && go mod tidy

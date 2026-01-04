@@ -1,3 +1,4 @@
 extends:
   - githooks/hangout-service-lefthook.yml
   - githooks/shared-package-lefthook.yml
+  - githooks/file-service-lefthook.yml
