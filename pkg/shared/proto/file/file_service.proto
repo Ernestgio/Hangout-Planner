@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package file.v1;
+
+option go_package = "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file;filepb";
+
+import "file/file_messages.proto";
+
+service FileService {
+  rpc GenerateUploadURLs(GenerateUploadURLsRequest) returns (GenerateUploadURLsResponse);
+  rpc ConfirmUpload(ConfirmUploadRequest) returns (ConfirmUploadResponse);
+  rpc GetFileByMemoryID(GetFileByMemoryIDRequest) returns (GetFileByMemoryIDResponse);
+  rpc GetFilesByMemoryIDs(GetFilesByMemoryIDsRequest) returns (GetFilesByMemoryIDsResponse);
+  rpc DeleteFile(DeleteFileRequest) returns (DeleteFileResponse);
+}
