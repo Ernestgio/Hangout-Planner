@@ -5,7 +5,6 @@ services:
       context: ../services/hangout
       dockerfile: Dockerfile
     restart: on-failure
-    container_name: hangout-service
     env_file:
       - ../services/hangout/.env
     ports:
@@ -27,7 +26,6 @@ services:
       context: ../services/file
       dockerfile: Dockerfile
     restart: on-failure
-    container_name: file-service
     env_file:
       - ../services/file/.env
     expose:
@@ -57,8 +55,7 @@ services:
       - ../components/nginx/ssl:/etc/nginx/ssl:ro
       - ../components/nginx/logs:/var/log/nginx
     depends_on:
-      hangout:
-        condition: service_healthy
+      - hangout
     networks:
       - default
     healthcheck:

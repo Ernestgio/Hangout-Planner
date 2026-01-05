@@ -1,7 +1,6 @@
 services:
   mysql:
     image: mysql:8.0
-    container_name: hangout-mysql
     restart: on-failure
     env_file:
       - ../components/database/.env
@@ -15,7 +14,6 @@ services:
 
   localstack:
     image: localstack/localstack:latest
-    container_name: hangout-localstack
     restart: on-failure
     ports:
       - "4566:4566"
