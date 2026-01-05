@@ -12,6 +12,7 @@ import (
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants/logmsg"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
@@ -35,7 +36,7 @@ type App struct {
 	cfg    *config.Config
 }
 
-func NewApp(cfg *config.Config) (*App, error) {
+func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 	dbConn, dbCloser, err := db.Connect(cfg.DBConfig)
 	if err != nil {
 		return nil, err
@@ -47,7 +48,7 @@ func NewApp(cfg *config.Config) (*App, error) {
 	bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
 
 	// Storage Layer
-	s3Client, err := storage.NewS3Client(context.Background(), cfg.S3Config)
+	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config)
 	if err != nil {
 		return nil, err
 	}
@@ -95,7 +96,8 @@ func NewApp(cfg *config.Config) (*App, error) {
 func (a *App) Start() error {
 	errChan := make(chan error, 1)
 	go func() {
-		errChan <- a.server.Start(":" + a.cfg.AppPort)
+		addr := ":" + a.cfg.AppPort
+		errChan <- a.server.Start(addr)
 	}()
 
 	quit := make(chan os.Signal, 1)
@@ -103,7 +105,7 @@ func (a *App) Start() error {
 
 	select {
 	case <-quit:
-		log.Println("Received interrupt signal, shutting down...")
+		log.Println(logmsg.AppShuttingDown)
 	case err := <-errChan:
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
 			return err
@@ -114,7 +116,8 @@ func (a *App) Start() error {
 }
 
 func (a *App) Shutdown() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownTimeout := time.Duration(constants.GracefulShutdownTimeout) * time.Second
+	ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 
 	if err := a.server.Shutdown(ctx); err != nil {
@@ -122,7 +125,7 @@ func (a *App) Shutdown() error {
 	}
 
 	if err := a.closer(); err != nil {
-		log.Printf("Error closing database connection: %v", err)
+		log.Printf(logmsg.DBConnectionCloseFailed, err)
 		return err
 	}
 

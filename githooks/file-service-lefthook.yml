@@ -1,0 +1,11 @@
+pre-commit:
+  parallel: false
+  commands:
+    hangout-service-go-mod-tidy:
+      run: cd services/file && go mod tidy
+
+    hangout-service-go-test:
+      run: cd services/file && go test ./internal/... -cover
+
+    hangout-service-golangci-lint:
+      run: cd services/file && golangci-lint run ./...

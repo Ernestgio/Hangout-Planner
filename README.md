@@ -158,6 +158,7 @@ Each services will have its own database, please setup your local environment / 
 
 ### Long-Term Vision
 
+- Security, between services, port protection, cors, permissions and roles for services and users
 - Excel export service
   - RabbitMQ service interconnect
   - background worker service

@@ -2,7 +2,7 @@ package constants
 
 const (
 
-	// Application Config - Devault environment variable values constants
+	// Application Config - Default environment variable values constants
 	ProductionEnv  = "PROD"
 	DevEnv         = "DEV"
 	DefaultAppName = "hangout"
@@ -23,6 +23,9 @@ const (
 
 	// Application constants
 	LoggerFormat = "[${time_rfc3339}] ${method} ${host}${uri} ${status} ${latency_human}\n"
+
+	// Application Timeouts
+	GracefulShutdownTimeout = 10 // seconds
 
 	// routes constants
 	HealthCheckRoute = "/healthz"
