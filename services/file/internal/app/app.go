@@ -46,7 +46,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		logger.Error(ctx, logmsg.NetworkListenerFailed, err, slog.String("addr", addr))
-		return nil, fmt.Errorf("failed to create listener: %w", err)
+		return nil, err
 	}
 
 	grpcServer := grpc.NewServer()

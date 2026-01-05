@@ -24,6 +24,9 @@ const (
 	// Application constants
 	LoggerFormat = "[${time_rfc3339}] ${method} ${host}${uri} ${status} ${latency_human}\n"
 
+	// Application Timeouts
+	GracefulShutdownTimeout = 10 // seconds
+
 	// routes constants
 	HealthCheckRoute = "/healthz"
 	SwaggerRoute     = "/swagger/*"
