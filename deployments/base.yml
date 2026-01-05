@@ -1,0 +1,35 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: hangout-mysql
+    restart: on-failure
+    env_file:
+      - ../components/database/.env
+    ports:
+      - "3306:3306"
+    volumes:
+      - ../components/database/init.sql:/data/application/init.sql
+    command: --init-file /data/application/init.sql
+    networks:
+      - default
+
+  localstack:
+    image: localstack/localstack:latest
+    container_name: hangout-localstack
+    restart: on-failure
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DATA_DIR=/var/lib/localstack
+      - PERSISTENCE=1
+    volumes:
+      - ../components/localstack:/var/lib/localstack
+      - ../components/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
+    networks:
+      - default
+
+networks:
+  default:
+    driver: bridge
