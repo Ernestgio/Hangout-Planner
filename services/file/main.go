@@ -1,49 +1,41 @@
 package main
 
 import (
-	"flag"
-	"log"
-	"net"
+	"context"
+	"log/slog"
 	"os"
-	"os/signal"
-	"syscall"
 
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health"
-	healthpb "google.golang.org/grpc/health/grpc_health_v1"
-	"google.golang.org/grpc/reflection"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/app"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/constants/logmsg"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/logger"
 )
 
 func main() {
-	addr := flag.String("addr", ":9001", "gRPC listen address")
-	flag.Parse()
+	ctx := context.Background()
 
-	lis, err := net.Listen("tcp", *addr)
+	// 1. Load configuration
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatalf("failed to listen: %v", err)
+		slog.Error(logmsg.ConfigLoadFailed, slog.Any("error", err))
+		os.Exit(1)
 	}
 
-	srv := grpc.NewServer()
+	// 2. Initialize logger
+	logger.Init(cfg.Env, cfg.AppName)
 
-	healthServer := health.NewServer()
-	healthpb.RegisterHealthServer(srv, healthServer)
-	healthServer.SetServingStatus("", healthpb.HealthCheckResponse_SERVING)
-	healthServer.SetServingStatus("file.v1.FileService", healthpb.HealthCheckResponse_SERVING)
-
-	reflection.Register(srv)
-
-	go func() {
-		sig := make(chan os.Signal, 1)
-		signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
-		<-sig
-		log.Println("shutting down gracefully...")
-		healthServer.Shutdown()
-		srv.GracefulStop()
-	}()
-
-	log.Printf("file service gRPC listening on %s", *addr)
-	log.Printf("health check available at %s (use grpc-health-probe or grpcurl)", *addr)
-	if err := srv.Serve(lis); err != nil {
-		log.Fatalf("server failed: %v", err)
+	// 3. Create a new application instance
+	application, err := app.NewApp(ctx, cfg)
+	if err != nil {
+		logger.Error(ctx, logmsg.AppCreateFailed, err)
+		os.Exit(1)
 	}
+
+	// 4. Start the application
+	if err := application.Start(); err != nil {
+		logger.Error(ctx, logmsg.AppTerminatedWithError, err)
+		os.Exit(1)
+	}
+
+	logger.Info(ctx, logmsg.AppExitSuccess)
 }
