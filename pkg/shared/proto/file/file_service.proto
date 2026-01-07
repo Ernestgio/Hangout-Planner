@@ -4,7 +4,7 @@ package file.v1;
 
 option go_package = "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file;filepb";
 
-import "proto/file/file_messages.proto";
+import "file/file_messages.proto";
 
 service FileService {
   rpc GenerateUploadURLs(GenerateUploadURLsRequest) returns (GenerateUploadURLsResponse);

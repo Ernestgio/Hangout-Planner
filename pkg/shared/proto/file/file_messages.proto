@@ -24,6 +24,7 @@ message FileUploadIntent {
   string filename = 1;
   int64 size = 2;
   string mime_type = 3;
+  string memory_id = 4;
 }
 
 message GenerateUploadURLsRequest {

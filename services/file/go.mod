@@ -5,6 +5,7 @@ go 1.24.11
 require (
 	ariga.io/atlas-provider-gorm v0.6.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
+	github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20260107135802-f0e4de52a0c3
 	github.com/aws/aws-sdk-go-v2 v1.41.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.6
@@ -15,6 +16,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.opentelemetry.io/contrib/instrumentation/github.com/aws/aws-sdk-go-v2/otelaws v0.64.0
 	google.golang.org/grpc v1.78.0
+	google.golang.org/protobuf v1.36.11
 	gorm.io/driver/mysql v1.5.7
 	gorm.io/gorm v1.30.1
 	gorm.io/plugin/opentelemetry v0.1.16
@@ -115,7 +117,6 @@ require (
 	google.golang.org/genproto v0.0.0-20250804133106-a7a43d27e69b // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251029180050-ab9386a59fda // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
-	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	gorm.io/driver/clickhouse v0.7.0 // indirect
 	gorm.io/driver/postgres v1.5.11 // indirect
