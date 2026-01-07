@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        v6.33.2
-// source: proto/file/file_service.proto
+// source: file/file_service.proto
 
 package filepb
 
@@ -20,11 +20,11 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-var File_proto_file_file_service_proto protoreflect.FileDescriptor
+var File_file_file_service_proto protoreflect.FileDescriptor
 
-const file_proto_file_file_service_proto_rawDesc = "" +
+const file_file_file_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1dproto/file/file_service.proto\x12\afile.v1\x1a\x1eproto/file/file_messages.proto2\xc1\x03\n" +
+	"\x17file/file_service.proto\x12\afile.v1\x1a\x18file/file_messages.proto2\xc1\x03\n" +
 	"\vFileService\x12]\n" +
 	"\x12GenerateUploadURLs\x12\".file.v1.GenerateUploadURLsRequest\x1a#.file.v1.GenerateUploadURLsResponse\x12N\n" +
 	"\rConfirmUpload\x12\x1d.file.v1.ConfirmUploadRequest\x1a\x1e.file.v1.ConfirmUploadResponse\x12Z\n" +
@@ -33,7 +33,7 @@ const file_proto_file_file_service_proto_rawDesc = "" +
 	"\n" +
 	"DeleteFile\x12\x1a.file.v1.DeleteFileRequest\x1a\x1b.file.v1.DeleteFileResponseBJZHgithub.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file;filepbb\x06proto3"
 
-var file_proto_file_file_service_proto_goTypes = []any{
+var file_file_file_service_proto_goTypes = []any{
 	(*GenerateUploadURLsRequest)(nil),   // 0: file.v1.GenerateUploadURLsRequest
 	(*ConfirmUploadRequest)(nil),        // 1: file.v1.ConfirmUploadRequest
 	(*GetFileByMemoryIDRequest)(nil),    // 2: file.v1.GetFileByMemoryIDRequest
@@ -45,7 +45,7 @@ var file_proto_file_file_service_proto_goTypes = []any{
 	(*GetFilesByMemoryIDsResponse)(nil), // 8: file.v1.GetFilesByMemoryIDsResponse
 	(*DeleteFileResponse)(nil),          // 9: file.v1.DeleteFileResponse
 }
-var file_proto_file_file_service_proto_depIdxs = []int32{
+var file_file_file_service_proto_depIdxs = []int32{
 	0, // 0: file.v1.FileService.GenerateUploadURLs:input_type -> file.v1.GenerateUploadURLsRequest
 	1, // 1: file.v1.FileService.ConfirmUpload:input_type -> file.v1.ConfirmUploadRequest
 	2, // 2: file.v1.FileService.GetFileByMemoryID:input_type -> file.v1.GetFileByMemoryIDRequest
@@ -63,26 +63,26 @@ var file_proto_file_file_service_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_proto_file_file_service_proto_init() }
-func file_proto_file_file_service_proto_init() {
-	if File_proto_file_file_service_proto != nil {
+func init() { file_file_file_service_proto_init() }
+func file_file_file_service_proto_init() {
+	if File_file_file_service_proto != nil {
 		return
 	}
-	file_proto_file_file_messages_proto_init()
+	file_file_file_messages_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_proto_file_file_service_proto_rawDesc), len(file_proto_file_file_service_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_file_file_service_proto_rawDesc), len(file_file_file_service_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
-		GoTypes:           file_proto_file_file_service_proto_goTypes,
-		DependencyIndexes: file_proto_file_file_service_proto_depIdxs,
+		GoTypes:           file_file_file_service_proto_goTypes,
+		DependencyIndexes: file_file_file_service_proto_depIdxs,
 	}.Build()
-	File_proto_file_file_service_proto = out.File
-	file_proto_file_file_service_proto_goTypes = nil
-	file_proto_file_file_service_proto_depIdxs = nil
+	File_file_file_service_proto = out.File
+	file_file_file_service_proto_goTypes = nil
+	file_file_file_service_proto_depIdxs = nil
 }
