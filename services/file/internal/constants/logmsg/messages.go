@@ -21,6 +21,11 @@ const (
 	DBCloseFailed      = "failed to close database connection"
 )
 
+// Storage Messages
+const (
+	S3ConnectionFailed = "S3 client initialization failed"
+)
+
 // Network & gRPC Server
 const (
 	NetworkListenerFailed     = "failed to create network listener"

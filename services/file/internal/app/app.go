@@ -15,6 +15,8 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/constants/logmsg"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/db"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/logger"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/repository"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/storage"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -27,13 +29,15 @@ type App struct {
 	healthServer *health.Server
 	listener     net.Listener
 	db           *gorm.DB
+	storage      storage.Storage
+	repository   repository.MemoryFileRepository
 	closer       func() error
 	cfg          *config.Config
 }
 
 func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
-	dbConn, dbCloser, err := db.Connect(cfg.DBConfig)
 
+	dbConn, dbCloser, err := db.Connect(cfg.DBConfig)
 	if err != nil {
 		logger.Error(ctx, logmsg.DBConnectionFailed, err,
 			slog.String("host", cfg.DBConfig.DBHost),
@@ -42,10 +46,23 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
+	repo := repository.NewMemoryFileRepository(dbConn)
+
+	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config)
+	if err != nil {
+		logger.Error(ctx, logmsg.S3ConnectionFailed, err,
+			slog.String("endpoint", cfg.S3Config.Endpoint),
+			slog.String("bucket", cfg.S3Config.BucketName),
+		)
+		_ = dbCloser()
+		return nil, err
+	}
+
 	addr := fmt.Sprintf(":%s", cfg.AppPort)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		logger.Error(ctx, logmsg.NetworkListenerFailed, err, slog.String("addr", addr))
+		_ = dbCloser()
 		return nil, err
 	}
 
@@ -63,6 +80,8 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		healthServer: healthServer,
 		listener:     lis,
 		db:           dbConn,
+		storage:      s3Client,
+		repository:   repo,
 		closer:       dbCloser,
 		cfg:          cfg,
 	}, nil
@@ -75,6 +94,7 @@ func (a *App) Start() error {
 		slog.String("addr", a.listener.Addr().String()),
 		slog.String("environment", a.cfg.Env),
 		slog.String("database", a.cfg.DBConfig.DBName),
+		slog.String("s3_bucket", a.cfg.S3Config.BucketName),
 	)
 
 	errChan := make(chan error, 1)
