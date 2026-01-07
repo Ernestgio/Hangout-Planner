@@ -4,6 +4,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Ernestgio/Hangout-Planner/pkg/shared/enums"
 	filepb "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/domain"
 	"github.com/google/uuid"
@@ -40,18 +41,22 @@ func ToPresignedUploadURL(fileID uuid.UUID, filename, uploadURL string, expiresA
 	}
 }
 
-func ToDomainMemoryFile(intent *filepb.FileUploadIntent, memoryID uuid.UUID, basePath string) *domain.MemoryFile {
-	fileID := uuid.New()
-	storagePath := BuildStoragePath(basePath, memoryID.String(), intent.Filename)
+func ToDomainMemoryFile(intent *filepb.FileUploadIntent, basePath string, fileStatus enums.FileUploadStatus) (*domain.MemoryFile, error) {
+	memoryID, err := uuid.Parse(intent.MemoryId)
+	if err != nil {
+		return nil, err
+	}
+
+	storagePath := BuildStoragePath(basePath, intent.MemoryId, intent.Filename)
 
 	return &domain.MemoryFile{
-		ID:           fileID,
 		MemoryID:     memoryID,
 		OriginalName: intent.Filename,
 		StoragePath:  storagePath,
 		FileSize:     intent.Size,
 		MimeType:     intent.MimeType,
-	}
+		FileStatus:   string(fileStatus),
+	}, nil
 }
 
 func BuildStoragePath(basePath, memoryID, filename string) string {
