@@ -10,13 +10,17 @@ import (
 	"syscall"
 	"time"
 
+	filepb "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/config"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/constants/logmsg"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/db"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/handlers"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/logger"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/repository"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/services"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/storage"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/validator"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -29,14 +33,13 @@ type App struct {
 	healthServer *health.Server
 	listener     net.Listener
 	db           *gorm.DB
-	storage      storage.Storage
-	repository   repository.MemoryFileRepository
 	closer       func() error
 	cfg          *config.Config
 }
 
 func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 
+	// DB Connection
 	dbConn, dbCloser, err := db.Connect(cfg.DBConfig)
 	if err != nil {
 		logger.Error(ctx, logmsg.DBConnectionFailed, err,
@@ -46,8 +49,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	repo := repository.NewMemoryFileRepository(dbConn)
-
+	// Storage Layer
 	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config)
 	if err != nil {
 		logger.Error(ctx, logmsg.S3ConnectionFailed, err,
@@ -58,6 +60,18 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
+	// Repository Layer
+	repo := repository.NewMemoryFileRepository(dbConn)
+
+	// Initialize validator
+	fileValidator := validator.NewFileValidator()
+
+	// Initialize service
+	fileService := services.NewFileService(dbConn, repo, s3Client, fileValidator)
+
+	// Initialize handler
+	fileHandler := handlers.NewFileHandler(fileService)
+
 	addr := fmt.Sprintf(":%s", cfg.AppPort)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
@@ -67,6 +81,9 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 	}
 
 	grpcServer := grpc.NewServer()
+
+	// Register file service
+	filepb.RegisterFileServiceServer(grpcServer, fileHandler)
 
 	healthServer := health.NewServer()
 	healthpb.RegisterHealthServer(grpcServer, healthServer)
@@ -80,8 +97,6 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		healthServer: healthServer,
 		listener:     lis,
 		db:           dbConn,
-		storage:      s3Client,
-		repository:   repo,
 		closer:       dbCloser,
 		cfg:          cfg,
 	}, nil
