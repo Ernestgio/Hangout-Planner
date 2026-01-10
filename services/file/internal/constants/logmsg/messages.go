@@ -38,3 +38,10 @@ const (
 const (
 	ConfigLoadFailed = "failed to load configuration"
 )
+
+// OpenTelemetry
+const (
+	OTELInitialized    = "OpenTelemetry initialized"
+	OTELInitFailed     = "failed to initialize OpenTelemetry"
+	OTELShutdownFailed = "failed to shutdown OpenTelemetry tracer provider"
+)

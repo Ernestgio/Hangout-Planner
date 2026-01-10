@@ -17,10 +17,12 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/db"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/handlers"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/logger"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/services"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/storage"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/validator"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
@@ -29,12 +31,13 @@ import (
 )
 
 type App struct {
-	server       *grpc.Server
-	healthServer *health.Server
-	listener     net.Listener
-	db           *gorm.DB
-	closer       func() error
-	cfg          *config.Config
+	server         *grpc.Server
+	healthServer   *health.Server
+	listener       net.Listener
+	db             *gorm.DB
+	tracerProvider *otel.TracerProvider
+	closer         func() error
+	cfg            *config.Config
 }
 
 func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
@@ -72,15 +75,48 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 	// Initialize handler
 	fileHandler := handlers.NewFileHandler(fileService)
 
+	// Initialize OpenTelemetry (if enabled)
+	var tracerProvider *otel.TracerProvider
+	if cfg.OTELConfig.Enabled {
+		otelCfg := otel.Config{
+			ServiceName:    cfg.AppName,
+			ServiceVersion: cfg.OTELConfig.ServiceVersion,
+			Environment:    cfg.Env,
+			Endpoint:       cfg.OTELConfig.Endpoint,
+			UseStdout:      cfg.OTELConfig.UseStdout,
+		}
+		tracerProvider, err = otel.NewTracerProvider(ctx, otelCfg)
+		if err != nil {
+			logger.Error(ctx, logmsg.OTELInitFailed, err)
+			_ = dbCloser()
+			return nil, err
+		}
+		logger.Info(ctx, logmsg.OTELInitialized,
+			slog.String("endpoint", cfg.OTELConfig.Endpoint),
+			slog.Bool("use_stdout", cfg.OTELConfig.UseStdout),
+		)
+	}
+
+	// Setup network listener
 	addr := fmt.Sprintf(":%s", cfg.AppPort)
 	lis, err := net.Listen("tcp", addr)
 	if err != nil {
 		logger.Error(ctx, logmsg.NetworkListenerFailed, err, slog.String("addr", addr))
 		_ = dbCloser()
+		if tracerProvider != nil {
+			_ = tracerProvider.Shutdown(ctx)
+		}
 		return nil, err
 	}
 
-	grpcServer := grpc.NewServer()
+	// Setup gRPC Server with OTEL interceptors
+	var grpcOpts []grpc.ServerOption
+	if cfg.OTELConfig.Enabled {
+		grpcOpts = append(grpcOpts,
+			grpc.StatsHandler(otelgrpc.NewServerHandler()),
+		)
+	}
+	grpcServer := grpc.NewServer(grpcOpts...)
 
 	// Register file service
 	filepb.RegisterFileServiceServer(grpcServer, fileHandler)
@@ -93,12 +129,13 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 	reflection.Register(grpcServer)
 
 	return &App{
-		server:       grpcServer,
-		healthServer: healthServer,
-		listener:     lis,
-		db:           dbConn,
-		closer:       dbCloser,
-		cfg:          cfg,
+		server:         grpcServer,
+		healthServer:   healthServer,
+		listener:       lis,
+		db:             dbConn,
+		tracerProvider: tracerProvider,
+		closer:         dbCloser,
+		cfg:            cfg,
 	}, nil
 }
 
@@ -156,6 +193,13 @@ func (a *App) Shutdown() error {
 	case <-ctx.Done():
 		logger.Warn(ctx, logmsg.ShutdownTimeoutExceeded)
 		a.server.Stop()
+	}
+
+	// Shutdown tracer provider to flush pending spans
+	if a.tracerProvider != nil {
+		if err := a.tracerProvider.Shutdown(ctx); err != nil {
+			logger.Error(ctx, logmsg.OTELShutdownFailed, err)
+		}
 	}
 
 	if err := a.closer(); err != nil {

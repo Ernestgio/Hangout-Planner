@@ -10,11 +10,12 @@ import (
 )
 
 type Config struct {
-	Env      string
-	AppName  string
-	AppPort  string
-	DBConfig *DBConfig
-	S3Config *S3Config
+	Env        string
+	AppName    string
+	AppPort    string
+	DBConfig   *DBConfig
+	S3Config   *S3Config
+	OTELConfig *OTELConfig
 }
 
 func Load() (*Config, error) {
@@ -23,11 +24,12 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Env:      getEnv("ENV", constants.DevEnv),
-		AppName:  getEnv("APP_NAME", constants.DefaultAppName),
-		AppPort:  getEnv("APP_PORT", constants.DefaultAppPort),
-		DBConfig: NewDBConfig(),
-		S3Config: NewS3Config(),
+		Env:        getEnv("ENV", constants.DevEnv),
+		AppName:    getEnv("APP_NAME", constants.DefaultAppName),
+		AppPort:    getEnv("APP_PORT", constants.DefaultAppPort),
+		DBConfig:   NewDBConfig(),
+		S3Config:   NewS3Config(),
+		OTELConfig: NewOTELConfig(),
 	}
 
 	if cfg.AppPort == "" {
