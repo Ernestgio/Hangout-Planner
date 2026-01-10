@@ -10,6 +10,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/mapper"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/storage"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/validator"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -23,16 +24,18 @@ type FileService interface {
 }
 
 type fileService struct {
-	db       *gorm.DB
-	fileRepo repository.MemoryFileRepository
-	storage  storage.Storage
+	db            *gorm.DB
+	fileRepo      repository.MemoryFileRepository
+	storage       storage.Storage
+	fileValidator validator.FileValidator
 }
 
-func NewFileService(db *gorm.DB, repo repository.MemoryFileRepository, storage storage.Storage) FileService {
+func NewFileService(db *gorm.DB, repo repository.MemoryFileRepository, storage storage.Storage, fileValidator validator.FileValidator) FileService {
 	return &fileService{
-		db:       db,
-		fileRepo: repo,
-		storage:  storage,
+		db:            db,
+		fileRepo:      repo,
+		storage:       storage,
+		fileValidator: fileValidator,
 	}
 }
 
@@ -43,6 +46,10 @@ func (s *fileService) GenerateUploadURLs(ctx context.Context, req *filepb.Genera
 		files := make([]*domain.MemoryFile, 0, len(req.Files))
 
 		for _, intent := range req.Files {
+			if err := s.fileValidator.ValidateFileUploadIntent(intent.Filename, intent.Size, intent.MimeType); err != nil {
+				return err
+			}
+
 			file, err := mapper.ToDomainMemoryFile(intent, req.BaseStoragePath, enums.FileUploadStatusPending)
 			if err != nil {
 				return apperrors.ErrInvalidMemoryID

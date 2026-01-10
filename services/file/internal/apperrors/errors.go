@@ -16,3 +16,10 @@ var ErrPresignedUploadURLFailed = errors.New("failed to generate presigned uploa
 var ErrInvalidMemoryID = errors.New("invalid memory ID")
 var ErrFileStatusUpdateFailed = errors.New("failed to update file status")
 var ErrFileCreationFailed = errors.New("failed to create file records")
+
+// File validation errors
+var ErrInvalidFileSize = errors.New("invalid file size")
+var ErrFileTooLarge = errors.New("file too large")
+var ErrInvalidFilename = errors.New("invalid filename")
+var ErrInvalidFileExtension = errors.New("invalid file extension")
+var ErrInvalidMimeType = errors.New("invalid MIME type")
