@@ -21,7 +21,7 @@ services:
       retries: 3
       start_period: 30s
 
-  file-service:
+  file:
     build:
       context: ../services/file
       dockerfile: Dockerfile

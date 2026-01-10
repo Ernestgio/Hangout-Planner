@@ -1,7 +1,6 @@
 package validator
 
 import (
-	"fmt"
 	"path/filepath"
 	"strings"
 
@@ -57,9 +56,7 @@ func (fv *fileValidator) ValidateFileUploadIntent(filename string, size int64, m
 	}
 
 	if !fv.IsValidMimeType(mimeType, ext) {
-		allowedMimes := fv.allowedMimeTypes[ext]
-		return fmt.Errorf("%w: MIME type %s doesn't match extension %s. Allowed MIME types: %v",
-			apperrors.ErrInvalidMimeType, mimeType, ext, allowedMimes)
+		return apperrors.ErrInvalidMimeType
 	}
 
 	return nil
