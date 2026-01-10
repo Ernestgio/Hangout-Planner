@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"io"
+	"time"
 )
 
 type Storage interface {
@@ -10,4 +11,5 @@ type Storage interface {
 	Delete(ctx context.Context, path string) error
 	GeneratePresignedDownloadURL(ctx context.Context, path string) (string, error)
 	GeneratePresignedUploadURL(ctx context.Context, path string, contentType string) (string, error)
+	GetPresignedURLExpiry() time.Duration
 }

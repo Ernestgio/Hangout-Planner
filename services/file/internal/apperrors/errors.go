@@ -12,3 +12,7 @@ var ErrFileUploadFailed = errors.New("file upload failed")
 var ErrFileDeleteFailed = errors.New("file deletion failed")
 var ErrPresignedDownloadURLFailed = errors.New("failed to generate presigned download URL")
 var ErrPresignedUploadURLFailed = errors.New("failed to generate presigned upload URL")
+
+var ErrInvalidMemoryID = errors.New("invalid memory ID")
+var ErrFileStatusUpdateFailed = errors.New("failed to update file status")
+var ErrFileCreationFailed = errors.New("failed to create file records")
