@@ -89,4 +89,10 @@ const (
 	DefaultS3ExternalEndpoint = "http://localhost:4566"
 	DefaultS3Region           = "ap-southeast-1"
 	DefaultS3Bucket           = "hangout-files"
+
+	// grpc client default configs
+	DefaultFileServiceURL = "localhost:9001"
+	DeafultMTLSCertPath   = "/app.certs/mtls/hangout-client.crt"
+	DefaultMTLSKeyPath    = "/app.certs/mtls/hangout-client.key"
+	DefaultMTLSCAPath     = "/app.certs/mtls/ca.crt"
 )
