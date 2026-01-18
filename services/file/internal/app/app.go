@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
 	"log/slog"
 	"net"
@@ -11,6 +13,7 @@ import (
 	"time"
 
 	filepb "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/config"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/constants/logmsg"
@@ -24,6 +27,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/validator"
 	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/health"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 	"google.golang.org/grpc/reflection"
@@ -109,13 +113,34 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	// Setup gRPC Server with OTEL interceptors
+	// Setup gRPC Server with mTLS and OTEL
 	var grpcOpts []grpc.ServerOption
+
+	// Add mTLS if enabled
+	if cfg.MTLSConfig.Enabled {
+		tlsConfig, err := loadServerTLSConfig(cfg.MTLSConfig)
+		if err != nil {
+			logger.Error(ctx, logmsg.MTLSInitFailed, err)
+			_ = dbCloser()
+			if tracerProvider != nil {
+				_ = tracerProvider.Shutdown(ctx)
+			}
+			return nil, err
+		}
+		creds := credentials.NewTLS(tlsConfig)
+		grpcOpts = append(grpcOpts, grpc.Creds(creds))
+		logger.Info(ctx, logmsg.MTLSInitialized,
+			slog.String("cert_file", cfg.MTLSConfig.CertFile),
+		)
+	}
+
+	// Add OTEL interceptor
 	if cfg.OTELConfig.Enabled {
 		grpcOpts = append(grpcOpts,
 			grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		)
 	}
+
 	grpcServer := grpc.NewServer(grpcOpts...)
 
 	// Register file service
@@ -209,4 +234,34 @@ func (a *App) Shutdown() error {
 
 	logger.Info(ctx, logmsg.ShutdownComplete)
 	return nil
+}
+
+// loadServerTLSConfig loads TLS configuration for gRPC server with mTLS
+func loadServerTLSConfig(cfg *config.MTLSConfig) (*tls.Config, error) {
+	// Load server certificate and private key
+	serverCert, err := tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)
+	if err != nil {
+		return nil, apperrors.ErrMTLSCertLoadFailed
+	}
+
+	// Load CA certificate for verifying client certificates
+	caCert, err := os.ReadFile(cfg.CAFile)
+	if err != nil {
+		return nil, apperrors.ErrMTLSCertLoadFailed
+	}
+
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCert) {
+		return nil, apperrors.ErrMTLSCertLoadFailed
+	}
+
+	// Configure TLS with mutual authentication
+	tlsConfig := &tls.Config{
+		Certificates: []tls.Certificate{serverCert},
+		ClientAuth:   tls.RequireAndVerifyClientCert, // Require client certificate
+		ClientCAs:    caCertPool,                     // Verify client cert against this CA
+		MinVersion:   tls.VersionTLS12,               // Use TLS 1.2 or higher
+	}
+
+	return tlsConfig, nil
 }

@@ -27,3 +27,6 @@ var ErrInvalidMimeType = errors.New("invalid MIME type")
 
 // Internal Server Error
 var ErrInternalServer = errors.New("internal server error")
+
+// MTLS errors
+var ErrMTLSCertLoadFailed = errors.New("failed to load mTLS certificates")

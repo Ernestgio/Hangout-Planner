@@ -45,3 +45,9 @@ const (
 	OTELInitFailed     = "failed to initialize OpenTelemetry"
 	OTELShutdownFailed = "failed to shutdown OpenTelemetry tracer provider"
 )
+
+// mTLS
+const (
+	MTLSInitialized = "mTLS enabled for gRPC server"
+	MTLSInitFailed  = "failed to initialize mTLS"
+)

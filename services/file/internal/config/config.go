@@ -16,6 +16,7 @@ type Config struct {
 	DBConfig   *DBConfig
 	S3Config   *S3Config
 	OTELConfig *OTELConfig
+	MTLSConfig *MTLSConfig
 }
 
 func Load() (*Config, error) {
@@ -30,6 +31,7 @@ func Load() (*Config, error) {
 		DBConfig:   NewDBConfig(),
 		S3Config:   NewS3Config(),
 		OTELConfig: NewOTELConfig(),
+		MTLSConfig: NewMTLSConfig(),
 	}
 
 	if cfg.AppPort == "" {

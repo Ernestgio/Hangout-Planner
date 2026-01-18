@@ -7,7 +7,7 @@ AWSLOCAL=aws --endpoint-url=http://localhost:4566 --profile localstack
 
 .PHONY: test coverage lint build run
 .PHONY: localstack-up awslocal mysql-run
-.PHONY: down
+.PHONY: up down
 .PHONY: nginx-reload nginx-test nginx-logs
 .PHONY: air diff migrate migrate-status
 
@@ -44,6 +44,9 @@ awslocal:
 mysql-run:
 	docker compose up -d mysql
 
+## Start docker-compose services (DB, redis, etc.)
+up:
+	docker-compose up --build
 
 ## Stop docker-compose services
 down:
