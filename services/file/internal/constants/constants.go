@@ -32,6 +32,9 @@ const (
 	DefaultS3ExternalEndpoint = "http://localhost:4566"
 	DefaultS3Region           = "ap-southeast-1"
 	DefaultS3Bucket           = "hangout-files"
+
+	// OTEL Config - Default values constants
+	DefaultOTELEndpoint = "localhost:4317"
 )
 
 // AllowedFileExtensions contains the permitted file extensions for uploads

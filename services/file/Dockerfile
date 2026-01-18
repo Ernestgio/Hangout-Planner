@@ -15,6 +15,10 @@ FROM alpine:latest
 
 WORKDIR /app
 
+# Install grpc_health_probe for healthchecks
+RUN wget -qO /bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/v0.4.34/grpc_health_probe-linux-amd64 && \
+    chmod +x /bin/grpc_health_probe
+
 COPY --from=builder /app/bin/file-service ./bin/file-service
 
 EXPOSE 9001

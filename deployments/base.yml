@@ -7,10 +7,15 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - ../components/database/init.sql:/data/application/init.sql
-    command: --init-file /data/application/init.sql
+      - mysql_data:/var/lib/mysql
+      - ../components/database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     networks:
       - default
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   localstack:
     image: localstack/localstack:latest
@@ -23,10 +28,16 @@ services:
       - DATA_DIR=/var/lib/localstack
       - PERSISTENCE=1
     volumes:
-      - ../components/localstack:/var/lib/localstack
+      - localstack_data:/var/lib/localstack
       - ../components/localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
     networks:
       - default
+
+volumes:
+  mysql_data:
+    driver: local
+  localstack_data:
+    driver: local
 
 networks:
   default:

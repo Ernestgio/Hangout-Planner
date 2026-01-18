@@ -55,6 +55,10 @@ func NewS3Client(ctx context.Context, cfg *config.S3Config) (*S3Client, error) {
 	}, nil
 }
 
+func (s *S3Client) GetPresignedURLExpiry() time.Duration {
+	return s.presignedURLExpiry
+}
+
 func (s *S3Client) Upload(ctx context.Context, path string, reader io.Reader, contentType string) error {
 	content, err := io.ReadAll(reader)
 	if err != nil {

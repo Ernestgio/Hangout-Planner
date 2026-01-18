@@ -21,7 +21,7 @@ services:
       retries: 3
       start_period: 30s
 
-  file-service:
+  file:
     build:
       context: ../services/file
       dockerfile: Dockerfile
@@ -30,17 +30,19 @@ services:
       - ../services/file/.env
     expose:
       - "9001"
+    volumes:
+      - ../components/nginx/ssl:/app/certs:ro
     depends_on:
       - mysql
       - localstack
     networks:
       - default
     healthcheck:
-      test: ["CMD", "/app/grpc_health_probe", "-addr=:9001"]
+      test: ["CMD-SHELL", "nc -z localhost 9001 || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 30s
+      start_period: 10s
 
   nginx:
     image: nginx:alpine
@@ -56,6 +58,7 @@ services:
       - ../components/nginx/logs:/var/log/nginx
     depends_on:
       - hangout
+      - file
     networks:
       - default
     healthcheck:

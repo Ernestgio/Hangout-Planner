@@ -12,3 +12,21 @@ var ErrFileUploadFailed = errors.New("file upload failed")
 var ErrFileDeleteFailed = errors.New("file deletion failed")
 var ErrPresignedDownloadURLFailed = errors.New("failed to generate presigned download URL")
 var ErrPresignedUploadURLFailed = errors.New("failed to generate presigned upload URL")
+
+var ErrInvalidMemoryID = errors.New("invalid memory ID")
+var ErrFileNotFound = errors.New("file not found")
+var ErrFileStatusUpdateFailed = errors.New("failed to update file status")
+var ErrFileCreationFailed = errors.New("failed to create file records")
+
+// File validation errors
+var ErrInvalidFileSize = errors.New("invalid file size")
+var ErrFileTooLarge = errors.New("file too large")
+var ErrInvalidFilename = errors.New("invalid filename")
+var ErrInvalidFileExtension = errors.New("invalid file extension")
+var ErrInvalidMimeType = errors.New("invalid MIME type")
+
+// Internal Server Error
+var ErrInternalServer = errors.New("internal server error")
+
+// MTLS errors
+var ErrMTLSCertLoadFailed = errors.New("failed to load mTLS certificates")
