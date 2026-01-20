@@ -836,27 +836,27 @@ const docTemplate = `{
                         "required": true
                     },
                     {
+                        "type": "string",
+                        "description": "Cursor for pagination (memory ID)",
+                        "name": "after_id",
+                        "in": "query"
+                    },
+                    {
                         "type": "integer",
-                        "description": "Number of items to return (default 10, max 100)",
+                        "description": "Limit for pagination",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Cursor for pagination (Memory ID)",
-                        "name": "after_id",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Sort direction: asc or desc (default desc)",
+                        "description": "Sort direction (asc/desc)",
                         "name": "sort_dir",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Memories listed successfully",
+                        "description": "Memories retrieved successfully",
                         "schema": {
                             "allOf": [
                                 {
@@ -874,7 +874,141 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid request",
+                        "description": "Invalid hangout ID",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/hangouts/{hangout_id}/memories/confirm-upload": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Confirms that files have been uploaded to S3 and marks them as ready",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Memories"
+                ],
+                "summary": "Confirm Upload",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Hangout ID",
+                        "name": "hangout_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Memory IDs to confirm",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.ConfirmUploadRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Upload confirmed successfully",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/hangouts/{hangout_id}/memories/upload-urls": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Creates memory records and returns presigned URLs for client-side upload to S3\nhangout_id is taken from the URL path, not the request body",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Memories"
+                ],
+                "summary": "Generate Upload URLs",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Hangout ID",
+                        "name": "hangout_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Files to upload (hangout_id not needed in body)",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GenerateUploadURLsRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Upload URLs generated successfully",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.MemoryUploadResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Invalid request payload",
                         "schema": {
                             "$ref": "#/definitions/response.StandardResponse"
                         }
@@ -898,87 +1032,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "post": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "Uploads multiple photos/memories for a hangout with concurrent processing.\n\n**Constraints:**\n- Maximum 10 files per request\n- Maximum 10MB per file\n- Allowed formats: .jpg, .jpeg, .png, .gif, .webp\n- MIME types: image/jpeg, image/png, image/gif, image/webp\n\n**Upload Behavior:**\n- Files are processed concurrently for faster upload\n- Returns partial success if some files succeed and others fail\n- Each file gets its own transaction (atomic per file)\n- If all files fail, returns error\n\n**Form Field:**\n- Use field name \"files\" in multipart/form-data\n- Can attach multiple files to the same field",
-                "consumes": [
-                    "multipart/form-data"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Memories"
-                ],
-                "summary": "Upload Memories",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Hangout ID",
-                        "name": "hangout_id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "file",
-                        "description": "Files to upload (use same field name for multiple files)",
-                        "name": "files",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Memories uploaded successfully (partial success possible)",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/response.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "type": "array",
-                                            "items": {
-                                                "$ref": "#/definitions/dto.MemoryResponse"
-                                            }
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "Too many files, file too large, invalid format, or no files provided",
-                        "schema": {
-                            "$ref": "#/definitions/response.StandardResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.StandardResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Hangout not found",
-                        "schema": {
-                            "$ref": "#/definitions/response.StandardResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error or all files failed",
-                        "schema": {
-                            "$ref": "#/definitions/response.StandardResponse"
-                        }
-                    }
-                }
             }
         },
         "/memories/{memory_id}": {
@@ -988,14 +1041,14 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retrieves a memory by its ID with presigned file URL",
+                "description": "Retrieves a single memory by ID",
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
                     "Memories"
                 ],
-                "summary": "Get Memory by ID",
+                "summary": "Get Memory",
                 "parameters": [
                     {
                         "type": "string",
@@ -1007,7 +1060,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Memory fetched successfully",
+                        "description": "Memory retrieved successfully",
                         "schema": {
                             "allOf": [
                                 {
@@ -1026,12 +1079,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid memory ID",
-                        "schema": {
-                            "$ref": "#/definitions/response.StandardResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/response.StandardResponse"
                         }
@@ -1082,12 +1129,6 @@ const docTemplate = `{
                     },
                     "400": {
                         "description": "Invalid memory ID",
-                        "schema": {
-                            "$ref": "#/definitions/response.StandardResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/response.StandardResponse"
                         }
@@ -1148,6 +1189,20 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.ConfirmUploadRequest": {
+            "type": "object",
+            "required": [
+                "memory_ids"
+            ],
+            "properties": {
+                "memory_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
                 }
             }
         },
@@ -1215,6 +1270,39 @@ const docTemplate = `{
                 },
                 "sort_dir": {
                     "type": "string"
+                }
+            }
+        },
+        "dto.FileUploadIntent": {
+            "type": "object",
+            "required": [
+                "filename",
+                "mime_type",
+                "size"
+            ],
+            "properties": {
+                "filename": {
+                    "type": "string"
+                },
+                "mime_type": {
+                    "type": "string"
+                },
+                "size": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.GenerateUploadURLsRequest": {
+            "type": "object",
+            "required": [
+                "files"
+            ],
+            "properties": {
+                "files": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.FileUploadIntent"
+                    }
                 }
             }
         },
@@ -1293,6 +1381,17 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.MemoryUploadResponse": {
+            "type": "object",
+            "properties": {
+                "upload_urls": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.PresignedUploadURL"
+                    }
+                }
+            }
+        },
         "dto.PaginatedHangouts": {
             "type": "object",
             "properties": {
@@ -1323,6 +1422,20 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "next_cursor": {
+                    "type": "string"
+                }
+            }
+        },
+        "dto.PresignedUploadURL": {
+            "type": "object",
+            "properties": {
+                "expires_at": {
+                    "type": "integer"
+                },
+                "memory_id": {
+                    "type": "string"
+                },
+                "upload_url": {
                     "type": "string"
                 }
             }

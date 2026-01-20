@@ -31,21 +31,9 @@ var ErrInvalidActivityIDs = errors.New("one or more activity IDs are invalid or 
 var ErrInvalidActivityID = errors.New("invalid activity ID")
 
 // file & memory errors
-var ErrFileTooLarge = errors.New("file size exceeds maximum allowed")
-var ErrInvalidFileType = errors.New("invalid file type")
-var ErrFileNotFound = errors.New("file not found")
-var ErrDuplicateFileName = errors.New("file with this name already exists in this hangout")
 var ErrInvalidMemoryID = errors.New("invalid memory ID")
 var ErrTooManyFiles = errors.New("too many files")
-var ErrAllFilesUploadFailed = errors.New("all files upload failed")
-
 var ErrMemoryNotFound = errors.New("memory not found")
-
-// s3 errors
-var ErrFailedCreateS3Client = errors.New("failed to create S3 client")
-var ErrFileUploadFailed = errors.New("file upload failed")
-var ErrFileDeleteFailed = errors.New("file deletion failed")
-var ErrGetPresignedURLFailed = errors.New("failed to get presigned URL")
 
 // tls errors
 var ErrLoadTLSConfig = errors.New("failed to load mTLS config")

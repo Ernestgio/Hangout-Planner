@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"fmt"
 	"os"
 
 	filepb "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file"
@@ -34,7 +35,7 @@ func NewFileServiceClient(cfg *config.GRPCClientConfig) (FileService, error) {
 	if cfg.MTLSEnabled {
 		tlsConfig, err := loadClientTLSConfig(cfg)
 		if err != nil {
-			return nil, apperrors.ErrLoadTLSConfig
+			return nil, err
 		}
 		creds := credentials.NewTLS(tlsConfig)
 		opts = append(opts, grpc.WithTransportCredentials(creds))
@@ -106,17 +107,17 @@ func (c *fileServiceClient) Close() error {
 func loadClientTLSConfig(cfg *config.GRPCClientConfig) (*tls.Config, error) {
 	clientCert, err := tls.LoadX509KeyPair(cfg.CertFile, cfg.KeyFile)
 	if err != nil {
-		return nil, apperrors.ErrLoadClientCert
+		return nil, fmt.Errorf("failed to load client certificate (cert: %s, key: %s): %w", cfg.CertFile, cfg.KeyFile, err)
 	}
 
 	caCert, err := os.ReadFile(cfg.CAFile)
 	if err != nil {
-		return nil, apperrors.ErrLoadCACert
+		return nil, fmt.Errorf("failed to load CA certificate (%s): %w", cfg.CAFile, err)
 	}
 
 	caCertPool := x509.NewCertPool()
 	if !caCertPool.AppendCertsFromPEM(caCert) {
-		return nil, apperrors.ErrLoadCACert
+		return nil, fmt.Errorf("failed to append CA certificate to pool (%s)", cfg.CAFile)
 	}
 
 	tlsConfig := &tls.Config{

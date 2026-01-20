@@ -7,6 +7,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"github.com/google/uuid"
@@ -14,7 +15,8 @@ import (
 )
 
 type MemoryHandler interface {
-	CreateMemories(c echo.Context) error
+	GenerateUploadURLs(c echo.Context) error
+	ConfirmUpload(c echo.Context) error
 	GetMemory(c echo.Context) error
 	ListMemories(c echo.Context) error
 	DeleteMemory(c echo.Context) error
@@ -32,86 +34,94 @@ func NewMemoryHandler(memoryService services.MemoryService, responseBuilder *res
 	}
 }
 
-// @Summary      Upload Memories
-// @Description  Uploads multiple photos/memories for a hangout with concurrent processing.
-// @Description
-// @Description  **Constraints:**
-// @Description  - Maximum 10 files per request
-// @Description  - Maximum 10MB per file
-// @Description  - Allowed formats: .jpg, .jpeg, .png, .gif, .webp
-// @Description  - MIME types: image/jpeg, image/png, image/gif, image/webp
-// @Description
-// @Description  **Upload Behavior:**
-// @Description  - Files are processed concurrently for faster upload
-// @Description  - Returns partial success if some files succeed and others fail
-// @Description  - Each file gets its own transaction (atomic per file)
-// @Description  - If all files fail, returns error
-// @Description
-// @Description  **Form Field:**
-// @Description  - Use field name "files" in multipart/form-data
-// @Description  - Can attach multiple files to the same field
+// @Summary      Generate Upload URLs
+// @Description  Creates memory records and returns presigned URLs for client-side upload to S3
+// @Description  hangout_id is taken from the URL path, not the request body
 // @Tags         Memories
-// @Accept       multipart/form-data
+// @Accept       json
 // @Produce      json
 // @Param        hangout_id path string true "Hangout ID"
-// @Param        files formData file true "Files to upload (use same field name for multiple files)"
-// @Success      201 {object} response.StandardResponse{data=[]dto.MemoryResponse} "Memories uploaded successfully (partial success possible)"
-// @Failure      400 {object} response.StandardResponse "Too many files, file too large, invalid format, or no files provided"
+// @Param        request body dto.GenerateUploadURLsRequest true "Files to upload (hangout_id not needed in body)"
+// @Success      201 {object} response.StandardResponse{data=dto.MemoryUploadResponse} "Upload URLs generated successfully"
+// @Failure      400 {object} response.StandardResponse "Invalid request payload"
 // @Failure      401 {object} response.StandardResponse "Unauthorized"
 // @Failure      404 {object} response.StandardResponse "Hangout not found"
-// @Failure      500 {object} response.StandardResponse "Internal server error or all files failed"
+// @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
-// @Router       /hangouts/{hangout_id}/memories [post]
-func (h *memoryHandler) CreateMemories(c echo.Context) error {
-	hangoutIDParam := c.Param("hangout_id")
-	hangoutID, err := uuid.Parse(hangoutIDParam)
+// @Router       /hangouts/{hangout_id}/memories/upload-urls [post]
+func (h *memoryHandler) GenerateUploadURLs(c echo.Context) error {
+	hangoutIDStr := c.Param("hangout_id")
+	hangoutID, err := uuid.Parse(hangoutIDStr)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
 	}
 
-	form, err := c.MultipartForm()
+	req, err := request.BindAndValidate[dto.GenerateUploadURLsRequest](c)
 	if err != nil {
-		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidPayload))
-	}
-
-	files := form.File["files"]
-	if len(files) == 0 {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
 
 	userID := c.Get("user_id").(uuid.UUID)
 	ctx := c.Request().Context()
 
-	memories, err := h.memoryService.CreateMemories(ctx, userID, hangoutID, files)
+	uploadResponse, err := h.memoryService.GenerateUploadURLs(ctx, userID, hangoutID, req)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
-		switch err {
-		case apperrors.ErrTooManyFiles, apperrors.ErrFileTooLarge, apperrors.ErrInvalidFileType:
-			statusCode = http.StatusBadRequest
-		case apperrors.ErrInvalidHangoutID:
-			statusCode = http.StatusNotFound
+		if err == apperrors.ErrInvalidHangoutID {
+			return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(err))
 		}
-		return c.JSON(statusCode, h.responseBuilder.Error(err))
+		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
 	}
 
-	return c.JSON(http.StatusCreated, h.responseBuilder.Success(constants.MemoriesUploadedSuccessfully, memories))
+	return c.JSON(http.StatusCreated, h.responseBuilder.Success(constants.UploadURLsGeneratedSuccessfully, uploadResponse))
 }
 
-// @Summary      Get Memory by ID
-// @Description  Retrieves a memory by its ID with presigned file URL
+// @Summary      Confirm Upload
+// @Description  Confirms that files have been uploaded to S3 and marks them as ready
+// @Tags         Memories
+// @Accept       json
+// @Produce      json
+// @Param        hangout_id path string true "Hangout ID"
+// @Param        request body dto.ConfirmUploadRequest true "Memory IDs to confirm"
+// @Success      200 {object} response.StandardResponse "Upload confirmed successfully"
+// @Failure      400 {object} response.StandardResponse "Invalid request payload"
+// @Failure      401 {object} response.StandardResponse "Unauthorized"
+// @Failure      500 {object} response.StandardResponse "Internal server error"
+// @Security     BearerAuth
+// @Router       /hangouts/{hangout_id}/memories/confirm-upload [post]
+func (h *memoryHandler) ConfirmUpload(c echo.Context) error {
+	req, err := request.BindAndValidate[dto.ConfirmUploadRequest](c)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidPayload))
+	}
+
+	userID := c.Get("user_id").(uuid.UUID)
+	ctx := c.Request().Context()
+
+	err = h.memoryService.ConfirmUpload(ctx, userID, req)
+	if err != nil {
+		if err == apperrors.ErrMemoryNotFound || err == apperrors.ErrInvalidMemoryID {
+			return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(err))
+		}
+		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
+	}
+
+	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.UploadConfirmedSuccessfully, nil))
+}
+
+// @Summary      Get Memory
+// @Description  Retrieves a single memory by ID
 // @Tags         Memories
 // @Produce      json
 // @Param        memory_id path string true "Memory ID"
-// @Success      200 {object} response.StandardResponse{data=dto.MemoryResponse} "Memory fetched successfully"
+// @Success      200 {object} response.StandardResponse{data=dto.MemoryResponse} "Memory retrieved successfully"
 // @Failure      400 {object} response.StandardResponse "Invalid memory ID"
-// @Failure      401 {object} response.StandardResponse "Unauthorized"
 // @Failure      404 {object} response.StandardResponse "Memory not found"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
 // @Router       /memories/{memory_id} [get]
 func (h *memoryHandler) GetMemory(c echo.Context) error {
-	memoryIDParam := c.Param("memory_id")
-	memoryID, err := uuid.Parse(memoryIDParam)
+	memoryIDStr := c.Param("memory_id")
+	memoryID, err := uuid.Parse(memoryIDStr)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidMemoryID))
 	}
@@ -121,14 +131,13 @@ func (h *memoryHandler) GetMemory(c echo.Context) error {
 
 	memory, err := h.memoryService.GetMemory(ctx, userID, memoryID)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
 		if err == apperrors.ErrMemoryNotFound {
-			statusCode = http.StatusNotFound
+			return c.JSON(http.StatusNotFound, h.responseBuilder.Error(err))
 		}
-		return c.JSON(statusCode, h.responseBuilder.Error(err))
+		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
 	}
 
-	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.MemoryFetchedSuccessfully, memory))
+	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.MemoryRetrievedSuccessfully, memory))
 }
 
 // @Summary      List Memories
@@ -136,19 +145,17 @@ func (h *memoryHandler) GetMemory(c echo.Context) error {
 // @Tags         Memories
 // @Produce      json
 // @Param        hangout_id path string true "Hangout ID"
-// @Param        limit query int false "Number of items to return (default 10, max 100)"
-// @Param        after_id query string false "Cursor for pagination (Memory ID)"
-// @Param        sort_dir query string false "Sort direction: asc or desc (default desc)"
-// @Success      200 {object} response.StandardResponse{data=dto.PaginatedMemories} "Memories listed successfully"
-// @Failure      400 {object} response.StandardResponse "Invalid request"
-// @Failure      401 {object} response.StandardResponse "Unauthorized"
-// @Failure      404 {object} response.StandardResponse "Hangout not found"
+// @Param        after_id query string false "Cursor for pagination (memory ID)"
+// @Param        limit query int false "Limit for pagination"
+// @Param        sort_dir query string false "Sort direction (asc/desc)"
+// @Success      200 {object} response.StandardResponse{data=dto.PaginatedMemories} "Memories retrieved successfully"
+// @Failure      400 {object} response.StandardResponse "Invalid hangout ID"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
 // @Router       /hangouts/{hangout_id}/memories [get]
 func (h *memoryHandler) ListMemories(c echo.Context) error {
-	hangoutIDParam := c.Param("hangout_id")
-	hangoutID, err := uuid.Parse(hangoutIDParam)
+	hangoutIDStr := c.Param("hangout_id")
+	hangoutID, err := uuid.Parse(hangoutIDStr)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
 	}
@@ -177,17 +184,13 @@ func (h *memoryHandler) ListMemories(c echo.Context) error {
 
 	memories, err := h.memoryService.ListMemories(ctx, userID, hangoutID, pagination)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
-		switch err {
-		case apperrors.ErrInvalidHangoutID:
-			statusCode = http.StatusNotFound
-		case apperrors.ErrInvalidCursorPagination:
-			statusCode = http.StatusBadRequest
+		if err == apperrors.ErrInvalidHangoutID {
+			return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(err))
 		}
-		return c.JSON(statusCode, h.responseBuilder.Error(err))
+		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
 	}
 
-	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.MemoriesListedSuccessfully, memories))
+	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.MemoriesRetrievedSuccessfully, memories))
 }
 
 // @Summary      Delete Memory
@@ -197,14 +200,13 @@ func (h *memoryHandler) ListMemories(c echo.Context) error {
 // @Param        memory_id path string true "Memory ID"
 // @Success      200 {object} response.StandardResponse "Memory deleted successfully"
 // @Failure      400 {object} response.StandardResponse "Invalid memory ID"
-// @Failure      401 {object} response.StandardResponse "Unauthorized"
 // @Failure      404 {object} response.StandardResponse "Memory not found"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
 // @Router       /memories/{memory_id} [delete]
 func (h *memoryHandler) DeleteMemory(c echo.Context) error {
-	memoryIDParam := c.Param("memory_id")
-	memoryID, err := uuid.Parse(memoryIDParam)
+	memoryIDStr := c.Param("memory_id")
+	memoryID, err := uuid.Parse(memoryIDStr)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidMemoryID))
 	}
@@ -214,11 +216,10 @@ func (h *memoryHandler) DeleteMemory(c echo.Context) error {
 
 	err = h.memoryService.DeleteMemory(ctx, userID, memoryID)
 	if err != nil {
-		statusCode := http.StatusInternalServerError
 		if err == apperrors.ErrMemoryNotFound {
-			statusCode = http.StatusNotFound
+			return c.JSON(http.StatusNotFound, h.responseBuilder.Error(err))
 		}
-		return c.JSON(statusCode, h.responseBuilder.Error(err))
+		return c.JSON(http.StatusInternalServerError, h.responseBuilder.Error(err))
 	}
 
 	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.MemoryDeletedSuccessfully, nil))

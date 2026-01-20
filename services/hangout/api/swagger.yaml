@@ -27,6 +27,15 @@ definitions:
       name:
         type: string
     type: object
+  dto.ConfirmUploadRequest:
+    properties:
+      memory_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - memory_ids
+    type: object
   dto.CreateActivityRequest:
     properties:
       name:
@@ -70,6 +79,28 @@ definitions:
         type: string
       sort_dir:
         type: string
+    type: object
+  dto.FileUploadIntent:
+    properties:
+      filename:
+        type: string
+      mime_type:
+        type: string
+      size:
+        type: integer
+    required:
+    - filename
+    - mime_type
+    - size
+    type: object
+  dto.GenerateUploadURLsRequest:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/dto.FileUploadIntent'
+        type: array
+    required:
+    - files
     type: object
   dto.HangoutDetailResponse:
     properties:
@@ -120,6 +151,13 @@ definitions:
       name:
         type: string
     type: object
+  dto.MemoryUploadResponse:
+    properties:
+      upload_urls:
+        items:
+          $ref: '#/definitions/dto.PresignedUploadURL'
+        type: array
+    type: object
   dto.PaginatedHangouts:
     properties:
       data:
@@ -140,6 +178,15 @@ definitions:
       has_more:
         type: boolean
       next_cursor:
+        type: string
+    type: object
+  dto.PresignedUploadURL:
+    properties:
+      expires_at:
+        type: integer
+      memory_id:
+        type: string
+      upload_url:
         type: string
     type: object
   dto.SignInRequest:
@@ -692,15 +739,15 @@ paths:
         name: hangout_id
         required: true
         type: string
-      - description: Number of items to return (default 10, max 100)
-        in: query
-        name: limit
-        type: integer
-      - description: Cursor for pagination (Memory ID)
+      - description: Cursor for pagination (memory ID)
         in: query
         name: after_id
         type: string
-      - description: 'Sort direction: asc or desc (default desc)'
+      - description: Limit for pagination
+        in: query
+        name: limit
+        type: integer
+      - description: Sort direction (asc/desc)
         in: query
         name: sort_dir
         type: string
@@ -708,7 +755,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Memories listed successfully
+          description: Memories retrieved successfully
           schema:
             allOf:
             - $ref: '#/definitions/response.StandardResponse'
@@ -717,7 +764,93 @@ paths:
                   $ref: '#/definitions/dto.PaginatedMemories'
               type: object
         "400":
-          description: Invalid request
+          description: Invalid hangout ID
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: List Memories
+      tags:
+      - Memories
+  /hangouts/{hangout_id}/memories/confirm-upload:
+    post:
+      consumes:
+      - application/json
+      description: Confirms that files have been uploaded to S3 and marks them as
+        ready
+      parameters:
+      - description: Hangout ID
+        in: path
+        name: hangout_id
+        required: true
+        type: string
+      - description: Memory IDs to confirm
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ConfirmUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upload confirmed successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm Upload
+      tags:
+      - Memories
+  /hangouts/{hangout_id}/memories/upload-urls:
+    post:
+      consumes:
+      - application/json
+      description: |-
+        Creates memory records and returns presigned URLs for client-side upload to S3
+        hangout_id is taken from the URL path, not the request body
+      parameters:
+      - description: Hangout ID
+        in: path
+        name: hangout_id
+        required: true
+        type: string
+      - description: Files to upload (hangout_id not needed in body)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GenerateUploadURLsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Upload URLs generated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.MemoryUploadResponse'
+              type: object
+        "400":
+          description: Invalid request payload
           schema:
             $ref: '#/definitions/response.StandardResponse'
         "401":
@@ -734,75 +867,7 @@ paths:
             $ref: '#/definitions/response.StandardResponse'
       security:
       - BearerAuth: []
-      summary: List Memories
-      tags:
-      - Memories
-    post:
-      consumes:
-      - multipart/form-data
-      description: |-
-        Uploads multiple photos/memories for a hangout with concurrent processing.
-
-        **Constraints:**
-        - Maximum 10 files per request
-        - Maximum 10MB per file
-        - Allowed formats: .jpg, .jpeg, .png, .gif, .webp
-        - MIME types: image/jpeg, image/png, image/gif, image/webp
-
-        **Upload Behavior:**
-        - Files are processed concurrently for faster upload
-        - Returns partial success if some files succeed and others fail
-        - Each file gets its own transaction (atomic per file)
-        - If all files fail, returns error
-
-        **Form Field:**
-        - Use field name "files" in multipart/form-data
-        - Can attach multiple files to the same field
-      parameters:
-      - description: Hangout ID
-        in: path
-        name: hangout_id
-        required: true
-        type: string
-      - description: Files to upload (use same field name for multiple files)
-        in: formData
-        name: files
-        required: true
-        type: file
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Memories uploaded successfully (partial success possible)
-          schema:
-            allOf:
-            - $ref: '#/definitions/response.StandardResponse'
-            - properties:
-                data:
-                  items:
-                    $ref: '#/definitions/dto.MemoryResponse'
-                  type: array
-              type: object
-        "400":
-          description: Too many files, file too large, invalid format, or no files
-            provided
-          schema:
-            $ref: '#/definitions/response.StandardResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.StandardResponse'
-        "404":
-          description: Hangout not found
-          schema:
-            $ref: '#/definitions/response.StandardResponse'
-        "500":
-          description: Internal server error or all files failed
-          schema:
-            $ref: '#/definitions/response.StandardResponse'
-      security:
-      - BearerAuth: []
-      summary: Upload Memories
+      summary: Generate Upload URLs
       tags:
       - Memories
   /hangouts/list:
@@ -867,10 +932,6 @@ paths:
           description: Invalid memory ID
           schema:
             $ref: '#/definitions/response.StandardResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.StandardResponse'
         "404":
           description: Memory not found
           schema:
@@ -885,7 +946,7 @@ paths:
       tags:
       - Memories
     get:
-      description: Retrieves a memory by its ID with presigned file URL
+      description: Retrieves a single memory by ID
       parameters:
       - description: Memory ID
         in: path
@@ -896,7 +957,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Memory fetched successfully
+          description: Memory retrieved successfully
           schema:
             allOf:
             - $ref: '#/definitions/response.StandardResponse'
@@ -906,10 +967,6 @@ paths:
               type: object
         "400":
           description: Invalid memory ID
-          schema:
-            $ref: '#/definitions/response.StandardResponse'
-        "401":
-          description: Unauthorized
           schema:
             $ref: '#/definitions/response.StandardResponse'
         "404":
@@ -922,7 +979,7 @@ paths:
             $ref: '#/definitions/response.StandardResponse'
       security:
       - BearerAuth: []
-      summary: Get Memory by ID
+      summary: Get Memory
       tags:
       - Memories
 securityDefinitions:

@@ -2,46 +2,46 @@ package services
 
 import (
 	"context"
-	"fmt"
-	"mime/multipart"
-	"sync"
 
+	filepb "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/grpc"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/validator"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
 type MemoryService interface {
-	CreateMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, files []*multipart.FileHeader) ([]dto.MemoryResponse, error)
+	GenerateUploadURLs(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error)
+	ConfirmUpload(ctx context.Context, userID uuid.UUID, req *dto.ConfirmUploadRequest) error
 	GetMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) (*dto.MemoryResponse, error)
 	ListMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedMemories, error)
 	DeleteMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) error
 }
 
 type memoryService struct {
-	db                *gorm.DB
-	memoryRepo        repository.MemoryRepository
-	hangoutRepo       repository.HangoutRepository
-	memoryFileService MemoryFileService
+	db          *gorm.DB
+	memoryRepo  repository.MemoryRepository
+	hangoutRepo repository.HangoutRepository
+	fileService grpc.FileService
 }
 
-func NewMemoryService(db *gorm.DB, memoryRepo repository.MemoryRepository, hangoutRepo repository.HangoutRepository, memoryFileService MemoryFileService) MemoryService {
+func NewMemoryService(db *gorm.DB, memoryRepo repository.MemoryRepository, hangoutRepo repository.HangoutRepository, fileService grpc.FileService,
+) MemoryService {
 	return &memoryService{
-		db:                db,
-		memoryRepo:        memoryRepo,
-		hangoutRepo:       hangoutRepo,
-		memoryFileService: memoryFileService,
+		db:          db,
+		memoryRepo:  memoryRepo,
+		hangoutRepo: hangoutRepo,
+		fileService: fileService,
 	}
 }
 
-func (s *memoryService) CreateMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, files []*multipart.FileHeader) ([]dto.MemoryResponse, error) {
-	if len(files) > constants.MaxFilePerUpload {
+func (s *memoryService) GenerateUploadURLs(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error) {
+	if len(req.Files) > constants.MaxFilePerUpload {
 		return nil, apperrors.ErrTooManyFiles
 	}
 
@@ -53,87 +53,79 @@ func (s *memoryService) CreateMemories(ctx context.Context, userID uuid.UUID, ha
 		return nil, err
 	}
 
-	var (
-		wg          sync.WaitGroup
-		mu          sync.Mutex
-		responses   []dto.MemoryResponse
-		failedCount int
-	)
+	memories := make([]*domain.Memory, len(req.Files))
 
-	for _, fileHeader := range files {
-		wg.Add(1)
+	for i, file := range req.Files {
+		memories[i] = &domain.Memory{
+			Name:      file.Filename,
+			HangoutID: hangoutID,
+			UserID:    userID,
+		}
+	}
 
-		go func(fh *multipart.FileHeader) {
-			defer wg.Done()
+	var uploadURLsResp *filepb.GenerateUploadURLsResponse
 
-			err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
-				filename, size, mimeType := validator.ExtractFileMetadata(fh)
+	err = s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if err := s.memoryRepo.WithTx(tx).CreateMemoriesBatch(ctx, memories); err != nil {
+			return err
+		}
 
-				memory := &domain.Memory{
-					Name:      filename,
-					HangoutID: hangoutID,
-					UserID:    userID,
-				}
-
-				createdMemory, err := s.memoryRepo.WithTx(tx).CreateMemory(ctx, memory)
-				if err != nil {
-					return err
-				}
-
-				src, err := fh.Open()
-				if err != nil {
-					return err
-				}
-				defer func() {
-					_ = src.Close()
-				}()
-
-				storagePath := fmt.Sprintf("hangouts/%s/memories/%s/%s", hangoutID, createdMemory.ID, filename)
-
-				memoryFile, err := s.memoryFileService.UploadFile(ctx, tx, &dto.FileUploadData{
-					MemoryID:    createdMemory.ID,
-					Filename:    filename,
-					StoragePath: storagePath,
-					Size:        size,
-					MimeType:    mimeType,
-					Content:     src,
-				})
-				if err != nil {
-					return err
-				}
-
-				fileURL, err := s.memoryFileService.GeneratePresignedURL(ctx, memoryFile.StoragePath)
-				if err != nil {
-					return err
-				}
-
-				mu.Lock()
-				responses = append(responses, *mapper.MemoryToResponseDTO(
-					createdMemory,
-					fileURL,
-					memoryFile.FileSize,
-					memoryFile.MimeType,
-				))
-				mu.Unlock()
-
-				return nil
-			})
-
-			if err != nil {
-				mu.Lock()
-				failedCount++
-				mu.Unlock()
+		fileIntents := make([]*filepb.FileUploadIntent, len(req.Files))
+		for i, memory := range memories {
+			fileIntents[i] = &filepb.FileUploadIntent{
+				Filename: req.Files[i].Filename,
+				Size:     req.Files[i].Size,
+				MimeType: req.Files[i].MimeType,
+				MemoryId: memory.ID.String(),
 			}
-		}(fileHeader)
+		}
+
+		baseStoragePath := "hangouts/" + hangoutID.String() + "/memories"
+		var err error
+		uploadURLsResp, err = s.fileService.GenerateUploadURLs(ctx, baseStoragePath, fileIntents)
+		if err != nil {
+			return err
+		}
+
+		fileIDUpdates := make(map[uuid.UUID]uuid.UUID)
+		for _, presignedURL := range uploadURLsResp.Urls {
+			memoryID, _ := uuid.Parse(presignedURL.MemoryId)
+			fileID, _ := uuid.Parse(presignedURL.FileId)
+			fileIDUpdates[memoryID] = fileID
+		}
+
+		if err := s.memoryRepo.WithTx(tx).UpdateFileIDs(ctx, fileIDUpdates); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
-	wg.Wait()
+	return mapper.ToMemoryUploadResponse(uploadURLsResp.Urls), nil
+}
 
-	if len(responses) > 0 {
-		return responses, nil
+func (s *memoryService) ConfirmUpload(ctx context.Context, userID uuid.UUID, req *dto.ConfirmUploadRequest) error {
+	memories, err := s.memoryRepo.GetMemoriesByIDs(ctx, req.MemoryIDs, userID)
+	if err != nil {
+		return err
 	}
 
-	return nil, apperrors.ErrAllFilesUploadFailed
+	if len(memories) != len(req.MemoryIDs) {
+		return apperrors.ErrMemoryNotFound
+	}
+
+	fileIDs := make([]string, 0, len(memories))
+	for _, memory := range memories {
+		if memory.FileID == nil {
+			return apperrors.ErrMemoryNotFound
+		}
+		fileIDs = append(fileIDs, memory.FileID.String())
+	}
+
+	return s.fileService.ConfirmUpload(ctx, fileIDs)
 }
 
 func (s *memoryService) GetMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) (*dto.MemoryResponse, error) {
@@ -145,12 +137,12 @@ func (s *memoryService) GetMemory(ctx context.Context, userID uuid.UUID, memoryI
 		return nil, err
 	}
 
-	memoryFile, err := s.memoryFileService.GetFileByMemoryID(ctx, memoryID)
+	fileWithURL, err := s.fileService.GetFileByMemoryID(ctx, memoryID.String())
 	if err != nil {
 		return nil, err
 	}
 
-	return mapper.MemoryToResponseDTO(memory, memoryFile.FileURL, memoryFile.FileSize, memoryFile.MimeType), nil
+	return mapper.MemoryToResponseDTO(memory, fileWithURL.DownloadUrl, fileWithURL.FileSize, fileWithURL.MimeType), nil
 }
 
 func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedMemories, error) {
@@ -173,19 +165,27 @@ func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hang
 		memories = memories[:limit]
 	}
 
+	memoryIDs := make([]string, len(memories))
+	for i, memory := range memories {
+		memoryIDs[i] = memory.ID.String()
+	}
+
+	filesMap, err := s.fileService.GetFilesByMemoryIDs(ctx, memoryIDs)
+	if err != nil {
+		return nil, err
+	}
+
 	responses := make([]dto.MemoryResponse, 0, len(memories))
 	for _, memory := range memories {
-		memoryFile, err := s.memoryFileService.GetFileByMemoryID(ctx, memory.ID)
-		if err != nil {
-			return nil, err
+		fileWithURL := filesMap[memory.ID.String()]
+		if fileWithURL != nil {
+			responses = append(responses, *mapper.MemoryToResponseDTO(
+				&memory,
+				fileWithURL.DownloadUrl,
+				fileWithURL.FileSize,
+				fileWithURL.MimeType,
+			))
 		}
-
-		responses = append(responses, *mapper.MemoryToResponseDTO(
-			&memory,
-			memoryFile.FileURL,
-			memoryFile.FileSize,
-			memoryFile.MimeType,
-		))
 	}
 
 	var nextCursor *uuid.UUID
@@ -211,7 +211,7 @@ func (s *memoryService) DeleteMemory(ctx context.Context, userID uuid.UUID, memo
 			return err
 		}
 
-		if err := s.memoryFileService.DeleteFile(ctx, tx, memoryID); err != nil {
+		if err := s.fileService.DeleteFile(ctx, memoryID.String()); err != nil {
 			return err
 		}
 

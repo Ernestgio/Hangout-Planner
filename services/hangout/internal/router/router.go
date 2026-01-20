@@ -46,7 +46,8 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	activityRoutes.GET("/", activityHandler.GetAllActivities)
 
 	// memory routes (nested under hangouts for create/list)
-	hangoutRoutes.POST("/:hangout_id/memories", memoryHandler.CreateMemories)
+	hangoutRoutes.POST("/:hangout_id/memories/upload-urls", memoryHandler.GenerateUploadURLs)
+	hangoutRoutes.POST("/:hangout_id/memories/confirm-upload", memoryHandler.ConfirmUpload)
 	hangoutRoutes.GET("/:hangout_id/memories", memoryHandler.ListMemories)
 
 	// memory routes (flat for single resource operations)

@@ -5,7 +5,7 @@ go 1.24.11
 require (
 	ariga.io/atlas-provider-gorm v0.6.0
 	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20260107145659-ef54470c45f5
+	github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20260120023945-0129121084bd
 	github.com/aws/aws-sdk-go-v2 v1.41.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.6

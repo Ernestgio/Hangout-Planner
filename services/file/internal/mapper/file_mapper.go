@@ -34,8 +34,8 @@ func ToFileWithURLBatch(files []*domain.MemoryFile, downloadURLs map[uuid.UUID]s
 
 func ToPresignedUploadURL(fileID uuid.UUID, memoryID uuid.UUID, filename, uploadURL string, expiresAt int64) *filepb.PresignedUploadURL {
 	return &filepb.PresignedUploadURL{
-		FileId: fileID.String(),
-		// MemoryId:  memoryID.String(),
+		FileId:    fileID.String(),
+		MemoryId:  memoryID.String(),
 		Filename:  filename,
 		UploadUrl: uploadURL,
 		ExpiresAt: expiresAt,
