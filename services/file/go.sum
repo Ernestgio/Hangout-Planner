@@ -644,8 +644,8 @@ github.com/ClickHouse/clickhouse-go/v2 v2.30.0 h1:AG4D/hW39qa58+JHQIFOSnxyL46H6h
 github.com/ClickHouse/clickhouse-go/v2 v2.30.0/go.mod h1:i9ZQAojcayW3RsdCb3YR+n+wC2h65eJsZCscZ1Z1wyo=
 github.com/DATA-DOG/go-sqlmock v1.5.0 h1:Shsta01QNfFxHCfpW6YH2STWB0MudeXXEWMr20OEh60=
 github.com/DATA-DOG/go-sqlmock v1.5.0/go.mod h1:f/Ixk793poVmq4qj/V1dPUg2JEAKC73Q5eFN3EC/SaM=
-github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20260107145659-ef54470c45f5 h1:jFgPg05M9GQdjXEXc9Jbco+RUGlreF3EkHm+w+W82pE=
-github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20260107145659-ef54470c45f5/go.mod h1:NtvixkCa/rZNb5i94yORFuhP1+y29X8ak5gQLNxjjsk=
+github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20260118093514-6d642756a06b h1:w79X++G/zDv9uYKoKJg5eQNC7GB46LbuXcJgPac1szQ=
+github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20260118093514-6d642756a06b/go.mod h1:NtvixkCa/rZNb5i94yORFuhP1+y29X8ak5gQLNxjjsk=
 github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.3 h1:2afWGsMzkIcN8Qm4mgPJKZWyroE5QBszMiDMYEBrnfw=
 github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.3/go.mod h1:dppbR7CwXD4pgtV9t3wD1812RaLDcBjtblcDF5f1vI0=
 github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.30.0 h1:sBEjpZlNHzK1voKq9695PJSX2o5NEXl7/OL3coiIY0c=
