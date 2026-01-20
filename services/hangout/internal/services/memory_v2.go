@@ -16,7 +16,7 @@ import (
 )
 
 type MemoryServiceV2 interface {
-	GenerateUploadURLs(ctx context.Context, userID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error)
+	GenerateUploadURLs(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error)
 	ConfirmUpload(ctx context.Context, userID uuid.UUID, req *dto.ConfirmUploadRequest) error
 	GetMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) (*dto.MemoryResponse, error)
 	ListMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedMemories, error)
@@ -40,12 +40,12 @@ func NewMemoryServiceV2(db *gorm.DB, memoryRepo repository.MemoryRepository, han
 	}
 }
 
-func (s *memoryServiceV2) GenerateUploadURLs(ctx context.Context, userID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error) {
+func (s *memoryServiceV2) GenerateUploadURLs(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error) {
 	if len(req.Files) > constants.MaxFilePerUpload {
 		return nil, apperrors.ErrTooManyFiles
 	}
 
-	_, err := s.hangoutRepo.GetHangoutByID(ctx, req.HangoutID, userID)
+	_, err := s.hangoutRepo.GetHangoutByID(ctx, hangoutID, userID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, apperrors.ErrInvalidHangoutID
@@ -58,7 +58,7 @@ func (s *memoryServiceV2) GenerateUploadURLs(ctx context.Context, userID uuid.UU
 	for i, file := range req.Files {
 		memories[i] = &domain.Memory{
 			Name:      file.Filename,
-			HangoutID: req.HangoutID,
+			HangoutID: hangoutID,
 			UserID:    userID,
 		}
 	}
@@ -80,7 +80,7 @@ func (s *memoryServiceV2) GenerateUploadURLs(ctx context.Context, userID uuid.UU
 			}
 		}
 
-		baseStoragePath := "hangouts/" + req.HangoutID.String() + "/memories"
+		baseStoragePath := "hangouts/" + hangoutID.String() + "/memories"
 		var err error
 		uploadURLsResp, err = s.fileService.GenerateUploadURLs(ctx, baseStoragePath, fileIntents)
 		if err != nil {

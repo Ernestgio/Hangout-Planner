@@ -35,8 +35,7 @@ type FileUploadIntent struct {
 }
 
 type GenerateUploadURLsRequest struct {
-	HangoutID uuid.UUID          `json:"hangout_id"`
-	Files     []FileUploadIntent `json:"files" validate:"required,dive"`
+	Files []FileUploadIntent `json:"files" validate:"required,dive"`
 }
 
 type PresignedUploadURL struct {

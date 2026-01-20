@@ -36,11 +36,12 @@ func NewMemoryHandlerV2(memoryService services.MemoryServiceV2, responseBuilder 
 
 // @Summary      Generate Upload URLs (V2)
 // @Description  Creates memory records and returns presigned URLs for client-side upload to S3
+// @Description  hangout_id is taken from the URL path, not the request body
 // @Tags         Memories
 // @Accept       json
 // @Produce      json
 // @Param        hangout_id path string true "Hangout ID"
-// @Param        request body dto.GenerateUploadURLsRequest true "Files to upload"
+// @Param        request body dto.GenerateUploadURLsRequest true "Files to upload (hangout_id not needed in body)"
 // @Success      201 {object} response.StandardResponse{data=dto.MemoryUploadResponse} "Upload URLs generated successfully"
 // @Failure      400 {object} response.StandardResponse "Invalid request payload"
 // @Failure      401 {object} response.StandardResponse "Unauthorized"
@@ -49,6 +50,12 @@ func NewMemoryHandlerV2(memoryService services.MemoryServiceV2, responseBuilder 
 // @Security     BearerAuth
 // @Router       /hangouts/{hangout_id}/memories/v2/upload-urls [post]
 func (h *memoryHandlerV2) GenerateUploadURLs(c echo.Context) error {
+	hangoutIDStr := c.Param("hangout_id")
+	hangoutID, err := uuid.Parse(hangoutIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
+	}
+
 	req, err := request.BindAndValidate[dto.GenerateUploadURLsRequest](c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidPayload))
@@ -57,7 +64,7 @@ func (h *memoryHandlerV2) GenerateUploadURLs(c echo.Context) error {
 	userID := c.Get("user_id").(uuid.UUID)
 	ctx := c.Request().Context()
 
-	uploadResponse, err := h.memoryService.GenerateUploadURLs(ctx, userID, req)
+	uploadResponse, err := h.memoryService.GenerateUploadURLs(ctx, userID, hangoutID, req)
 	if err != nil {
 		if err == apperrors.ErrInvalidHangoutID {
 			return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(err))
