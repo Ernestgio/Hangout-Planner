@@ -76,13 +76,15 @@ const (
 	MaxFilePerUpload             = 10
 
 	// Memory message constants
-	MemoriesUploadedSuccessfully  = "Memories uploaded successfully."
-	MemoryCreatedSuccessfully     = "Memory created successfully."
-	MemoryFetchedSuccessfully     = "Memory fetched successfully."
-	MemoryRetrievedSuccessfully   = "Memory retrieved successfully."
-	MemoriesListedSuccessfully    = "Memories listed successfully."
-	MemoriesRetrievedSuccessfully = "Memories retrieved successfully."
-	MemoryDeletedSuccessfully     = "Memory deleted successfully."
+	MemoriesUploadedSuccessfully    = "Memories uploaded successfully."
+	MemoryCreatedSuccessfully       = "Memory created successfully."
+	MemoryFetchedSuccessfully       = "Memory fetched successfully."
+	MemoryRetrievedSuccessfully     = "Memory retrieved successfully."
+	MemoriesListedSuccessfully      = "Memories listed successfully."
+	MemoriesRetrievedSuccessfully   = "Memories retrieved successfully."
+	MemoryDeletedSuccessfully       = "Memory deleted successfully."
+	UploadURLsGeneratedSuccessfully = "Upload URLs generated successfully."
+	UploadConfirmedSuccessfully     = "Upload confirmed successfully."
 
 	// S3 Config - Default environment variable values constants
 	DefaultS3Endpoint         = "http://localhost:4566"
