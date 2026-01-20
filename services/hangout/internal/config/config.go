@@ -11,13 +11,14 @@ import (
 )
 
 type Config struct {
-	Env        string
-	AppName    string
-	AppPort    string
-	DBConfig   *DBConfig
-	JwtConfig  *JwtConfig
-	S3Config   *S3Config
-	BcryptCost int
+	Env              string
+	AppName          string
+	AppPort          string
+	DBConfig         *DBConfig
+	JwtConfig        *JwtConfig
+	S3Config         *S3Config
+	GRPCClientConfig *GRPCClientConfig
+	BcryptCost       int
 }
 
 func Load() (*Config, error) {
@@ -26,13 +27,14 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		Env:        getEnv("ENV", constants.DevEnv),
-		AppName:    getEnv("APP_NAME", constants.DefaultAppName),
-		AppPort:    getEnv("APP_PORT", constants.DefaultAppPort),
-		DBConfig:   NewDBConfig(),
-		JwtConfig:  NewJwtConfig(),
-		S3Config:   NewS3Config(),
-		BcryptCost: bcrypt.DefaultCost,
+		Env:              getEnv("ENV", constants.DevEnv),
+		AppName:          getEnv("APP_NAME", constants.DefaultAppName),
+		AppPort:          getEnv("APP_PORT", constants.DefaultAppPort),
+		DBConfig:         NewDBConfig(),
+		JwtConfig:        NewJwtConfig(),
+		S3Config:         NewS3Config(),
+		GRPCClientConfig: NewGRPCClientConfig(),
+		BcryptCost:       bcrypt.DefaultCost,
 	}
 
 	if cfg.AppPort == "" {

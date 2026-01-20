@@ -281,9 +281,10 @@ func (x *GenerateUploadURLsResponse) GetUrls() []*PresignedUploadURL {
 type PresignedUploadURL struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FileId        string                 `protobuf:"bytes,1,opt,name=file_id,json=fileId,proto3" json:"file_id,omitempty"`
-	Filename      string                 `protobuf:"bytes,2,opt,name=filename,proto3" json:"filename,omitempty"`
-	UploadUrl     string                 `protobuf:"bytes,3,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
-	ExpiresAt     int64                  `protobuf:"varint,4,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
+	MemoryId      string                 `protobuf:"bytes,2,opt,name=memory_id,json=memoryId,proto3" json:"memory_id,omitempty"`
+	Filename      string                 `protobuf:"bytes,3,opt,name=filename,proto3" json:"filename,omitempty"`
+	UploadUrl     string                 `protobuf:"bytes,4,opt,name=upload_url,json=uploadUrl,proto3" json:"upload_url,omitempty"`
+	ExpiresAt     int64                  `protobuf:"varint,5,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -321,6 +322,13 @@ func (*PresignedUploadURL) Descriptor() ([]byte, []int) {
 func (x *PresignedUploadURL) GetFileId() string {
 	if x != nil {
 		return x.FileId
+	}
+	return ""
+}
+
+func (x *PresignedUploadURL) GetMemoryId() string {
+	if x != nil {
+		return x.MemoryId
 	}
 	return ""
 }
@@ -721,14 +729,15 @@ const file_file_file_messages_proto_rawDesc = "" +
 	"\x11base_storage_path\x18\x01 \x01(\tR\x0fbaseStoragePath\x12/\n" +
 	"\x05files\x18\x02 \x03(\v2\x19.file.v1.FileUploadIntentR\x05files\"M\n" +
 	"\x1aGenerateUploadURLsResponse\x12/\n" +
-	"\x04urls\x18\x01 \x03(\v2\x1b.file.v1.PresignedUploadURLR\x04urls\"\x87\x01\n" +
+	"\x04urls\x18\x01 \x03(\v2\x1b.file.v1.PresignedUploadURLR\x04urls\"\xa4\x01\n" +
 	"\x12PresignedUploadURL\x12\x17\n" +
-	"\afile_id\x18\x01 \x01(\tR\x06fileId\x12\x1a\n" +
-	"\bfilename\x18\x02 \x01(\tR\bfilename\x12\x1d\n" +
+	"\afile_id\x18\x01 \x01(\tR\x06fileId\x12\x1b\n" +
+	"\tmemory_id\x18\x02 \x01(\tR\bmemoryId\x12\x1a\n" +
+	"\bfilename\x18\x03 \x01(\tR\bfilename\x12\x1d\n" +
 	"\n" +
-	"upload_url\x18\x03 \x01(\tR\tuploadUrl\x12\x1d\n" +
+	"upload_url\x18\x04 \x01(\tR\tuploadUrl\x12\x1d\n" +
 	"\n" +
-	"expires_at\x18\x04 \x01(\x03R\texpiresAt\"1\n" +
+	"expires_at\x18\x05 \x01(\x03R\texpiresAt\"1\n" +
 	"\x14ConfirmUploadRequest\x12\x19\n" +
 	"\bfile_ids\x18\x01 \x03(\tR\afileIds\"1\n" +
 	"\x15ConfirmUploadResponse\x12\x18\n" +

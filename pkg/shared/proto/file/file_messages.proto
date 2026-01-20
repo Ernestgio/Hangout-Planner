@@ -38,9 +38,10 @@ message GenerateUploadURLsResponse {
 
 message PresignedUploadURL {
   string file_id = 1;
-  string filename = 2;
-  string upload_url = 3;
-  int64 expires_at = 4;
+  string memory_id = 2;
+  string filename = 3;
+  string upload_url = 4;
+  int64 expires_at = 5;
 }
 
 // ============================================

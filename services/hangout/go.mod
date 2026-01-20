@@ -5,7 +5,7 @@ module github.com/Ernestgio/Hangout-Planner/services/hangout
 require (
 	ariga.io/atlas-provider-gorm v0.6.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20251013132122-435823ff034e
+	github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20260118093514-6d642756a06b
 	github.com/aws/aws-sdk-go-v2 v1.41.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.6
@@ -23,6 +23,7 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/yuin/goldmark v1.4.13
 	golang.org/x/crypto v0.46.0
+	google.golang.org/grpc v1.78.0
 	gorm.io/driver/mysql v1.6.0
 	gorm.io/gorm v1.31.1
 )
@@ -132,7 +133,6 @@ require (
 	google.golang.org/genproto v0.0.0-20251213004720-97cd9d5aeac2 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20251213004720-97cd9d5aeac2 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2 // indirect
-	google.golang.org/grpc v1.77.0 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect

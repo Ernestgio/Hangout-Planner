@@ -27,3 +27,28 @@ type PaginatedMemories struct {
 	NextCursor *uuid.UUID       `json:"next_cursor"`
 	HasMore    bool             `json:"has_more"`
 }
+
+type FileUploadIntent struct {
+	Filename string `json:"filename" validate:"required"`
+	Size     int64  `json:"size" validate:"required,gt=0"`
+	MimeType string `json:"mime_type" validate:"required"`
+}
+
+type GenerateUploadURLsRequest struct {
+	HangoutID uuid.UUID          `json:"hangout_id"`
+	Files     []FileUploadIntent `json:"files" validate:"required,dive"`
+}
+
+type PresignedUploadURL struct {
+	MemoryID  uuid.UUID `json:"memory_id"`
+	UploadURL string    `json:"upload_url"`
+	ExpiresAt int64     `json:"expires_at"`
+}
+
+type MemoryUploadResponse struct {
+	UploadURLs []PresignedUploadURL `json:"upload_urls"`
+}
+
+type ConfirmUploadRequest struct {
+	MemoryIDs []uuid.UUID `json:"memory_ids" validate:"required,dive"`
+}

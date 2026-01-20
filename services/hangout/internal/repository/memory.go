@@ -15,6 +15,8 @@ import (
 type MemoryRepository interface {
 	WithTx(tx *gorm.DB) MemoryRepository
 	CreateMemory(ctx context.Context, memory *domain.Memory) (*domain.Memory, error)
+	CreateMemoriesBatch(ctx context.Context, memories []*domain.Memory) error
+	UpdateFileIDs(ctx context.Context, updates map[uuid.UUID]uuid.UUID) error
 	GetMemoryByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Memory, error)
 	GetMemoriesByHangoutID(ctx context.Context, hangoutID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Memory, error)
 	DeleteMemory(ctx context.Context, id uuid.UUID) error
@@ -37,6 +39,43 @@ func (r *memoryRepository) CreateMemory(ctx context.Context, memory *domain.Memo
 		return nil, err
 	}
 	return memory, nil
+}
+
+func (r *memoryRepository) CreateMemoriesBatch(ctx context.Context, memories []*domain.Memory) error {
+	return r.db.WithContext(ctx).Create(&memories).Error
+}
+
+func (r *memoryRepository) UpdateFileIDs(ctx context.Context, updates map[uuid.UUID]uuid.UUID) error {
+	if len(updates) == 0 {
+		return nil
+	}
+
+	ids := make([]interface{}, 0, len(updates))
+	caseSQL := "CASE "
+	args := make([]interface{}, 0, len(updates)*2)
+
+	for memoryID, fileID := range updates {
+		caseSQL += "WHEN id = ? THEN ? "
+		args = append(args, memoryID.String(), fileID.String())
+		ids = append(ids, memoryID.String())
+	}
+	caseSQL += "END"
+
+	sql := fmt.Sprintf("UPDATE memories SET file_id = %s WHERE id IN (?%s)", caseSQL, repeatPlaceholder(len(ids)-1))
+	args = append(args, ids...)
+
+	return r.db.WithContext(ctx).Exec(sql, args...).Error
+}
+
+func repeatPlaceholder(count int) string {
+	if count <= 0 {
+		return ""
+	}
+	result := ""
+	for i := 0; i < count; i++ {
+		result += ", ?"
+	}
+	return result
 }
 
 func (r *memoryRepository) GetMemoryByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Memory, error) {

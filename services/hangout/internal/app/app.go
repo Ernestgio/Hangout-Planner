@@ -14,6 +14,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants/logmsg"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/db"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/grpc"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator"
@@ -30,14 +31,46 @@ import (
 )
 
 type App struct {
-	server *echo.Echo
-	db     *gorm.DB
-	closer func() error
-	cfg    *config.Config
+	server     *echo.Echo
+	db         *gorm.DB
+	fileClient grpc.FileService
+	closer     func() error
+	cfg        *config.Config
 }
 
-func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
+func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
+	// Initialize external resources with automatic cleanup on error
+
+	// DB Connection
 	dbConn, dbCloser, err := db.Connect(cfg.DBConfig)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			if closeErr := dbCloser(); closeErr != nil {
+				log.Printf(logmsg.DBConnectionCloseFailed, closeErr)
+			}
+		}
+	}()
+
+	// gRPC File Service Client
+	fileClient, err := grpc.NewFileServiceClient(cfg.GRPCClientConfig)
+	if err != nil {
+		log.Printf(logmsg.FileServiceClientInitFailed, err)
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			if closeErr := fileClient.Close(); closeErr != nil {
+				log.Printf(logmsg.FileServiceClientCloseFailed, closeErr)
+			}
+		}
+	}()
+	log.Printf(logmsg.FileServiceClientInitialized, cfg.GRPCClientConfig.FileServiceURL)
+
+	// s3 Client
+	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config)
 	if err != nil {
 		return nil, err
 	}
@@ -46,12 +79,6 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 	responseBuilder := response.NewBuilder(cfg.Env == constants.ProductionEnv)
 	jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
 	bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
-
-	// Storage Layer
-	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config)
-	if err != nil {
-		return nil, err
-	}
 	fileValidator := filevalidator.NewFileValidator()
 
 	// Repository Layer
@@ -86,10 +113,11 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler, memoryHandler)
 
 	return &App{
-		server: e,
-		db:     dbConn,
-		closer: dbCloser,
-		cfg:    cfg,
+		server:     e,
+		db:         dbConn,
+		fileClient: fileClient,
+		closer:     dbCloser,
+		cfg:        cfg,
 	}, nil
 }
 
@@ -122,6 +150,12 @@ func (a *App) Shutdown() error {
 
 	if err := a.server.Shutdown(ctx); err != nil {
 		return err
+	}
+
+	if a.fileClient != nil {
+		if err := a.fileClient.Close(); err != nil {
+			log.Printf(logmsg.FileServiceClientCloseFailed, err)
+		}
 	}
 
 	if err := a.closer(); err != nil {

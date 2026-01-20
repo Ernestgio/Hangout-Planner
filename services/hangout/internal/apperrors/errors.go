@@ -46,3 +46,11 @@ var ErrFailedCreateS3Client = errors.New("failed to create S3 client")
 var ErrFileUploadFailed = errors.New("file upload failed")
 var ErrFileDeleteFailed = errors.New("file deletion failed")
 var ErrGetPresignedURLFailed = errors.New("failed to get presigned URL")
+
+// tls errors
+var ErrLoadTLSConfig = errors.New("failed to load mTLS config")
+var ErrLoadClientCert = errors.New("failed to load client certificate")
+var ErrLoadCACert = errors.New("failed to load CA certificate")
+
+// grpc errors
+var ErrConnectFileService = errors.New("failed to connect to file service")

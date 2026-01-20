@@ -8,8 +8,9 @@ import (
 )
 
 type Memory struct {
-	ID        uuid.UUID `gorm:"primaryKey;type:char(36)"`
-	Name      string    `gorm:"type:varchar(255);not null;uniqueIndex:idx_hangout_name,priority:2"`
+	ID        uuid.UUID  `gorm:"primaryKey;type:char(36)"`
+	Name      string     `gorm:"type:varchar(255);not null;uniqueIndex:idx_hangout_name,priority:2"`
+	FileID    *uuid.UUID `gorm:"type:char(36);index"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt gorm.DeletedAt `gorm:"index"`

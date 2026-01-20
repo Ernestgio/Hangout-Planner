@@ -69,7 +69,7 @@ func (s *fileService) GenerateUploadURLs(ctx context.Context, req *filepb.Genera
 			if err != nil {
 				return err
 			}
-			presignedURL := mapper.ToPresignedUploadURL(file.ID, file.OriginalName, uploadURL, expiresAt)
+			presignedURL := mapper.ToPresignedUploadURL(file.ID, file.MemoryID, file.OriginalName, uploadURL, expiresAt)
 			urls = append(urls, presignedURL)
 		}
 
