@@ -35,9 +35,6 @@ var ErrInvalidMemoryID = errors.New("invalid memory ID")
 var ErrTooManyFiles = errors.New("too many files")
 var ErrMemoryNotFound = errors.New("memory not found")
 
-// s3 errors
-var ErrGetPresignedURLFailed = errors.New("failed to get presigned URL")
-
 // tls errors
 var ErrLoadTLSConfig = errors.New("failed to load mTLS config")
 var ErrLoadClientCert = errors.New("failed to load client certificate")

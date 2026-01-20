@@ -73,7 +73,6 @@ const (
 
 	// Memory message constants
 	MemoryRetrievedSuccessfully     = "Memory retrieved successfully."
-	MemoriesListedSuccessfully      = "Memories listed successfully."
 	MemoriesRetrievedSuccessfully   = "Memories retrieved successfully."
 	MemoryDeletedSuccessfully       = "Memory deleted successfully."
 	UploadURLsGeneratedSuccessfully = "Upload URLs generated successfully."
