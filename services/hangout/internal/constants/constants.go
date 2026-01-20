@@ -69,28 +69,15 @@ const (
 	SortByDate        = "date"
 
 	// File upload constants
-	MaxFileSize                  = 10 * 1024 * 1024
-	MaxRequestSize               = 10 * 1024 * 1024
-	DefaultPresignedURLExpiryMin = 15
-	AllowedImageExtension        = ".jpg,.jpeg,.png,.gif,.webp"
-	MaxFilePerUpload             = 10
+	MaxFilePerUpload = 10
 
 	// Memory message constants
-	MemoriesUploadedSuccessfully    = "Memories uploaded successfully."
-	MemoryCreatedSuccessfully       = "Memory created successfully."
-	MemoryFetchedSuccessfully       = "Memory fetched successfully."
 	MemoryRetrievedSuccessfully     = "Memory retrieved successfully."
 	MemoriesListedSuccessfully      = "Memories listed successfully."
 	MemoriesRetrievedSuccessfully   = "Memories retrieved successfully."
 	MemoryDeletedSuccessfully       = "Memory deleted successfully."
 	UploadURLsGeneratedSuccessfully = "Upload URLs generated successfully."
 	UploadConfirmedSuccessfully     = "Upload confirmed successfully."
-
-	// S3 Config - Default environment variable values constants
-	DefaultS3Endpoint         = "http://localhost:4566"
-	DefaultS3ExternalEndpoint = "http://localhost:4566"
-	DefaultS3Region           = "ap-southeast-1"
-	DefaultS3Bucket           = "hangout-files"
 
 	// grpc client default configs
 	DefaultFileServiceURL = "file:9001"

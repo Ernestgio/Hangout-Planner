@@ -13,7 +13,7 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler, activityHandler handlers.ActivityHandler, memoryHandler handlers.MemoryHandler, memoryHandlerV2 handlers.MemoryHandlerV2) {
+func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler, activityHandler handlers.ActivityHandler, memoryHandlerV2 handlers.MemoryHandlerV2) {
 	e.GET(constants.HealthCheckRoute, func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	})
@@ -46,8 +46,7 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	activityRoutes.GET("/", activityHandler.GetAllActivities)
 
 	// memory routes (nested under hangouts for create/list)
-	hangoutRoutes.POST("/:hangout_id/memories", memoryHandler.CreateMemories)
-	hangoutRoutes.GET("/:hangout_id/memories", memoryHandler.ListMemories)
+
 	hangoutRoutes.POST("/:hangout_id/memories/v2/upload-urls", memoryHandlerV2.GenerateUploadURLs)
 	hangoutRoutes.POST("/:hangout_id/memories/v2/confirm-upload", memoryHandlerV2.ConfirmUpload)
 	hangoutRoutes.GET("/:hangout_id/memories/v2", memoryHandlerV2.ListMemories)
@@ -56,8 +55,6 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	memoryRoutes := e.Group(constants.MemoryRoutes)
 	memoryRoutes.Use(middlewares.JWT(cfg, responseBuilder))
 	memoryRoutes.Use(middlewares.UserContextMiddleware)
-	memoryRoutes.GET("/:memory_id", memoryHandler.GetMemory)
-	memoryRoutes.DELETE("/:memory_id", memoryHandler.DeleteMemory)
 
 	// memory V2 routes (client-side upload) - single resource operations
 	memoryRoutesV2 := e.Group(constants.MemoryRoutes + "/v2")

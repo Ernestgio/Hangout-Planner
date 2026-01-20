@@ -21,9 +21,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/storage"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
-	filevalidator "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/validator"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"golang.org/x/crypto/bcrypt"
@@ -69,39 +67,28 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	}()
 	log.Printf(logmsg.FileServiceClientInitialized, cfg.GRPCClientConfig.FileServiceURL)
 
-	// s3 Client
-	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config)
-	if err != nil {
-		return nil, err
-	}
-
 	// Initialize utils
 	responseBuilder := response.NewBuilder(cfg.Env == constants.ProductionEnv)
 	jwtUtils := utils.NewJWTUtils(cfg.JwtConfig)
 	bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
-	fileValidator := filevalidator.NewFileValidator()
 
 	// Repository Layer
 	userRepo := repository.NewUserRepository(dbConn)
 	hangoutRepo := repository.NewHangoutRepository(dbConn)
 	activityRepo := repository.NewActivityRepository(dbConn)
 	memoryRepo := repository.NewMemoryRepository(dbConn)
-	memoryFileRepo := repository.NewMemoryFileRepository(dbConn)
 
 	// Service Layer
 	userService := services.NewUserService(dbConn, userRepo, bcryptUtils)
 	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
 	hangoutService := services.NewHangoutService(dbConn, hangoutRepo, activityRepo)
 	activityService := services.NewActivityService(dbConn, activityRepo)
-	memoryFileService := services.NewMemoryFileService(s3Client, memoryFileRepo, fileValidator)
-	memoryService := services.NewMemoryService(dbConn, memoryRepo, hangoutRepo, memoryFileService)
 	memoryServiceV2 := services.NewMemoryServiceV2(dbConn, memoryRepo, hangoutRepo, fileClient)
 
 	// handler Layer
 	authHandler := handlers.NewAuthHandler(authService, responseBuilder)
 	hangoutHandler := handlers.NewHangoutHandler(hangoutService, responseBuilder)
 	activityHandler := handlers.NewActivityHandler(activityService, responseBuilder)
-	memoryHandler := handlers.NewMemoryHandler(memoryService, responseBuilder)
 	memoryHandlerV2 := handlers.NewMemoryHandlerV2(memoryServiceV2, responseBuilder)
 
 	// Server Setup
@@ -112,7 +99,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
 	e.Use(middleware.Decompress())
 
-	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler, memoryHandler, memoryHandlerV2)
+	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler, memoryHandlerV2)
 
 	return &App{
 		server:     e,

@@ -14,7 +14,6 @@ func main() {
 		&domain.Hangout{},
 		&domain.Activity{},
 		&domain.Memory{},
-		&domain.MemoryFile{},
 	)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to load gorm schema: %v\n", err)
