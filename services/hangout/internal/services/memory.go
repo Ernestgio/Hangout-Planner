@@ -15,7 +15,7 @@ import (
 	"gorm.io/gorm"
 )
 
-type MemoryServiceV2 interface {
+type MemoryService interface {
 	GenerateUploadURLs(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error)
 	ConfirmUpload(ctx context.Context, userID uuid.UUID, req *dto.ConfirmUploadRequest) error
 	GetMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) (*dto.MemoryResponse, error)
@@ -23,16 +23,16 @@ type MemoryServiceV2 interface {
 	DeleteMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) error
 }
 
-type memoryServiceV2 struct {
+type memoryService struct {
 	db          *gorm.DB
 	memoryRepo  repository.MemoryRepository
 	hangoutRepo repository.HangoutRepository
 	fileService grpc.FileService
 }
 
-func NewMemoryServiceV2(db *gorm.DB, memoryRepo repository.MemoryRepository, hangoutRepo repository.HangoutRepository, fileService grpc.FileService,
-) MemoryServiceV2 {
-	return &memoryServiceV2{
+func NewMemoryService(db *gorm.DB, memoryRepo repository.MemoryRepository, hangoutRepo repository.HangoutRepository, fileService grpc.FileService,
+) MemoryService {
+	return &memoryService{
 		db:          db,
 		memoryRepo:  memoryRepo,
 		hangoutRepo: hangoutRepo,
@@ -40,7 +40,7 @@ func NewMemoryServiceV2(db *gorm.DB, memoryRepo repository.MemoryRepository, han
 	}
 }
 
-func (s *memoryServiceV2) GenerateUploadURLs(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error) {
+func (s *memoryService) GenerateUploadURLs(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error) {
 	if len(req.Files) > constants.MaxFilePerUpload {
 		return nil, apperrors.ErrTooManyFiles
 	}
@@ -107,7 +107,7 @@ func (s *memoryServiceV2) GenerateUploadURLs(ctx context.Context, userID uuid.UU
 	return mapper.ToMemoryUploadResponse(uploadURLsResp.Urls), nil
 }
 
-func (s *memoryServiceV2) ConfirmUpload(ctx context.Context, userID uuid.UUID, req *dto.ConfirmUploadRequest) error {
+func (s *memoryService) ConfirmUpload(ctx context.Context, userID uuid.UUID, req *dto.ConfirmUploadRequest) error {
 	memories, err := s.memoryRepo.GetMemoriesByIDs(ctx, req.MemoryIDs, userID)
 	if err != nil {
 		return err
@@ -128,7 +128,7 @@ func (s *memoryServiceV2) ConfirmUpload(ctx context.Context, userID uuid.UUID, r
 	return s.fileService.ConfirmUpload(ctx, fileIDs)
 }
 
-func (s *memoryServiceV2) GetMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) (*dto.MemoryResponse, error) {
+func (s *memoryService) GetMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) (*dto.MemoryResponse, error) {
 	memory, err := s.memoryRepo.GetMemoryByID(ctx, memoryID, userID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -145,7 +145,7 @@ func (s *memoryServiceV2) GetMemory(ctx context.Context, userID uuid.UUID, memor
 	return mapper.MemoryToResponseDTO(memory, fileWithURL.DownloadUrl, fileWithURL.FileSize, fileWithURL.MimeType), nil
 }
 
-func (s *memoryServiceV2) ListMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedMemories, error) {
+func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedMemories, error) {
 	_, err := s.hangoutRepo.GetHangoutByID(ctx, hangoutID, userID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -201,7 +201,7 @@ func (s *memoryServiceV2) ListMemories(ctx context.Context, userID uuid.UUID, ha
 	}, nil
 }
 
-func (s *memoryServiceV2) DeleteMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) error {
+func (s *memoryService) DeleteMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) error {
 	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		_, err := s.memoryRepo.WithTx(tx).GetMemoryByID(ctx, memoryID, userID)
 		if err != nil {

@@ -83,13 +83,13 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
 	hangoutService := services.NewHangoutService(dbConn, hangoutRepo, activityRepo)
 	activityService := services.NewActivityService(dbConn, activityRepo)
-	memoryServiceV2 := services.NewMemoryServiceV2(dbConn, memoryRepo, hangoutRepo, fileClient)
+	memoryService := services.NewMemoryService(dbConn, memoryRepo, hangoutRepo, fileClient)
 
 	// handler Layer
 	authHandler := handlers.NewAuthHandler(authService, responseBuilder)
 	hangoutHandler := handlers.NewHangoutHandler(hangoutService, responseBuilder)
 	activityHandler := handlers.NewActivityHandler(activityService, responseBuilder)
-	memoryHandlerV2 := handlers.NewMemoryHandlerV2(memoryServiceV2, responseBuilder)
+	memoryHandler := handlers.NewMemoryHandler(memoryService, responseBuilder)
 
 	// Server Setup
 	e := echo.New()
@@ -99,7 +99,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
 	e.Use(middleware.Decompress())
 
-	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler, memoryHandlerV2)
+	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler, memoryHandler)
 
 	return &App{
 		server:     e,

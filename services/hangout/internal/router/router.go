@@ -13,7 +13,7 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler, activityHandler handlers.ActivityHandler, memoryHandlerV2 handlers.MemoryHandlerV2) {
+func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler, activityHandler handlers.ActivityHandler, memoryHandler handlers.MemoryHandler) {
 	e.GET(constants.HealthCheckRoute, func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	})
@@ -46,20 +46,14 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	activityRoutes.GET("/", activityHandler.GetAllActivities)
 
 	// memory routes (nested under hangouts for create/list)
-
-	hangoutRoutes.POST("/:hangout_id/memories/v2/upload-urls", memoryHandlerV2.GenerateUploadURLs)
-	hangoutRoutes.POST("/:hangout_id/memories/v2/confirm-upload", memoryHandlerV2.ConfirmUpload)
-	hangoutRoutes.GET("/:hangout_id/memories/v2", memoryHandlerV2.ListMemories)
+	hangoutRoutes.POST("/:hangout_id/memories/upload-urls", memoryHandler.GenerateUploadURLs)
+	hangoutRoutes.POST("/:hangout_id/memories/confirm-upload", memoryHandler.ConfirmUpload)
+	hangoutRoutes.GET("/:hangout_id/memories", memoryHandler.ListMemories)
 
 	// memory routes (flat for single resource operations)
 	memoryRoutes := e.Group(constants.MemoryRoutes)
 	memoryRoutes.Use(middlewares.JWT(cfg, responseBuilder))
 	memoryRoutes.Use(middlewares.UserContextMiddleware)
-
-	// memory V2 routes (client-side upload) - single resource operations
-	memoryRoutesV2 := e.Group(constants.MemoryRoutes + "/v2")
-	memoryRoutesV2.Use(middlewares.JWT(cfg, responseBuilder))
-	memoryRoutesV2.Use(middlewares.UserContextMiddleware)
-	memoryRoutesV2.GET("/:memory_id", memoryHandlerV2.GetMemory)
-	memoryRoutesV2.DELETE("/:memory_id", memoryHandlerV2.DeleteMemory)
+	memoryRoutes.GET("/:memory_id", memoryHandler.GetMemory)
+	memoryRoutes.DELETE("/:memory_id", memoryHandler.DeleteMemory)
 }

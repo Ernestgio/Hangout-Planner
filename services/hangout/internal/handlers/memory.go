@@ -14,7 +14,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-type MemoryHandlerV2 interface {
+type MemoryHandler interface {
 	GenerateUploadURLs(c echo.Context) error
 	ConfirmUpload(c echo.Context) error
 	GetMemory(c echo.Context) error
@@ -22,19 +22,19 @@ type MemoryHandlerV2 interface {
 	DeleteMemory(c echo.Context) error
 }
 
-type memoryHandlerV2 struct {
-	memoryService   services.MemoryServiceV2
+type memoryHandler struct {
+	memoryService   services.MemoryService
 	responseBuilder *response.Builder
 }
 
-func NewMemoryHandlerV2(memoryService services.MemoryServiceV2, responseBuilder *response.Builder) MemoryHandlerV2 {
-	return &memoryHandlerV2{
+func NewMemoryHandler(memoryService services.MemoryService, responseBuilder *response.Builder) MemoryHandler {
+	return &memoryHandler{
 		memoryService:   memoryService,
 		responseBuilder: responseBuilder,
 	}
 }
 
-// @Summary      Generate Upload URLs (V2)
+// @Summary      Generate Upload URLs
 // @Description  Creates memory records and returns presigned URLs for client-side upload to S3
 // @Description  hangout_id is taken from the URL path, not the request body
 // @Tags         Memories
@@ -48,8 +48,8 @@ func NewMemoryHandlerV2(memoryService services.MemoryServiceV2, responseBuilder 
 // @Failure      404 {object} response.StandardResponse "Hangout not found"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
-// @Router       /hangouts/{hangout_id}/memories/v2/upload-urls [post]
-func (h *memoryHandlerV2) GenerateUploadURLs(c echo.Context) error {
+// @Router       /hangouts/{hangout_id}/memories/upload-urls [post]
+func (h *memoryHandler) GenerateUploadURLs(c echo.Context) error {
 	hangoutIDStr := c.Param("hangout_id")
 	hangoutID, err := uuid.Parse(hangoutIDStr)
 	if err != nil {
@@ -75,7 +75,7 @@ func (h *memoryHandlerV2) GenerateUploadURLs(c echo.Context) error {
 	return c.JSON(http.StatusCreated, h.responseBuilder.Success(constants.UploadURLsGeneratedSuccessfully, uploadResponse))
 }
 
-// @Summary      Confirm Upload (V2)
+// @Summary      Confirm Upload
 // @Description  Confirms that files have been uploaded to S3 and marks them as ready
 // @Tags         Memories
 // @Accept       json
@@ -87,8 +87,8 @@ func (h *memoryHandlerV2) GenerateUploadURLs(c echo.Context) error {
 // @Failure      401 {object} response.StandardResponse "Unauthorized"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
-// @Router       /hangouts/{hangout_id}/memories/v2/confirm-upload [post]
-func (h *memoryHandlerV2) ConfirmUpload(c echo.Context) error {
+// @Router       /hangouts/{hangout_id}/memories/confirm-upload [post]
+func (h *memoryHandler) ConfirmUpload(c echo.Context) error {
 	req, err := request.BindAndValidate[dto.ConfirmUploadRequest](c)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidPayload))
@@ -118,8 +118,8 @@ func (h *memoryHandlerV2) ConfirmUpload(c echo.Context) error {
 // @Failure      404 {object} response.StandardResponse "Memory not found"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
-// @Router       /memories/v2/{memory_id} [get]
-func (h *memoryHandlerV2) GetMemory(c echo.Context) error {
+// @Router       /memories/{memory_id} [get]
+func (h *memoryHandler) GetMemory(c echo.Context) error {
 	memoryIDStr := c.Param("memory_id")
 	memoryID, err := uuid.Parse(memoryIDStr)
 	if err != nil {
@@ -140,7 +140,7 @@ func (h *memoryHandlerV2) GetMemory(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.MemoryRetrievedSuccessfully, memory))
 }
 
-// @Summary      List Memories (V2)
+// @Summary      List Memories
 // @Description  Lists all memories for a hangout with cursor pagination
 // @Tags         Memories
 // @Produce      json
@@ -152,8 +152,8 @@ func (h *memoryHandlerV2) GetMemory(c echo.Context) error {
 // @Failure      400 {object} response.StandardResponse "Invalid hangout ID"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
-// @Router       /hangouts/{hangout_id}/memories/v2 [get]
-func (h *memoryHandlerV2) ListMemories(c echo.Context) error {
+// @Router       /hangouts/{hangout_id}/memories [get]
+func (h *memoryHandler) ListMemories(c echo.Context) error {
 	hangoutIDStr := c.Param("hangout_id")
 	hangoutID, err := uuid.Parse(hangoutIDStr)
 	if err != nil {
@@ -203,8 +203,8 @@ func (h *memoryHandlerV2) ListMemories(c echo.Context) error {
 // @Failure      404 {object} response.StandardResponse "Memory not found"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
-// @Router       /memories/v2/{memory_id} [delete]
-func (h *memoryHandlerV2) DeleteMemory(c echo.Context) error {
+// @Router       /memories/{memory_id} [delete]
+func (h *memoryHandler) DeleteMemory(c echo.Context) error {
 	memoryIDStr := c.Param("memory_id")
 	memoryID, err := uuid.Parse(memoryIDStr)
 	if err != nil {
