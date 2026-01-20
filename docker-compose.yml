@@ -1,3 +1,4 @@
 include:
   - deployments/base.yml
   - deployments/services.yml
+  - deployments/telemetry.yml
