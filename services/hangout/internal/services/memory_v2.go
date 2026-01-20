@@ -5,6 +5,7 @@ import (
 
 	filepb "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/grpc"
@@ -18,7 +19,7 @@ type MemoryServiceV2 interface {
 	GenerateUploadURLs(ctx context.Context, userID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error)
 	ConfirmUpload(ctx context.Context, userID uuid.UUID, req *dto.ConfirmUploadRequest) error
 	GetMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) (*dto.MemoryResponse, error)
-	ListMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID) ([]dto.MemoryResponse, error)
+	ListMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedMemories, error)
 	DeleteMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) error
 }
 
@@ -40,6 +41,10 @@ func NewMemoryServiceV2(db *gorm.DB, memoryRepo repository.MemoryRepository, han
 }
 
 func (s *memoryServiceV2) GenerateUploadURLs(ctx context.Context, userID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error) {
+	if len(req.Files) > constants.MaxFilePerUpload {
+		return nil, apperrors.ErrTooManyFiles
+	}
+
 	_, err := s.hangoutRepo.GetHangoutByID(ctx, req.HangoutID, userID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -83,11 +88,11 @@ func (s *memoryServiceV2) GenerateUploadURLs(ctx context.Context, userID uuid.UU
 		}
 
 		fileIDUpdates := make(map[uuid.UUID]uuid.UUID)
-		// for _, presignedURL := range uploadURLsResp.Urls {
-		// 	// memoryID, _ := uuid.Parse(presignedURL.MemoryId)
-		// 	// fileID, _ := uuid.Parse(presignedURL.FileId)
-		// 	// fileIDUpdates[memoryID] = fileID
-		// }
+		for _, presignedURL := range uploadURLsResp.Urls {
+			memoryID, _ := uuid.Parse(presignedURL.MemoryId)
+			fileID, _ := uuid.Parse(presignedURL.FileId)
+			fileIDUpdates[memoryID] = fileID
+		}
 
 		if err := s.memoryRepo.WithTx(tx).UpdateFileIDs(ctx, fileIDUpdates); err != nil {
 			return err
@@ -135,7 +140,7 @@ func (s *memoryServiceV2) GetMemory(ctx context.Context, userID uuid.UUID, memor
 	return mapper.MemoryToResponseDTO(memory, fileWithURL.DownloadUrl, fileWithURL.FileSize, fileWithURL.MimeType), nil
 }
 
-func (s *memoryServiceV2) ListMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID) ([]dto.MemoryResponse, error) {
+func (s *memoryServiceV2) ListMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedMemories, error) {
 	_, err := s.hangoutRepo.GetHangoutByID(ctx, hangoutID, userID)
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -144,9 +149,15 @@ func (s *memoryServiceV2) ListMemories(ctx context.Context, userID uuid.UUID, ha
 		return nil, err
 	}
 
-	memories, err := s.memoryRepo.GetMemoriesByHangoutID(ctx, hangoutID, nil)
+	memories, err := s.memoryRepo.GetMemoriesByHangoutID(ctx, hangoutID, pagination)
 	if err != nil {
 		return nil, err
+	}
+
+	limit := pagination.GetLimit()
+	hasMore := len(memories) > limit
+	if hasMore {
+		memories = memories[:limit]
 	}
 
 	memoryIDs := make([]string, len(memories))
@@ -172,7 +183,17 @@ func (s *memoryServiceV2) ListMemories(ctx context.Context, userID uuid.UUID, ha
 		}
 	}
 
-	return responses, nil
+	var nextCursor *uuid.UUID
+	if hasMore && len(memories) > 0 {
+		lastID := memories[len(memories)-1].ID
+		nextCursor = &lastID
+	}
+
+	return &dto.PaginatedMemories{
+		Data:       responses,
+		NextCursor: nextCursor,
+		HasMore:    hasMore,
+	}, nil
 }
 
 func (s *memoryServiceV2) DeleteMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) error {

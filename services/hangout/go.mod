@@ -140,3 +140,5 @@ require (
 	gorm.io/driver/sqlite v1.6.0 // indirect
 	gorm.io/driver/sqlserver v1.6.3 // indirect
 )
+
+replace github.com/Ernestgio/Hangout-Planner/pkg/shared => ../../pkg/shared

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
@@ -130,11 +131,13 @@ func (h *memoryHandlerV2) GetMemory(c echo.Context) error {
 }
 
 // @Summary      List Memories
-// @Description  Lists all memories for a hangout
+// @Description  Lists all memories for a hangout with cursor pagination
 // @Tags         Memories
 // @Produce      json
 // @Param        hangout_id query string true "Hangout ID"
-// @Success      200 {object} response.StandardResponse{data=[]dto.MemoryResponse} "Memories retrieved successfully"
+// @Param        cursor query string false "Cursor for pagination"
+// @Param        limit query int false "Limit for pagination"
+// @Success      200 {object} response.StandardResponse{data=dto.PaginatedMemories} "Memories retrieved successfully"
 // @Failure      400 {object} response.StandardResponse "Invalid query parameters"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
@@ -146,10 +149,29 @@ func (h *memoryHandlerV2) ListMemories(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))
 	}
 
+	pagination := &dto.CursorPagination{}
+
+	if limitStr := c.QueryParam("limit"); limitStr != "" {
+		var limit int
+		if _, err := fmt.Sscanf(limitStr, "%d", &limit); err == nil {
+			pagination.Limit = limit
+		}
+	}
+
+	if afterIDStr := c.QueryParam("after_id"); afterIDStr != "" {
+		if afterID, err := uuid.Parse(afterIDStr); err == nil {
+			pagination.AfterID = &afterID
+		}
+	}
+
+	if sortDir := c.QueryParam("sort_dir"); sortDir != "" {
+		pagination.SortDir = sortDir
+	}
+
 	userID := c.Get("user_id").(uuid.UUID)
 	ctx := c.Request().Context()
 
-	memories, err := h.memoryService.ListMemories(ctx, userID, hangoutID)
+	memories, err := h.memoryService.ListMemories(ctx, userID, hangoutID, pagination)
 	if err != nil {
 		if err == apperrors.ErrInvalidHangoutID {
 			return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(err))
