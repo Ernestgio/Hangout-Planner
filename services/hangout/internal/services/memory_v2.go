@@ -108,16 +108,21 @@ func (s *memoryServiceV2) GenerateUploadURLs(ctx context.Context, userID uuid.UU
 }
 
 func (s *memoryServiceV2) ConfirmUpload(ctx context.Context, userID uuid.UUID, req *dto.ConfirmUploadRequest) error {
-	var fileIDs []string
-	for _, memoryID := range req.MemoryIDs {
-		_, err := s.memoryRepo.GetMemoryByID(ctx, memoryID, userID)
-		if err != nil {
-			if err == gorm.ErrRecordNotFound {
-				return apperrors.ErrMemoryNotFound
-			}
-			return err
+	memories, err := s.memoryRepo.GetMemoriesByIDs(ctx, req.MemoryIDs, userID)
+	if err != nil {
+		return err
+	}
+
+	if len(memories) != len(req.MemoryIDs) {
+		return apperrors.ErrMemoryNotFound
+	}
+
+	fileIDs := make([]string, 0, len(memories))
+	for _, memory := range memories {
+		if memory.FileID == nil {
+			return apperrors.ErrMemoryNotFound
 		}
-		fileIDs = append(fileIDs, memoryID.String())
+		fileIDs = append(fileIDs, memory.FileID.String())
 	}
 
 	return s.fileService.ConfirmUpload(ctx, fileIDs)

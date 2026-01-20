@@ -981,7 +981,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/memories/v2": {
+        "/hangouts/{hangout_id}/memories/v2": {
             "get": {
                 "security": [
                     {
@@ -995,25 +995,31 @@ const docTemplate = `{
                 "tags": [
                     "Memories"
                 ],
-                "summary": "List Memories",
+                "summary": "List Memories (V2)",
                 "parameters": [
                     {
                         "type": "string",
                         "description": "Hangout ID",
                         "name": "hangout_id",
-                        "in": "query",
+                        "in": "path",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "Cursor for pagination",
-                        "name": "cursor",
+                        "description": "Cursor for pagination (memory ID)",
+                        "name": "after_id",
                         "in": "query"
                     },
                     {
                         "type": "integer",
                         "description": "Limit for pagination",
                         "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort direction (asc/desc)",
+                        "name": "sort_dir",
                         "in": "query"
                     }
                 ],
@@ -1037,7 +1043,7 @@ const docTemplate = `{
                         }
                     },
                     "400": {
-                        "description": "Invalid query parameters",
+                        "description": "Invalid hangout ID",
                         "schema": {
                             "$ref": "#/definitions/response.StandardResponse"
                         }
@@ -1051,14 +1057,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/memories/v2/confirm-upload": {
+        "/hangouts/{hangout_id}/memories/v2/confirm-upload": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Confirms that files have been uploaded to S3",
+                "description": "Confirms that files have been uploaded to S3 and marks them as ready",
                 "consumes": [
                     "application/json"
                 ],
@@ -1068,10 +1074,17 @@ const docTemplate = `{
                 "tags": [
                     "Memories"
                 ],
-                "summary": "Confirm Upload",
+                "summary": "Confirm Upload (V2)",
                 "parameters": [
                     {
-                        "description": "File IDs to confirm",
+                        "type": "string",
+                        "description": "Hangout ID",
+                        "name": "hangout_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Memory IDs to confirm",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -1108,14 +1121,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/memories/v2/upload-urls": {
+        "/hangouts/{hangout_id}/memories/v2/upload-urls": {
             "post": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "Creates memory records and returns presigned URLs for client-side upload",
+                "description": "Creates memory records and returns presigned URLs for client-side upload to S3",
                 "consumes": [
                     "application/json"
                 ],
@@ -1125,8 +1138,15 @@ const docTemplate = `{
                 "tags": [
                     "Memories"
                 ],
-                "summary": "Generate Upload URLs",
+                "summary": "Generate Upload URLs (V2)",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Hangout ID",
+                        "name": "hangout_id",
+                        "in": "path",
+                        "required": true
+                    },
                     {
                         "description": "Files to upload",
                         "name": "request",
@@ -1164,6 +1184,12 @@ const docTemplate = `{
                     },
                     "401": {
                         "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.StandardResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Hangout not found",
                         "schema": {
                             "$ref": "#/definitions/response.StandardResponse"
                         }

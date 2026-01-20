@@ -48,6 +48,9 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	// memory routes (nested under hangouts for create/list)
 	hangoutRoutes.POST("/:hangout_id/memories", memoryHandler.CreateMemories)
 	hangoutRoutes.GET("/:hangout_id/memories", memoryHandler.ListMemories)
+	hangoutRoutes.POST("/:hangout_id/memories/v2/upload-urls", memoryHandlerV2.GenerateUploadURLs)
+	hangoutRoutes.POST("/:hangout_id/memories/v2/confirm-upload", memoryHandlerV2.ConfirmUpload)
+	hangoutRoutes.GET("/:hangout_id/memories/v2", memoryHandlerV2.ListMemories)
 
 	// memory routes (flat for single resource operations)
 	memoryRoutes := e.Group(constants.MemoryRoutes)
@@ -56,13 +59,10 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	memoryRoutes.GET("/:memory_id", memoryHandler.GetMemory)
 	memoryRoutes.DELETE("/:memory_id", memoryHandler.DeleteMemory)
 
-	// memory V2 routes (client-side upload)
+	// memory V2 routes (client-side upload) - single resource operations
 	memoryRoutesV2 := e.Group(constants.MemoryRoutes + "/v2")
 	memoryRoutesV2.Use(middlewares.JWT(cfg, responseBuilder))
 	memoryRoutesV2.Use(middlewares.UserContextMiddleware)
-	memoryRoutesV2.POST("/upload-urls", memoryHandlerV2.GenerateUploadURLs)
-	memoryRoutesV2.POST("/confirm-upload", memoryHandlerV2.ConfirmUpload)
 	memoryRoutesV2.GET("/:memory_id", memoryHandlerV2.GetMemory)
-	memoryRoutesV2.GET("/", memoryHandlerV2.ListMemories)
 	memoryRoutesV2.DELETE("/:memory_id", memoryHandlerV2.DeleteMemory)
 }

@@ -34,18 +34,20 @@ func NewMemoryHandlerV2(memoryService services.MemoryServiceV2, responseBuilder 
 	}
 }
 
-// @Summary      Generate Upload URLs
-// @Description  Creates memory records and returns presigned URLs for client-side upload
+// @Summary      Generate Upload URLs (V2)
+// @Description  Creates memory records and returns presigned URLs for client-side upload to S3
 // @Tags         Memories
 // @Accept       json
 // @Produce      json
+// @Param        hangout_id path string true "Hangout ID"
 // @Param        request body dto.GenerateUploadURLsRequest true "Files to upload"
 // @Success      201 {object} response.StandardResponse{data=dto.MemoryUploadResponse} "Upload URLs generated successfully"
 // @Failure      400 {object} response.StandardResponse "Invalid request payload"
 // @Failure      401 {object} response.StandardResponse "Unauthorized"
+// @Failure      404 {object} response.StandardResponse "Hangout not found"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
-// @Router       /memories/v2/upload-urls [post]
+// @Router       /hangouts/{hangout_id}/memories/v2/upload-urls [post]
 func (h *memoryHandlerV2) GenerateUploadURLs(c echo.Context) error {
 	req, err := request.BindAndValidate[dto.GenerateUploadURLsRequest](c)
 	if err != nil {
@@ -66,18 +68,19 @@ func (h *memoryHandlerV2) GenerateUploadURLs(c echo.Context) error {
 	return c.JSON(http.StatusCreated, h.responseBuilder.Success(constants.UploadURLsGeneratedSuccessfully, uploadResponse))
 }
 
-// @Summary      Confirm Upload
-// @Description  Confirms that files have been uploaded to S3
+// @Summary      Confirm Upload (V2)
+// @Description  Confirms that files have been uploaded to S3 and marks them as ready
 // @Tags         Memories
 // @Accept       json
 // @Produce      json
-// @Param        request body dto.ConfirmUploadRequest true "File IDs to confirm"
+// @Param        hangout_id path string true "Hangout ID"
+// @Param        request body dto.ConfirmUploadRequest true "Memory IDs to confirm"
 // @Success      200 {object} response.StandardResponse "Upload confirmed successfully"
 // @Failure      400 {object} response.StandardResponse "Invalid request payload"
 // @Failure      401 {object} response.StandardResponse "Unauthorized"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
-// @Router       /memories/v2/confirm-upload [post]
+// @Router       /hangouts/{hangout_id}/memories/v2/confirm-upload [post]
 func (h *memoryHandlerV2) ConfirmUpload(c echo.Context) error {
 	req, err := request.BindAndValidate[dto.ConfirmUploadRequest](c)
 	if err != nil {
@@ -130,20 +133,21 @@ func (h *memoryHandlerV2) GetMemory(c echo.Context) error {
 	return c.JSON(http.StatusOK, h.responseBuilder.Success(constants.MemoryRetrievedSuccessfully, memory))
 }
 
-// @Summary      List Memories
+// @Summary      List Memories (V2)
 // @Description  Lists all memories for a hangout with cursor pagination
 // @Tags         Memories
 // @Produce      json
-// @Param        hangout_id query string true "Hangout ID"
-// @Param        cursor query string false "Cursor for pagination"
+// @Param        hangout_id path string true "Hangout ID"
+// @Param        after_id query string false "Cursor for pagination (memory ID)"
 // @Param        limit query int false "Limit for pagination"
+// @Param        sort_dir query string false "Sort direction (asc/desc)"
 // @Success      200 {object} response.StandardResponse{data=dto.PaginatedMemories} "Memories retrieved successfully"
-// @Failure      400 {object} response.StandardResponse "Invalid query parameters"
+// @Failure      400 {object} response.StandardResponse "Invalid hangout ID"
 // @Failure      500 {object} response.StandardResponse "Internal server error"
 // @Security     BearerAuth
-// @Router       /memories/v2 [get]
+// @Router       /hangouts/{hangout_id}/memories/v2 [get]
 func (h *memoryHandlerV2) ListMemories(c echo.Context) error {
-	hangoutIDStr := c.QueryParam("hangout_id")
+	hangoutIDStr := c.Param("hangout_id")
 	hangoutID, err := uuid.Parse(hangoutIDStr)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, h.responseBuilder.Error(apperrors.ErrInvalidHangoutID))

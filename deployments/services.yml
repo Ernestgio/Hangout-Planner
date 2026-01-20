@@ -12,8 +12,10 @@ services:
     volumes:
       - ../components/nginx/ssl:/app/certs/mtls:ro
     depends_on:
-      - mysql
-      - localstack
+      mysql:
+        condition: service_healthy
+      localstack:
+        condition: service_started
     networks:
       - default
     healthcheck:
@@ -35,8 +37,10 @@ services:
     volumes:
       - ../components/nginx/ssl:/app/certs:ro
     depends_on:
-      - mysql
-      - localstack
+      mysql:
+        condition: service_healthy
+      localstack:
+        condition: service_started
     networks:
       - default
     healthcheck:

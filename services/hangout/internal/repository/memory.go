@@ -18,6 +18,7 @@ type MemoryRepository interface {
 	CreateMemoriesBatch(ctx context.Context, memories []*domain.Memory) error
 	UpdateFileIDs(ctx context.Context, updates map[uuid.UUID]uuid.UUID) error
 	GetMemoryByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Memory, error)
+	GetMemoriesByIDs(ctx context.Context, ids []uuid.UUID, userID uuid.UUID) ([]domain.Memory, error)
 	GetMemoriesByHangoutID(ctx context.Context, hangoutID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Memory, error)
 	DeleteMemory(ctx context.Context, id uuid.UUID) error
 }
@@ -85,7 +86,13 @@ func (r *memoryRepository) GetMemoryByID(ctx context.Context, id uuid.UUID, user
 	}
 	return &memory, nil
 }
-
+func (r *memoryRepository) GetMemoriesByIDs(ctx context.Context, ids []uuid.UUID, userID uuid.UUID) ([]domain.Memory, error) {
+	var memories []domain.Memory
+	if err := r.db.WithContext(ctx).Where("id IN ? AND user_id = ?", ids, userID).Find(&memories).Error; err != nil {
+		return nil, err
+	}
+	return memories, nil
+}
 func (r *memoryRepository) GetMemoriesByHangoutID(ctx context.Context, hangoutID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Memory, error) {
 	var memories []domain.Memory
 	limitToFetch := pagination.GetLimit() + 1
