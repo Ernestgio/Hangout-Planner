@@ -5,7 +5,7 @@ module github.com/Ernestgio/Hangout-Planner/services/hangout
 require (
 	ariga.io/atlas-provider-gorm v0.6.0
 	github.com/DATA-DOG/go-sqlmock v1.5.2
-	github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20260118093514-6d642756a06b
+	github.com/Ernestgio/Hangout-Planner/pkg/shared v0.0.0-20260120023945-0129121084bd
 	github.com/aws/aws-sdk-go-v2 v1.41.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.6
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.6
@@ -140,5 +140,3 @@ require (
 	gorm.io/driver/sqlite v1.6.0 // indirect
 	gorm.io/driver/sqlserver v1.6.3 // indirect
 )
-
-replace github.com/Ernestgio/Hangout-Planner/pkg/shared => ../../pkg/shared

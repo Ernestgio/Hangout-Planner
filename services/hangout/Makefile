@@ -80,10 +80,7 @@ diff:
 ifndef NAME
 	$(error NAME is required. Usage: make diff NAME=migration_name)
 endif
-	atlas migrate diff $(NAME) \
-  		--to file://migrations \
-  		--dev-url "docker://mysql/8/dev" \
-  		--format '{{ sql . "  " }}'
+	atlas migrate diff $(NAME) --env local
 
 migrate:
 	atlas migrate apply --env local

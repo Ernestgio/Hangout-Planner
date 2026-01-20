@@ -9,6 +9,8 @@ services:
       - ../services/hangout/.env
     ports:
       - "9000:9000"
+    volumes:
+      - ../components/nginx/ssl:/app/certs/mtls:ro
     depends_on:
       - mysql
       - localstack

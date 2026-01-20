@@ -93,8 +93,8 @@ const (
 	DefaultS3Bucket           = "hangout-files"
 
 	// grpc client default configs
-	DefaultFileServiceURL = "localhost:9001"
-	DeafultMTLSCertPath   = "/app.certs/mtls/hangout-client.crt"
-	DefaultMTLSKeyPath    = "/app.certs/mtls/hangout-client.key"
-	DefaultMTLSCAPath     = "/app.certs/mtls/ca.crt"
+	DefaultFileServiceURL = "file:9001"
+	DefaultMTLSCertPath   = "/app/certs/mtls/hangout-client.crt"
+	DefaultMTLSKeyPath    = "/app/certs/mtls/hangout-client.key"
+	DefaultMTLSCAPath     = "/app/certs/mtls/ca.crt"
 )

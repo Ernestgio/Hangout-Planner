@@ -13,7 +13,7 @@ import (
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
-func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler, activityHandler handlers.ActivityHandler, memoryHandler handlers.MemoryHandler) {
+func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Builder, authHandler handlers.AuthHandler, hangoutHandler handlers.HangoutHandler, activityHandler handlers.ActivityHandler, memoryHandler handlers.MemoryHandler, memoryHandlerV2 handlers.MemoryHandlerV2) {
 	e.GET(constants.HealthCheckRoute, func(c echo.Context) error {
 		return c.String(http.StatusOK, "OK")
 	})
@@ -55,4 +55,14 @@ func NewRouter(e *echo.Echo, cfg *config.Config, responseBuilder *response.Build
 	memoryRoutes.Use(middlewares.UserContextMiddleware)
 	memoryRoutes.GET("/:memory_id", memoryHandler.GetMemory)
 	memoryRoutes.DELETE("/:memory_id", memoryHandler.DeleteMemory)
+
+	// memory V2 routes (client-side upload)
+	memoryRoutesV2 := e.Group(constants.MemoryRoutes + "/v2")
+	memoryRoutesV2.Use(middlewares.JWT(cfg, responseBuilder))
+	memoryRoutesV2.Use(middlewares.UserContextMiddleware)
+	memoryRoutesV2.POST("/upload-urls", memoryHandlerV2.GenerateUploadURLs)
+	memoryRoutesV2.POST("/confirm-upload", memoryHandlerV2.ConfirmUpload)
+	memoryRoutesV2.GET("/:memory_id", memoryHandlerV2.GetMemory)
+	memoryRoutesV2.GET("/", memoryHandlerV2.ListMemories)
+	memoryRoutesV2.DELETE("/:memory_id", memoryHandlerV2.DeleteMemory)
 }

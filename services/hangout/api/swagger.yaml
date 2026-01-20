@@ -27,6 +27,15 @@ definitions:
       name:
         type: string
     type: object
+  dto.ConfirmUploadRequest:
+    properties:
+      memory_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - memory_ids
+    type: object
   dto.CreateActivityRequest:
     properties:
       name:
@@ -70,6 +79,30 @@ definitions:
         type: string
       sort_dir:
         type: string
+    type: object
+  dto.FileUploadIntent:
+    properties:
+      filename:
+        type: string
+      mime_type:
+        type: string
+      size:
+        type: integer
+    required:
+    - filename
+    - mime_type
+    - size
+    type: object
+  dto.GenerateUploadURLsRequest:
+    properties:
+      files:
+        items:
+          $ref: '#/definitions/dto.FileUploadIntent'
+        type: array
+      hangout_id:
+        type: string
+    required:
+    - files
     type: object
   dto.HangoutDetailResponse:
     properties:
@@ -120,6 +153,13 @@ definitions:
       name:
         type: string
     type: object
+  dto.MemoryUploadResponse:
+    properties:
+      upload_urls:
+        items:
+          $ref: '#/definitions/dto.PresignedUploadURL'
+        type: array
+    type: object
   dto.PaginatedHangouts:
     properties:
       data:
@@ -140,6 +180,15 @@ definitions:
       has_more:
         type: boolean
       next_cursor:
+        type: string
+    type: object
+  dto.PresignedUploadURL:
+    properties:
+      expires_at:
+        type: integer
+      memory_id:
+        type: string
+      upload_url:
         type: string
     type: object
   dto.SignInRequest:
@@ -923,6 +972,196 @@ paths:
       security:
       - BearerAuth: []
       summary: Get Memory by ID
+      tags:
+      - Memories
+  /memories/v2:
+    get:
+      description: Lists all memories for a hangout with cursor pagination
+      parameters:
+      - description: Hangout ID
+        in: query
+        name: hangout_id
+        required: true
+        type: string
+      - description: Cursor for pagination
+        in: query
+        name: cursor
+        type: string
+      - description: Limit for pagination
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Memories retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.PaginatedMemories'
+              type: object
+        "400":
+          description: Invalid query parameters
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: List Memories
+      tags:
+      - Memories
+  /memories/v2/{memory_id}:
+    delete:
+      description: Deletes a memory and its associated file
+      parameters:
+      - description: Memory ID
+        in: path
+        name: memory_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Memory deleted successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: Invalid memory ID
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "404":
+          description: Memory not found
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete Memory
+      tags:
+      - Memories
+    get:
+      description: Retrieves a single memory by ID
+      parameters:
+      - description: Memory ID
+        in: path
+        name: memory_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Memory retrieved successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.MemoryResponse'
+              type: object
+        "400":
+          description: Invalid memory ID
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "404":
+          description: Memory not found
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Memory
+      tags:
+      - Memories
+  /memories/v2/confirm-upload:
+    post:
+      consumes:
+      - application/json
+      description: Confirms that files have been uploaded to S3
+      parameters:
+      - description: File IDs to confirm
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.ConfirmUploadRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Upload confirmed successfully
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirm Upload
+      tags:
+      - Memories
+  /memories/v2/upload-urls:
+    post:
+      consumes:
+      - application/json
+      description: Creates memory records and returns presigned URLs for client-side
+        upload
+      parameters:
+      - description: Files to upload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GenerateUploadURLsRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Upload URLs generated successfully
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.MemoryUploadResponse'
+              type: object
+        "400":
+          description: Invalid request payload
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/response.StandardResponse'
+      security:
+      - BearerAuth: []
+      summary: Generate Upload URLs
       tags:
       - Memories
 securityDefinitions:
