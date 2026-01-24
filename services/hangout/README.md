@@ -1,101 +1,175 @@
-# Hangout Service - Core Service for Hangout Planner Project
+# Hangout Service - Core REST API Microservice
 
-The **core backend service** responsible for creating, managing, and listing hangouts.  
-Implements clean architecture principles and production-ready practices using Go, Echo, and GORM.
+A production-grade RESTful API service for social event management, implementing modern backend patterns with clean architecture, gRPC client integration, and comprehensive observability. Serves as the primary business logic layer in a distributed microservices architecture.
 
-## Tech Stack
+## Overview
 
-- Go (module: `services/hangout`)
-- Echo + echo-jwt
-- GORM + MySQL
-- go-playground/validator (request validation)
-- Swagger/OpenAPI via swag + echo-swagger
-- Atlas migrations
-- golangci-lint
-- Air (Live reload)
-- AWS SDK for Go v2 (S3 client)
-- LocalStack (local S3 emulation)
+The Hangout Service is the main backend service handling user authentication, hangout management, activity coordination, and memory storage orchestration. It integrates with the File Service via gRPC for distributed file operations, demonstrating service mesh patterns and secure inter-service communication.
 
-## Architecture
+## Technical Architecture
 
-The service follows a layered, standard-convention dependency-inverted structure:
+### Technology Stack
 
-- `handlers/`: HTTP handlers (request binding/validation, response mapping)
-- `services/`: application use-cases
-- `repository/`: persistence boundaries
-- `domain/`: entities and core types
-- `dto/` + `mapper/`: transport models and mapping
-- `middlewares/`: auth + request context wiring
-- `internal/http/`: shared request/response utilities (validator, sanitizer, response envelope)
+- **Language**: Go 1.24.11
+- **Web Framework**: Echo v4 with middleware ecosystem
+- **ORM**: GORM with MySQL driver, batch operations optimization
+- **Authentication**: JWT with RS256 signing, bcrypt password hashing
+- **API Documentation**: Swagger/OpenAPI 3.0 via swag
+- **Database Migrations**: Atlas CLI with declarative schema
+- **Service Communication**: gRPC client with mTLS for File Service integration
+- **Storage Integration**: S3-compatible via File Service abstraction
+- **Development Tools**: Air for live reload, golangci-lint for code quality
 
-The edge gateway terminates TLS/HTTP/2 and forwards requests to this service over the Docker network (HTTP).
+### Architecture Patterns
 
-## Running Locally
+- **Clean Architecture**: Layered design with dependency inversion
+- **Repository Pattern**: Data access abstraction with transactional support
+- **Service Layer Pattern**: Business logic encapsulation and orchestration
+- **DTO Pattern**: Request/response mapping with validation
+- **Middleware Chain**: Authentication, context propagation, error handling
+- **Client-Side Upload Pattern**: Presigned URLs for efficient file transfers
+
+## Core Features
+
+### Authentication & Authorization
+
+- **JWT Authentication**: RS256 asymmetric signing with configurable expiry
+- **Secure Password Storage**: bcrypt hashing with adjustable cost factor
+- **Middleware Protection**: Route-level authentication enforcement
+- **User Context Propagation**: Request-scoped user information across layers
+- **Token Claims**: Custom JWT payload with user metadata
+
+### Hangout Management
+
+- **CRUD Operations**: Full lifecycle management for hangout events
+- **Ownership Validation**: Users can only modify their own hangouts
+- **Listing & Pagination**: Efficient bulk retrieval with cursor-based pagination
+
+### Activity Coordination
+
+- **Activity CRUD**: Manage activities within hangout contexts
+- **Bulk Retrieval**: Efficient listing with pagination support
+
+### Memory Management (Client-Side Upload Pattern)
+
+- **Three-Phase Upload Flow**:
+  1. **Generate Upload URLs**: Batch create memory records, obtain presigned S3 URLs
+  2. **Client Direct Upload**: Client uploads files directly to S3 using presigned URLs
+  3. **Confirm Upload**: Mark files as confirmed after successful upload
+- **Batch Operations**: Single SQL INSERT for multiple memories
+- **Ownership Validation**: Batch fetch memories to verify user access
+- **File Service Integration**: gRPC client with mTLS for secure communication
+- **Cursor-Based Pagination**: Efficient memory listing with hasMore/nextCursor
+
+### gRPC Client Integration
+
+Integrates with File Service via gRPC with mTLS for secure file operations (generate presigned URLs, confirm uploads, retrieve files, delete files).
+
+## Service Integration
+
+### Nginx API Gateway Flow
+
+```
+Client (HTTPS:443)
+    ↓
+Nginx (TLS termination, HTTP/2)
+    ↓
+Hangout Service (HTTP:9000)
+    ↓ (gRPC + mTLS)
+File Service (gRPC:9001)
+    ↓
+S3 / LocalStack (S3:4566)
+```
+
+## Development Setup
 
 ### Prerequisites
 
-- Docker Desktop
-- Make (optional but recommended)
-- Go 1.24.11
+- Go 1.24.11+
 - Docker & Docker Compose
+- Make
 - golangci-lint
-- Air - Live reload for Go apps
-- Swag (API documentation)
-- Atlas
+- Atlas CLI
+- Swag (for API documentation generation)
 
-### Environment
+### Environment Configuration
 
-Copy `.env.example` to `.env` and fill in your configuration.
+Copy `.env.example` to `.env` and configure your environment variables.
 
-## Features
+### Running the Service
 
-### Modules
+**Start all services with Docker Compose**:
 
-- Auth Modules
-- Hangout Modules
-- Activity modules
-- **Memory Modules** — Photo upload system with concurrent processing and S3 storage
-  - Concurrent file processing with goroutines (6-10x faster than sequential)
-  - Partial success handling for better user experience
-  - S3-compatible storage with AES-256 encryption and MD5 checksums
-  - Presigned URLs for secure file access (15-minute expiry)
-  - Cursor-based pagination for memory listing
+```bash
+make up
+```
 
-### Core
+**Local development with Air (live reload)**:
 
-- RESTful API built on Echo
-- Swagger API documentation
-- Graceful server shutdown
-- Dependency injection via interfaces
-- Auto DB migration
-- Context propagation across all layers (for timeouts, cancellation, and future observability/tracing)
-- Full Hangout CRUD
-- Signup and Signin
-- **File Upload System**
-  - Multipart/form-data handling
-  - Transport-agnostic validation layer
-  - Thread-safe concurrent uploads
-  - Atomic per-file transactions
-  - Designed for future microservice extraction
+```bash
+make air
+```
 
-### Testing & Quality
+**Run database migrations**:
 
-- Unit tests (table-driven + mocks)
-- HTML test coverage reports
-- GolangCI-Lint configuration
-- Makefile automation
-- Live reload with Air
+```bash
+make migrate
+```
 
-### Server Layer
+**Generate Swagger documentation**:
 
-- Standard JSON response format
-- Sentinel error design
-- Request validator integration
-- JWT authentication middleware
-- Centralized error handling middleware
+```bash
+make swag
+```
 
-### Future Enhancements
+**Access API documentation**:
 
-- Redis to prevent concurrent session
-- Location tagging
-- Share hangout features
+```
+https://localhost/rp-api/hangout-service/swagger/index.html
+```
+
+## Testing & Quality
+
+### Unit Testing
+
+```bash
+make test
+```
+
+### Test Coverage Report
+
+```bash
+make coverage
+```
+
+Generates HTML report and opens in browser.
+
+### Code Quality
+
+```bash
+make lint
+```
+
+Runs golangci-lint with project configuration.
+
+### Test Structure
+
+- Table-driven tests for comprehensive scenarios
+- Mock repositories for service layer testing
+
+## Future Enhancements
+
+### Features
+
+- Location-based hangout discovery
+- Hangout sharing and invitations
+- Activity voting and RSVP
+- Memory reactions and comments
+- Redis session management (prevent concurrent sessions)
+
+### Observability
+
+- Distributed tracing with Jaeger
+- Centralized logging with ELK/Loki
+- Alerting with Prometheus Alertmanager
+- Custom Grafana dashboards
