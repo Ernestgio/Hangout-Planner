@@ -62,13 +62,13 @@ func (r *memoryRepository) UpdateFileIDs(ctx context.Context, updates map[uuid.U
 	}
 	caseSQL += "END"
 
-	sql := fmt.Sprintf("UPDATE memories SET file_id = %s WHERE id IN (?%s)", caseSQL, repeatPlaceholder(len(ids)-1))
+	sql := fmt.Sprintf("UPDATE memories SET file_id = %s WHERE id IN (?%s)", caseSQL, RepeatPlaceholder(len(ids)-1))
 	args = append(args, ids...)
 
 	return r.db.WithContext(ctx).Exec(sql, args...).Error
 }
 
-func repeatPlaceholder(count int) string {
+func RepeatPlaceholder(count int) string {
 	if count <= 0 {
 		return ""
 	}
@@ -86,6 +86,7 @@ func (r *memoryRepository) GetMemoryByID(ctx context.Context, id uuid.UUID, user
 	}
 	return &memory, nil
 }
+
 func (r *memoryRepository) GetMemoriesByIDs(ctx context.Context, ids []uuid.UUID, userID uuid.UUID) ([]domain.Memory, error) {
 	var memories []domain.Memory
 	if err := r.db.WithContext(ctx).Where("id IN ? AND user_id = ?", ids, userID).Find(&memories).Error; err != nil {
@@ -93,6 +94,7 @@ func (r *memoryRepository) GetMemoriesByIDs(ctx context.Context, ids []uuid.UUID
 	}
 	return memories, nil
 }
+
 func (r *memoryRepository) GetMemoriesByHangoutID(ctx context.Context, hangoutID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Memory, error) {
 	var memories []domain.Memory
 	limitToFetch := pagination.GetLimit() + 1
