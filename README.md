@@ -1,8 +1,8 @@
 # Hangout Planner — Scalable Go Backend Platform
 
-Hangout Planner is a Go-based backend platform for planning and managing hangouts with photo memory uploads. The repo is structured as a monorepo with a core service (`hangout`) and shared packages, fronted by an NGINX edge gateway that handles TLS termination, HTTP/2, and path-based routing.
+Hangout Planner is a microservices-based backend platform for planning and managing hangouts with photo memory uploads. The architecture features a REST API service for business logic and a dedicated gRPC File Service for storage operations, fronted by an NGINX gateway handling TLS termination, HTTP/2, and path-based routing.
 
-This project is built to demonstrate production-minded backend engineering: layered architecture, automated database migrations, CI, file upload with S3-compatible storage, and a local environment that mirrors common deployment topology (gateway → services → database → object storage).
+This project is built to demonstrate production-minded backend engineering: layered architecture, automated database migrations, CI, grpc microservices integration (with mTLS), file upload with S3-compatible storage, and a local environment that mirrors common deployment topology (gateway → services → database → object storage).
 
 Designed with **clean architecture**, **SOLID principles**, and **future-proof modular design** for microservices scalability.
 
@@ -10,12 +10,15 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 
 **Backend**
 
-- Go (services/hangout)
+- Go (services/hangout, services/file)
 - Echo (HTTP server, routing, middleware)
+- gRPC + Protocol Buffers (service-to-service communication)
+- mTLS (mutual TLS authentication)
 - JWT auth (echo-jwt)
 - go-playground/validator (request validation)
 - GORM + MySQL driver
-- MySQL 8.0
+- MySQL 8.0 (separate databases per service)
+- Localstack
 
 **API & Documentation**
 
@@ -35,126 +38,87 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 - Lefthook (local git hooks)
 - Atlas migrations (schema diff/apply)
 - Make (scripting)
+- mkcert for one time cert generation
 
 ## Repository Layout
 
-- `services/hangout/`: core HTTP API service
+- `services/hangout/`: REST API service (auth, hangouts, activities, memories)
+- `services/file/`: gRPC File Service (file lifecycle, S3 operations)
+- `pkg/shared/`: shared contracts (Protocol Buffers, enums, types)
 - `components/nginx/`: edge gateway (reverse proxy, HTTPS, HTTP/2)
-- `components/database/`: local database bootstrap (init script, env)
-- `pkg/shared/`: shared Go module (types/constants)
+- `components/database/`: local database bootstrap
 
 ## Local Development
 
 ### Prerequisites
 
-- Go 1.24.11
+- Go 1.24.11+
 - Docker & Docker Compose
-- MySQL (local or via Docker)
-- Nginx (local or via Docker)
-- Swag CLI for API docs
-- golangci-lint
-- Make (Makefile)
-- Air - Live reload for Go apps
-- Lefthook - git hooks for pre-commit / pre-push actions
-- Atlas for db auto migration
-- mkcert (one-time certificate generation)
-- AWS CLI (for LocalStack S3 verification and debugging)
+- Make
+- Protocol Buffer compiler (protoc) with Go plugins
+- Atlas CLI (migrations)
+- Swag CLI (API docs)
+- mkcert (one-time TLS certificate generation)
 
-### Environment variables
+### Environment Setup
 
-1. Database env
+1. Copy `.env.example` to `.env` in each service directory
+2. Generate TLS certificates (one-time): see `components/nginx/README.md`
+3. Start services: `make up`
+4. Run migrations: `cd services/hangout && make migrate && cd ../file && make migrate`
 
-- Copy `components/database/.env.example` to `components/database/.env`
-
-2. Service env
-
-- Copy `services/hangout/.env.example` to `services/hangout/.env`
-
-3. TLS certs for localhost (one-time)
-
-- See `components/nginx/README.md`
-
-### Local deployment with mysql from docker compose and go run
-
-```sh
-make mysql-run
-make run
-```
-
-or use air for auto reload
-
-```sh
-make mysql-run
-make air
-```
-
-### Local deployment fully with docker compose
-
--- Set DB_HOST to mysql -- utlizing docker network
-
-```sh
-make mysql-run (run the database first)
-make up
-```
-
-### DB Auto Migration
-
-Each services will have its own database, please setup your local environment / system variable to have the connection string value of your db with the variable name `{SERVICE}_DB_URL`. We then can generate diff by executing `make diff NAME={Migration_name}` and apply migration by executing `make migrate`
+Each service has its own database. Set `{SERVICE}_DB_URL` environment variables for Atlas migrations.
 
 ---
 
 ## Existing Features
 
-### Project Infrastructure
+### Microservices Architecture
 
-- Docker Compose orchestration
-- Health checks and container restart policies
-- GitHub Actions CI/CD
-- Lefthook for local Git workflow automation
+- **Hangout Service**: REST API with JWT auth, batch DB operations, Swagger docs
+- **File Service**: gRPC file lifecycle management with mTLS authentication
+- **Protocol Buffers**: Shared contracts in `pkg/shared` for service communication
+- **Separate databases**: Each service owns its schema with Atlas migrations
+- **Service discovery**: Docker DNS for internal routing
 
-### Hangout Service
+### File Upload Architecture
 
-- Auth, Hangout, and Activity modules
-- Swagger auto-docs with echoswagger
-- Unit tests (mocking, table-driven)
-- Test coverage reports (HTML)
-- GolangCI-Lint, Air reload
-- Makefile automation
-- Hangout memory file uploads (photos and alike)
-- More details on [Hangout Service Documentation](./services/hangout/README.md).
-
-### Database
-
-- Auto migration with atlas
-- Graceful shutdown
-
-### API Gateway
-
-- Nginx with HTTPS
-- Nginx as an API gateway, reverse-proxy, rate limiter and load balancer
-
-### LocalStack & File Storage
-
-- **LocalStack S3** for local development (AWS-compatible object storage)
-- **File upload feature** for hangout memories (photos)
-- **Concurrent upload** processing with goroutines (6-10x faster)
-- **Partial success** pattern (Instagram/Facebook style)
-- **AES-256 encryption** + MD5 checksums for uploaded files
-- **Presigned URLs** for secure file access (15-minute expiry)
-- **Dual endpoint configuration** (internal Docker network + external localhost)
+- Client-side upload via presigned S3 URLs (no file bytes through API)
+- Batch operations for multi-file uploads with rollback support
+- LocalStack S3 for development (AWS-compatible)
+- AES-256 encryption, MD5 checksums, 15-minute URL expiry
 - Max 10 files per upload, 10MB per file
 - Supported formats: `.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`
+
+### Security
+
+- mTLS for service-to-service communication (Hangout ↔ File)
+- JWT authentication for client requests
+- TLS termination at Nginx gateway
+- Certificate-based authentication with CA validation
+
+### Infrastructure
+
+- **Docker Compose**: Multi-service orchestration with health checks and restart policies
+- **Nginx**: API gateway with reverse proxy, HTTP/2, TLS termination, rate limiting, and load balancing
+- **LocalStack**: AWS-compatible S3 emulation for local development with persistence
+- **GitHub Actions**: CI/CD pipeline for linting, testing, and coverage reporting
+
+### Tooling
+
+- **Make**: Automation scripts for common tasks (build, test, migrate, up/down)
+- **Air**: Live reload for Go services during development
+- **Swag**: OpenAPI/Swagger documentation generation from code annotations
+- **golangci-lint**: Comprehensive Go linting with multiple checkers
+- **Lefthook**: Git hooks for pre-commit and pre-push automation
+- **mkcert**: Local TLS certificate generation for HTTPS development
+- **Atlas**: Database schema migrations with diff and apply capabilities
 
 ## Roadmap
 
 ### Short-Term Goals
 
-- File service
-  - File upload feature (photos attachment for hangout memories!)
-  - AWS S3 integration (LocalStack support)
-  - gRPC communication between fileservice and hangout service
-- Multi db for microservices
-- shared module in pkg/shared
+- **Observability stack**: Prometheus (metrics), Grafana (visualization), Grafana Tempo (distributed tracing), OpenTelemetry Collector (instrumentation)
 
 ### Long-Term Vision
 
@@ -164,6 +128,6 @@ Each services will have its own database, please setup your local environment / 
   - background worker service
 - Notification Emails + SMTP
 - OAuth / federated logins
-- Advanced observability: metrics, tracing, logging
-- Redis caching for preventing concurrent login session
-- Implement file scanning using opengovsg [lambda-virus-scanner](https://github.com/opengovsg/lambda-virus-scanner) + 2 S3 bucket architecture (dirty and clean bucket)
+- Role-based access control (RBAC) for multi-user scenarios
+- Redis caching layer for session management and rate limiting
+- Implement file scanning using opengovsg [lambda-virus-scanner](https://github.com/opengovsg/lambda-virus-scanner) + 3 S3 buckets architecture (dirty, clean, and thumbnail / resized image bucket)
