@@ -52,7 +52,7 @@ func TestCreateBatch_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryFileRepository(db)
+			r := repo.NewMemoryFileRepository(db, nil)
 			tt.prepare(mock, tt.files)
 			err := r.CreateBatch(ctx, tt.files)
 			if tt.wantError {
@@ -96,7 +96,7 @@ func TestGetByMemoryID_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryFileRepository(db)
+			r := repo.NewMemoryFileRepository(db, nil)
 			id := uuid.New()
 			tt.prepare(mock, id)
 			f, err := r.GetByMemoryID(ctx, id)
@@ -155,7 +155,7 @@ func TestGetByMemoryIDs_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryFileRepository(db)
+			r := repo.NewMemoryFileRepository(db, nil)
 			tt.prepare(mock, tt.ids)
 			files, err := r.GetByMemoryIDs(ctx, tt.ids)
 			if tt.wantError {
@@ -221,7 +221,7 @@ func TestUpdateStatusBatch_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryFileRepository(db)
+			r := repo.NewMemoryFileRepository(db, nil)
 			tt.prepare(mock, tt.ids, tt.status)
 			err := r.UpdateStatusBatch(ctx, tt.ids, tt.status)
 			if tt.wantError {
@@ -268,7 +268,7 @@ func TestDelete_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryFileRepository(db)
+			r := repo.NewMemoryFileRepository(db, nil)
 			id := uuid.New()
 			tt.prepare(mock, id)
 			err := r.Delete(ctx, id)
@@ -303,7 +303,7 @@ func TestWithTx_TableDriven(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			dbMain, mockMain := newDBWithRegexp(t)
 			dbTx, mockTx := newDBWithRegexp(t)
-			mainRepo := repo.NewMemoryFileRepository(dbMain)
+			mainRepo := repo.NewMemoryFileRepository(dbMain, nil)
 			f := []*domain.MemoryFile{{OriginalName: "tx.png", MemoryID: uuid.New()}}
 			tt.prepare(mockTx)
 			r := mainRepo.WithTx(dbTx)

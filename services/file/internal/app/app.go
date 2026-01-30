@@ -58,9 +58,6 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	// Repository Layer
-	repo := repository.NewMemoryFileRepository(dbConn)
-
 	// Initialize validator
 	fileValidator := validator.NewFileValidator()
 
@@ -117,6 +114,9 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 
 	// Initialize metrics recorder (after OTEL)
 	metricsRecorder := otel.NewMetricsRecorder(metrics)
+
+	// Repository Layer (after metrics to pass metrics)
+	repo := repository.NewMemoryFileRepository(dbConn, metricsRecorder)
 
 	// Storage Layer (after OTEL to pass metrics)
 	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config, metricsRecorder)
