@@ -75,12 +75,6 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 	// Initialize validator
 	fileValidator := validator.NewFileValidator()
 
-	// Initialize service
-	fileService := services.NewFileService(dbConn, repo, s3Client, fileValidator)
-
-	// Initialize handler
-	fileHandler := handlers.NewFileHandler(fileService)
-
 	// Initialize OpenTelemetry (if enabled)
 	var tracerProvider *otel.TracerProvider
 	var meterProvider *otel.MeterProvider
@@ -131,6 +125,13 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 			slog.Bool("use_stdout", cfg.OTELConfig.UseStdout),
 		)
 	}
+
+	// Initialize service (after OTEL to pass metrics)
+	metricsRecorder := otel.NewMetricsRecorder(metrics)
+	fileService := services.NewFileService(dbConn, repo, s3Client, fileValidator, metricsRecorder)
+
+	// Initialize handler
+	fileHandler := handlers.NewFileHandler(fileService)
 
 	// Setup network listener
 	addr := fmt.Sprintf(":%s", cfg.AppPort)

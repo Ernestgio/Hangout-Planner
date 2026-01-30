@@ -6,8 +6,10 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/pkg/shared/enums"
 	filepb "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/apperrors"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/mapper"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/storage"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/validator"
@@ -28,18 +30,21 @@ type fileService struct {
 	fileRepo      repository.MemoryFileRepository
 	storage       storage.Storage
 	fileValidator validator.FileValidator
+	metrics       *otel.MetricsRecorder
 }
 
-func NewFileService(db *gorm.DB, repo repository.MemoryFileRepository, storage storage.Storage, fileValidator validator.FileValidator) FileService {
+func NewFileService(db *gorm.DB, repo repository.MemoryFileRepository, storage storage.Storage, fileValidator validator.FileValidator, metrics *otel.MetricsRecorder) FileService {
 	return &fileService{
 		db:            db,
 		fileRepo:      repo,
 		storage:       storage,
 		fileValidator: fileValidator,
+		metrics:       metrics,
 	}
 }
 
 func (s *fileService) GenerateUploadURLs(ctx context.Context, req *filepb.GenerateUploadURLsRequest) (*filepb.GenerateUploadURLsResponse, error) {
+	recordMetrics := s.metrics.StartOperation(ctx, constants.MetricOpGenerateUploadURL)
 	var urls []*filepb.PresignedUploadURL
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
@@ -76,8 +81,13 @@ func (s *fileService) GenerateUploadURLs(ctx context.Context, req *filepb.Genera
 		return nil
 	})
 
+	recordMetrics(err)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, intent := range req.Files {
+		s.metrics.RecordFileSize(ctx, intent.Size)
 	}
 
 	return &filepb.GenerateUploadURLsResponse{
@@ -86,6 +96,8 @@ func (s *fileService) GenerateUploadURLs(ctx context.Context, req *filepb.Genera
 }
 
 func (s *fileService) ConfirmUpload(ctx context.Context, req *filepb.ConfirmUploadRequest) (*filepb.ConfirmUploadResponse, error) {
+	recordMetrics := s.metrics.StartOperation(ctx, constants.MetricOpConfirmUpload)
+
 	fileIDs := make([]uuid.UUID, 0, len(req.FileIds))
 	for _, idStr := range req.FileIds {
 		id, err := uuid.Parse(idStr)
@@ -102,6 +114,7 @@ func (s *fileService) ConfirmUpload(ctx context.Context, req *filepb.ConfirmUplo
 		return nil
 	})
 
+	recordMetrics(err)
 	if err != nil {
 		return nil, err
 	}
@@ -112,34 +125,43 @@ func (s *fileService) ConfirmUpload(ctx context.Context, req *filepb.ConfirmUplo
 }
 
 func (s *fileService) GetFileByMemoryID(ctx context.Context, req *filepb.GetFileByMemoryIDRequest) (*filepb.GetFileByMemoryIDResponse, error) {
+	recordMetrics := s.metrics.StartOperation(ctx, constants.MetricOpGetFile)
+
 	memoryID, err := uuid.Parse(req.MemoryId)
 	if err != nil {
+		recordMetrics(apperrors.ErrInvalidMemoryID)
 		return nil, apperrors.ErrInvalidMemoryID
 	}
 
 	file, err := s.fileRepo.GetByMemoryID(ctx, memoryID)
 	if err != nil {
+		recordMetrics(apperrors.ErrInvalidMemoryID)
 		return nil, apperrors.ErrInvalidMemoryID
 	}
 
 	downloadURL, err := s.storage.GeneratePresignedDownloadURL(ctx, file.StoragePath)
 	if err != nil {
+		recordMetrics(err)
 		return nil, err
 	}
 
 	urlExpiresAt := mapper.GetExpiresAtUnix(s.storage.GetPresignedURLExpiry())
 	fileWithURL := mapper.ToFileWithURL(file, downloadURL, urlExpiresAt)
 
+	recordMetrics(nil)
 	return &filepb.GetFileByMemoryIDResponse{
 		File: fileWithURL,
 	}, nil
 }
 
 func (s *fileService) GetFilesByMemoryIDs(ctx context.Context, req *filepb.GetFilesByMemoryIDsRequest) (*filepb.GetFilesByMemoryIDsResponse, error) {
+	recordMetrics := s.metrics.StartOperation(ctx, constants.MetricOpGetFilesBatch)
+
 	memoryIDs := make([]uuid.UUID, 0, len(req.MemoryIds))
 	for _, idStr := range req.MemoryIds {
 		id, err := uuid.Parse(idStr)
 		if err != nil {
+			recordMetrics(apperrors.ErrInvalidMemoryID)
 			return nil, apperrors.ErrInvalidMemoryID
 		}
 		memoryIDs = append(memoryIDs, id)
@@ -147,6 +169,7 @@ func (s *fileService) GetFilesByMemoryIDs(ctx context.Context, req *filepb.GetFi
 
 	files, err := s.fileRepo.GetByMemoryIDs(ctx, memoryIDs)
 	if err != nil {
+		recordMetrics(apperrors.ErrInvalidMemoryID)
 		return nil, apperrors.ErrInvalidMemoryID
 	}
 
@@ -154,6 +177,7 @@ func (s *fileService) GetFilesByMemoryIDs(ctx context.Context, req *filepb.GetFi
 	for _, file := range files {
 		downloadURL, err := s.storage.GeneratePresignedDownloadURL(ctx, file.StoragePath)
 		if err != nil {
+			recordMetrics(err)
 			return nil, err
 		}
 		downloadURLs[file.ID] = downloadURL
@@ -162,19 +186,24 @@ func (s *fileService) GetFilesByMemoryIDs(ctx context.Context, req *filepb.GetFi
 	urlExpiresAt := mapper.GetExpiresAtUnix(s.storage.GetPresignedURLExpiry())
 	filesWithURLs := mapper.ToFileWithURLBatch(files, downloadURLs, urlExpiresAt)
 
+	recordMetrics(nil)
 	return &filepb.GetFilesByMemoryIDsResponse{
 		Files: filesWithURLs,
 	}, nil
 }
 
 func (s *fileService) DeleteFile(ctx context.Context, req *filepb.DeleteFileRequest) (*filepb.DeleteFileResponse, error) {
+	recordMetrics := s.metrics.StartOperation(ctx, constants.MetricOpDeleteFile)
+
 	memoryID, err := uuid.Parse(req.MemoryId)
 	if err != nil {
+		recordMetrics(apperrors.ErrInvalidMemoryID)
 		return nil, apperrors.ErrInvalidMemoryID
 	}
 
 	file, err := s.fileRepo.GetByMemoryID(ctx, memoryID)
 	if err != nil {
+		recordMetrics(apperrors.ErrInvalidMemoryID)
 		return nil, apperrors.ErrInvalidMemoryID
 	}
 
@@ -186,13 +215,16 @@ func (s *fileService) DeleteFile(ctx context.Context, req *filepb.DeleteFileRequ
 	})
 
 	if err != nil {
+		recordMetrics(err)
 		return nil, err
 	}
 
 	if err := s.storage.Delete(ctx, file.StoragePath); err != nil {
+		recordMetrics(apperrors.ErrFileDeleteFailed)
 		return nil, apperrors.ErrFileDeleteFailed
 	}
 
+	recordMetrics(nil)
 	return &filepb.DeleteFileResponse{
 		Success: true,
 	}, nil
