@@ -40,6 +40,8 @@ type App struct {
 	listener       net.Listener
 	db             *gorm.DB
 	tracerProvider *otel.TracerProvider
+	meterProvider  *otel.MeterProvider
+	metrics        *otel.Metrics
 	closer         func() error
 	cfg            *config.Config
 }
@@ -81,6 +83,8 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 
 	// Initialize OpenTelemetry (if enabled)
 	var tracerProvider *otel.TracerProvider
+	var meterProvider *otel.MeterProvider
+	var metrics *otel.Metrics
 	if cfg.OTELConfig.Enabled {
 		otelCfg := otel.Config{
 			ServiceName:    cfg.AppName,
@@ -95,6 +99,33 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 			_ = dbCloser()
 			return nil, err
 		}
+
+		meterProvider, err = otel.NewMeterProvider(ctx, otelCfg)
+		if err != nil {
+			logger.Error(ctx, logmsg.OTELInitFailed, err)
+			_ = dbCloser()
+			_ = tracerProvider.Shutdown(ctx)
+			return nil, err
+		}
+
+		metrics, err = otel.InitMetrics(constants.MeterName)
+		if err != nil {
+			logger.Error(ctx, logmsg.OTELInitFailed, err)
+			_ = dbCloser()
+			_ = tracerProvider.Shutdown(ctx)
+			_ = meterProvider.Shutdown(ctx)
+			return nil, err
+		}
+
+		// Start Go runtime instrumentation
+		if err := otel.StartRuntimeInstrumentation(); err != nil {
+			logger.Error(ctx, logmsg.OTELInitFailed, err)
+			_ = dbCloser()
+			_ = tracerProvider.Shutdown(ctx)
+			_ = meterProvider.Shutdown(ctx)
+			return nil, err
+		}
+
 		logger.Info(ctx, logmsg.OTELInitialized,
 			slog.String("endpoint", cfg.OTELConfig.Endpoint),
 			slog.Bool("use_stdout", cfg.OTELConfig.UseStdout),
@@ -110,6 +141,9 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		if tracerProvider != nil {
 			_ = tracerProvider.Shutdown(ctx)
 		}
+		if meterProvider != nil {
+			_ = meterProvider.Shutdown(ctx)
+		}
 		return nil, err
 	}
 
@@ -124,6 +158,9 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 			_ = dbCloser()
 			if tracerProvider != nil {
 				_ = tracerProvider.Shutdown(ctx)
+			}
+			if meterProvider != nil {
+				_ = meterProvider.Shutdown(ctx)
 			}
 			return nil, err
 		}
@@ -159,6 +196,8 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		listener:       lis,
 		db:             dbConn,
 		tracerProvider: tracerProvider,
+		meterProvider:  meterProvider,
+		metrics:        metrics,
 		closer:         dbCloser,
 		cfg:            cfg,
 	}, nil
@@ -223,6 +262,13 @@ func (a *App) Shutdown() error {
 	// Shutdown tracer provider to flush pending spans
 	if a.tracerProvider != nil {
 		if err := a.tracerProvider.Shutdown(ctx); err != nil {
+			logger.Error(ctx, logmsg.OTELShutdownFailed, err)
+		}
+	}
+
+	// Shutdown meter provider to flush pending metrics
+	if a.meterProvider != nil {
+		if err := a.meterProvider.Shutdown(ctx); err != nil {
 			logger.Error(ctx, logmsg.OTELShutdownFailed, err)
 		}
 	}

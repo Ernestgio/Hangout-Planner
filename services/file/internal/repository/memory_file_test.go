@@ -304,7 +304,7 @@ func TestWithTx_TableDriven(t *testing.T) {
 			dbMain, mockMain := newDBWithRegexp(t)
 			dbTx, mockTx := newDBWithRegexp(t)
 			mainRepo := repo.NewMemoryFileRepository(dbMain)
-			f := []*domain.MemoryFile{&domain.MemoryFile{OriginalName: "tx.png", MemoryID: uuid.New()}}
+			f := []*domain.MemoryFile{{OriginalName: "tx.png", MemoryID: uuid.New()}}
 			tt.prepare(mockTx)
 			r := mainRepo.WithTx(dbTx)
 			err := r.CreateBatch(ctx, f)
