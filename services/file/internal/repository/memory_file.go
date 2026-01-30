@@ -10,9 +10,7 @@ import (
 
 type MemoryFileRepository interface {
 	WithTx(tx *gorm.DB) MemoryFileRepository
-	Create(ctx context.Context, file *domain.MemoryFile) (*domain.MemoryFile, error)
 	CreateBatch(ctx context.Context, files []*domain.MemoryFile) error
-	GetByID(ctx context.Context, fileID uuid.UUID) (*domain.MemoryFile, error)
 	GetByMemoryID(ctx context.Context, memoryID uuid.UUID) (*domain.MemoryFile, error)
 	GetByMemoryIDs(ctx context.Context, memoryIDs []uuid.UUID) ([]*domain.MemoryFile, error)
 	UpdateStatusBatch(ctx context.Context, fileIDs []uuid.UUID, status string) error
@@ -31,23 +29,8 @@ func (r *memoryFileRepository) WithTx(tx *gorm.DB) MemoryFileRepository {
 	return &memoryFileRepository{db: tx}
 }
 
-func (r *memoryFileRepository) Create(ctx context.Context, file *domain.MemoryFile) (*domain.MemoryFile, error) {
-	if err := r.db.WithContext(ctx).Create(file).Error; err != nil {
-		return nil, err
-	}
-	return file, nil
-}
-
 func (r *memoryFileRepository) CreateBatch(ctx context.Context, files []*domain.MemoryFile) error {
 	return r.db.WithContext(ctx).Create(files).Error
-}
-
-func (r *memoryFileRepository) GetByID(ctx context.Context, fileID uuid.UUID) (*domain.MemoryFile, error) {
-	var file domain.MemoryFile
-	if err := r.db.WithContext(ctx).Where("id = ?", fileID).First(&file).Error; err != nil {
-		return nil, err
-	}
-	return &file, nil
 }
 
 func (r *memoryFileRepository) GetByMemoryID(ctx context.Context, memoryID uuid.UUID) (*domain.MemoryFile, error) {

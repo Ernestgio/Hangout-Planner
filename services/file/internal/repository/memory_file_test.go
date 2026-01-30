@@ -14,51 +14,6 @@ import (
 	"gorm.io/gorm"
 )
 
-func TestCreate_TableDriven(t *testing.T) {
-	ctx := context.Background()
-
-	tests := []struct {
-		name      string
-		prepare   func(sqlmock.Sqlmock, *domain.MemoryFile)
-		wantError bool
-	}{
-		{
-			name: "success",
-			prepare: func(m sqlmock.Sqlmock, f *domain.MemoryFile) {
-				m.ExpectBegin()
-				m.ExpectExec("INSERT INTO .*memory_files.*").WillReturnResult(sqlmock.NewResult(1, 1))
-				m.ExpectCommit()
-			},
-		},
-		{
-			name: "insert error",
-			prepare: func(m sqlmock.Sqlmock, f *domain.MemoryFile) {
-				m.ExpectBegin()
-				m.ExpectExec("INSERT INTO .*memory_files.*").WillReturnError(errors.New("insert failed"))
-				m.ExpectRollback()
-			},
-			wantError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryFileRepository(db)
-			f := &domain.MemoryFile{OriginalName: "test.png", MemoryID: uuid.New()}
-			tt.prepare(mock, f)
-			got, err := r.Create(ctx, f)
-			if tt.wantError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, f.OriginalName, got.OriginalName)
-			}
-			require.NoError(t, mock.ExpectationsWereMet())
-		})
-	}
-}
-
 func TestCreateBatch_TableDriven(t *testing.T) {
 	ctx := context.Background()
 
@@ -104,52 +59,6 @@ func TestCreateBatch_TableDriven(t *testing.T) {
 				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
-			}
-			require.NoError(t, mock.ExpectationsWereMet())
-		})
-	}
-}
-
-func TestGetByID_TableDriven(t *testing.T) {
-	ctx := context.Background()
-
-	tests := []struct {
-		name      string
-		prepare   func(sqlmock.Sqlmock, uuid.UUID)
-		wantError bool
-	}{
-		{
-			name: "found",
-			prepare: func(m sqlmock.Sqlmock, id uuid.UUID) {
-				cols := []string{"id", "original_name", "file_extension", "storage_path", "file_size", "mime_type", "file_status", "created_at", "deleted_at", "memory_id"}
-				m.ExpectQuery("SELECT .* FROM .*memory_files.*").
-					WithArgs(id, sqlmock.AnyArg()).
-					WillReturnRows(sqlmock.NewRows(cols).AddRow(id, "file.png", "png", "/path/file.png", 1024, "image/png", "PENDING", time.Now(), nil, uuid.New()))
-			},
-		},
-		{
-			name: "not found",
-			prepare: func(m sqlmock.Sqlmock, id uuid.UUID) {
-				m.ExpectQuery("SELECT .* FROM .*memory_files.*").
-					WithArgs(id, sqlmock.AnyArg()).
-					WillReturnError(gorm.ErrRecordNotFound)
-			},
-			wantError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryFileRepository(db)
-			id := uuid.New()
-			tt.prepare(mock, id)
-			f, err := r.GetByID(ctx, id)
-			if tt.wantError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				require.Equal(t, "file.png", f.OriginalName)
 			}
 			require.NoError(t, mock.ExpectationsWereMet())
 		})
@@ -395,12 +304,11 @@ func TestWithTx_TableDriven(t *testing.T) {
 			dbMain, mockMain := newDBWithRegexp(t)
 			dbTx, mockTx := newDBWithRegexp(t)
 			mainRepo := repo.NewMemoryFileRepository(dbMain)
-			f := &domain.MemoryFile{OriginalName: "tx.png", MemoryID: uuid.New()}
+			f := []*domain.MemoryFile{&domain.MemoryFile{OriginalName: "tx.png", MemoryID: uuid.New()}}
 			tt.prepare(mockTx)
 			r := mainRepo.WithTx(dbTx)
-			got, err := r.Create(ctx, f)
+			err := r.CreateBatch(ctx, f)
 			require.NoError(t, err)
-			require.Equal(t, "tx.png", got.OriginalName)
 			require.NoError(t, mockTx.ExpectationsWereMet())
 			require.NoError(t, mockMain.ExpectationsWereMet())
 		})
