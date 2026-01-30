@@ -10,6 +10,8 @@ import (
 
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/file/internal/config"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/constants"
+	"github.com/Ernestgio/Hangout-Planner/services/file/internal/otel"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
@@ -24,9 +26,10 @@ type S3Client struct {
 	bucketName         string
 	externalEndpoint   string
 	presignedURLExpiry time.Duration
+	metrics            *otel.MetricsRecorder
 }
 
-func NewS3Client(ctx context.Context, cfg *config.S3Config) (*S3Client, error) {
+func NewS3Client(ctx context.Context, cfg *config.S3Config, metrics *otel.MetricsRecorder) (*S3Client, error) {
 	awsCfg, err := awsconfig.LoadDefaultConfig(ctx,
 		awsconfig.WithRegion(cfg.Region),
 		awsconfig.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(
@@ -52,6 +55,7 @@ func NewS3Client(ctx context.Context, cfg *config.S3Config) (*S3Client, error) {
 		bucketName:         cfg.BucketName,
 		externalEndpoint:   cfg.ExternalEndpoint,
 		presignedURLExpiry: cfg.GetPresignedURLExpiry(),
+		metrics:            metrics,
 	}, nil
 }
 
@@ -83,10 +87,12 @@ func (s *S3Client) Upload(ctx context.Context, path string, reader io.Reader, co
 }
 
 func (s *S3Client) Delete(ctx context.Context, path string) error {
+	start := time.Now()
 	_, err := s.client.DeleteObject(ctx, &s3.DeleteObjectInput{
 		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(path),
 	})
+	s.metrics.RecordS3Operation(ctx, constants.MetricS3OpDelete, time.Since(start))
 	if err != nil {
 		return apperrors.ErrFileDeleteFailed
 	}
@@ -95,12 +101,14 @@ func (s *S3Client) Delete(ctx context.Context, path string) error {
 }
 
 func (s *S3Client) GeneratePresignedDownloadURL(ctx context.Context, path string) (string, error) {
+	start := time.Now()
 	presignClient := s.newPresignClient()
 
 	req, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(s.bucketName),
 		Key:    aws.String(path),
 	}, s.withPresignExpiry)
+	s.metrics.RecordS3Operation(ctx, constants.MetricS3OpPresignDownload, time.Since(start))
 	if err != nil {
 		return "", apperrors.ErrPresignedDownloadURLFailed
 	}
@@ -109,6 +117,7 @@ func (s *S3Client) GeneratePresignedDownloadURL(ctx context.Context, path string
 }
 
 func (s *S3Client) GeneratePresignedUploadURL(ctx context.Context, path string, contentType string) (string, error) {
+	start := time.Now()
 	presignClient := s.newPresignClient()
 
 	req, err := presignClient.PresignPutObject(ctx, &s3.PutObjectInput{
@@ -116,6 +125,7 @@ func (s *S3Client) GeneratePresignedUploadURL(ctx context.Context, path string, 
 		Key:         aws.String(path),
 		ContentType: aws.String(contentType),
 	}, s.withPresignExpiry)
+	s.metrics.RecordS3Operation(ctx, constants.MetricS3OpPresignUpload, time.Since(start))
 	if err != nil {
 		return "", apperrors.ErrPresignedUploadURLFailed
 	}

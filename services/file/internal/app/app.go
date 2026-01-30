@@ -58,17 +58,6 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	// Storage Layer
-	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config)
-	if err != nil {
-		logger.Error(ctx, logmsg.S3ConnectionFailed, err,
-			slog.String("endpoint", cfg.S3Config.Endpoint),
-			slog.String("bucket", cfg.S3Config.BucketName),
-		)
-		_ = dbCloser()
-		return nil, err
-	}
-
 	// Repository Layer
 	repo := repository.NewMemoryFileRepository(dbConn)
 
@@ -126,8 +115,27 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		)
 	}
 
-	// Initialize service (after OTEL to pass metrics)
+	// Initialize metrics recorder (after OTEL)
 	metricsRecorder := otel.NewMetricsRecorder(metrics)
+
+	// Storage Layer (after OTEL to pass metrics)
+	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config, metricsRecorder)
+	if err != nil {
+		logger.Error(ctx, logmsg.S3ConnectionFailed, err,
+			slog.String("endpoint", cfg.S3Config.Endpoint),
+			slog.String("bucket", cfg.S3Config.BucketName),
+		)
+		_ = dbCloser()
+		if tracerProvider != nil {
+			_ = tracerProvider.Shutdown(ctx)
+		}
+		if meterProvider != nil {
+			_ = meterProvider.Shutdown(ctx)
+		}
+		return nil, err
+	}
+
+	// Initialize service
 	fileService := services.NewFileService(dbConn, repo, s3Client, fileValidator, metricsRecorder)
 
 	// Initialize handler
