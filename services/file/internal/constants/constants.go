@@ -35,6 +35,32 @@ const (
 
 	// OTEL Config - Default values constants
 	DefaultOTELEndpoint = "localhost:4317"
+
+	// Metrics Constants - Operation labels
+	MetricOpGenerateUploadURL = "generate_upload_url"
+	MetricOpConfirmUpload     = "confirm_upload"
+	MetricOpGetFile           = "get_file"
+	MetricOpGetFilesBatch     = "get_files_batch"
+	MetricOpDeleteFile        = "delete_file"
+
+	// Metrics Constants - Status labels
+	MetricStatusSuccess = "success"
+	MetricStatusError   = "error"
+	MetricStatusPending = "pending"
+
+	// Metrics Constants - S3 Operation labels
+	MetricS3OpPresignUpload   = "presign_upload_url"
+	MetricS3OpPresignDownload = "presign_download_url"
+	MetricS3OpDelete          = "delete_object"
+
+	// Metrics Constants - DB Operation labels
+	MetricDBOpInsert = "insert"
+	MetricDBOpSelect = "select"
+	MetricDBOpUpdate = "update"
+	MetricDBOpDelete = "delete"
+
+	// Metrics Constants - Meter name
+	MeterName = "github.com/Ernestgio/Hangout-Planner/services/file"
 )
 
 // AllowedFileExtensions contains the permitted file extensions for uploads
