@@ -99,7 +99,7 @@ func (mp *MeterProvider) Shutdown(ctx context.Context) error {
 }
 
 func StartRuntimeMetrics() error {
-	return runtime.Start(runtime.WithMinimumReadMemStatsInterval(15 * time.Second))
+	return runtime.Start(runtime.WithMinimumReadMemStatsInterval(time.Second))
 }
 
 func InitMetrics() (*Metrics, error) {
