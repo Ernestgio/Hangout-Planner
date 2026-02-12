@@ -20,7 +20,7 @@
   "graphTooltip": 1,
   "id": null,
   "links": [],
-  "liveNow": false,
+  "liveNow": true,
   "panels": [
     {
       "collapsed": false,
@@ -116,7 +116,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(otel_file_service_request_total{service_name=\"file-service\"}[1m])",
+          "expr": "rate(otel_file_service_requests_total{service_name=\"file\",status=\"success\"}[1m])",
           "legendFormat": "{{operation}}",
           "range": true,
           "refId": "A"
@@ -210,7 +210,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(otel_file_service_request_errors{service_name=\"file-service\"}[1m])",
+          "expr": "rate(otel_file_service_requests_total{service_name=\"file\",status!=\"success\"}[1m])",
           "legendFormat": "{{operation}}",
           "range": true,
           "refId": "A"
@@ -300,7 +300,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, rate(otel_file_service_request_duration_bucket{service_name=\"file-service\"}[1m]))",
+          "expr": "histogram_quantile(0.50, rate(otel_file_service_request_duration_seconds_bucket{service_name=\"file\"}[1m]))",
           "legendFormat": "P50 - {{operation}}",
           "range": true,
           "refId": "A"
@@ -311,7 +311,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, rate(otel_file_service_request_duration_bucket{service_name=\"file-service\"}[1m]))",
+          "expr": "histogram_quantile(0.95, rate(otel_file_service_request_duration_seconds_bucket{service_name=\"file\"}[1m]))",
           "legendFormat": "P95 - {{operation}}",
           "range": true,
           "refId": "B"
@@ -322,7 +322,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, rate(otel_file_service_request_duration_bucket{service_name=\"file-service\"}[1m]))",
+          "expr": "histogram_quantile(0.99, rate(otel_file_service_request_duration_seconds_bucket{service_name=\"file\"}[1m]))",
           "legendFormat": "P99 - {{operation}}",
           "range": true,
           "refId": "C"
@@ -425,7 +425,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "otel_file_service_active_requests{service_name=\"file-service\"}",
+          "expr": "otel_file_service_requests_active{service_name=\"file\"}",
           "legendFormat": "{{operation}}",
           "range": true,
           "refId": "A"
@@ -515,8 +515,8 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, rate(otel_file_service_s3_operation_duration_bucket{service_name=\"file-service\"}[1m]))",
-          "legendFormat": "P95 - {{s3_operation}}",
+          "expr": "histogram_quantile(0.95, rate(otel_file_service_s3_operation_duration_seconds_bucket{service_name=\"file\"}[1m]))",
+          "legendFormat": "P95 - {{operation}}",
           "range": true,
           "refId": "A"
         }
@@ -605,8 +605,8 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, rate(otel_file_service_db_operation_duration_bucket{service_name=\"file-service\"}[1m]))",
-          "legendFormat": "P95 - {{db_operation}}",
+          "expr": "histogram_quantile(0.95, rate(otel_file_service_db_operation_duration_seconds_bucket{service_name=\"file\"}[1m]))",
+          "legendFormat": "P95 - {{operation}}",
           "range": true,
           "refId": "A"
         }
@@ -695,7 +695,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.50, rate(otel_file_service_file_upload_size_bucket{service_name=\"file-service\"}[5m]))",
+          "expr": "histogram_quantile(0.50, rate(otel_file_service_file_upload_size_bucket{service_name=\"file\"}[5m]))",
           "legendFormat": "P50",
           "range": true,
           "refId": "A"
@@ -706,7 +706,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, rate(otel_file_service_file_upload_size_bucket{service_name=\"file-service\"}[5m]))",
+          "expr": "histogram_quantile(0.95, rate(otel_file_service_file_upload_size_bucket{service_name=\"file\"}[5m]))",
           "legendFormat": "P95",
           "range": true,
           "refId": "B"
@@ -717,7 +717,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.99, rate(otel_file_service_file_upload_size_bucket{service_name=\"file-service\"}[5m]))",
+          "expr": "histogram_quantile(0.99, rate(otel_file_service_file_upload_size_bucket{service_name=\"file\"}[5m]))",
           "legendFormat": "P99",
           "range": true,
           "refId": "C"
@@ -807,13 +807,430 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "histogram_quantile(0.95, rate(otel_file_service_db_batch_size_bucket{service_name=\"file-service\"}[5m]))",
-          "legendFormat": "P95 - {{db_operation}}",
+          "expr": "histogram_quantile(0.95, rate(otel_file_service_db_batch_size_bucket{service_name=\"file\"}[5m]))",
+          "legendFormat": "P95 - {{operation}}",
           "range": true,
           "refId": "A"
         }
       ],
       "title": "DB Batch Size Distribution (P95)",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 34
+      },
+      "id": 11,
+      "panels": [],
+      "title": "Go Runtime Metrics - Memory, GC, Goroutines",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Number of active goroutines",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "goroutines",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 0,
+        "y": 35
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "otel_process_runtime_go_goroutines{service_name=\"file\"}",
+          "legendFormat": "Goroutines",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Go Goroutines",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Go memory usage",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "bytes",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "bytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 6,
+        "y": 35
+      },
+      "id": 13,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "otel_process_runtime_go_mem_heap_alloc_bytes{service_name=\"file\"}",
+          "legendFormat": "Heap Alloc",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "otel_process_runtime_go_mem_heap_inuse_bytes{service_name=\"file\"}",
+          "legendFormat": "Heap In-Use",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "otel_process_runtime_go_mem_heap_idle_bytes{service_name=\"file\"}",
+          "legendFormat": "Heap Idle",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Go Memory Usage",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "Garbage collection metrics",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "count",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 12,
+        "y": 35
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "rate(otel_process_runtime_go_gc_count_total{service_name=\"file\"}[1m])",
+          "legendFormat": "GC Rate",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Go GC Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "description": "SQL connection pool metrics",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "connections",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "tooltip": false,
+              "viz": false,
+              "legend": false
+            },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 6,
+        "x": 18,
+        "y": 35
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": ["mean", "max"],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "otel_go_sql_connections_open{service_name=\"file\"}",
+          "legendFormat": "Open",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "otel_go_sql_connections_in_use{service_name=\"file\"}",
+          "legendFormat": "In Use",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "otel_go_sql_connections_idle{service_name=\"file\"}",
+          "legendFormat": "Idle",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "SQL Connection Pool",
       "type": "timeseries"
     }
   ],

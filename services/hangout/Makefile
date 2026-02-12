@@ -50,7 +50,6 @@ awslocal:
 mysql-run:
 	docker compose up -d mysql
 
-
 ## Start docker-compose services (DB, redis, etc.)
 up:
 	docker-compose up --build
@@ -87,6 +86,20 @@ migrate:
 
 migrate-status:
 	atlas migrate status --env local 
+
+
+## Telemetry services
+## Otel tollector
+otel-run:
+	docker compose up -d otelcollector
+
+##prometheus
+prometheus-run:
+	docker compose up -d prometheus
+
+#grafana
+grafana-run:
+	docker compose up -d grafana
 
 ## Show available targets
 help:

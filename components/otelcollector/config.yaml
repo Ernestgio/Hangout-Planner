@@ -28,7 +28,7 @@ processors:
         value: hangout-planner
         action: upsert
       - key: deployment.environment
-        value: ${ENVIRONMENT:local}
+        value: local
         action: upsert
 
   attributes/cardinality:
