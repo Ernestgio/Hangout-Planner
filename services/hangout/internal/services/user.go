@@ -3,7 +3,6 @@ package services
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
@@ -37,7 +36,7 @@ func NewUserService(db *gorm.DB, userRepo repository.UserRepository, bcryptUtils
 }
 
 func (s *userService) CreateUser(ctx context.Context, request dto.CreateUserRequest) (*domain.User, error) {
-	start := time.Now()
+	recordMetrics := s.metrics.StartRequest(ctx, "user", "create")
 	var createdUser *domain.User
 
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -63,18 +62,24 @@ func (s *userService) CreateUser(ctx context.Context, request dto.CreateUserRequ
 		return nil
 	})
 
+	recordMetrics(getStatus(err))
 	if err != nil {
-		s.metrics.RecordDBOperation(ctx, "transaction", "users", time.Since(start), 0)
 		return nil, err
 	}
 
-	s.metrics.RecordDBOperation(ctx, "insert", "users", time.Since(start), 1)
 	return createdUser, nil
 }
 
 func (s *userService) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
-	start := time.Now()
+	recordMetrics := s.metrics.StartRequest(ctx, "user", "get_by_email")
 	user, err := s.userRepo.GetUserByEmail(ctx, email)
-	s.metrics.RecordDBOperation(ctx, "select", "users", time.Since(start), 0)
+	recordMetrics(getStatus(err))
 	return user, err
+}
+
+func getStatus(err error) string {
+	if err != nil {
+		return "error"
+	}
+	return "success"
 }

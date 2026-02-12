@@ -9,7 +9,6 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/request"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
-	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
 	"github.com/labstack/echo/v4"
 )
@@ -22,14 +21,12 @@ type AuthHandler interface {
 type authHandler struct {
 	authService     services.AuthService
 	responseBuilder *response.Builder
-	metrics         *otel.MetricsRecorder
 }
 
-func NewAuthHandler(authService services.AuthService, responseBuilder *response.Builder, metrics *otel.MetricsRecorder) AuthHandler {
+func NewAuthHandler(authService services.AuthService, responseBuilder *response.Builder) AuthHandler {
 	return &authHandler{
 		authService:     authService,
 		responseBuilder: responseBuilder,
-		metrics:         metrics,
 	}
 }
 
@@ -45,18 +42,13 @@ func NewAuthHandler(authService services.AuthService, responseBuilder *response.
 // @Failure      500   {object}  response.StandardResponse
 // @Router       /auth/signup [post]
 func (ac *authHandler) SignUp(c echo.Context) error {
-	ctx := c.Request().Context()
-	finish := ac.metrics.StartRequest(ctx, "auth", "signup")
-
 	req, err := request.BindAndValidate[dto.SignUpRequest](c)
 	if err != nil {
-		finish("error")
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
-
+	ctx := c.Request().Context()
 	user, err := ac.authService.SignUser(ctx, req)
 	if err != nil {
-		finish("error")
 		switch err {
 		case apperrors.ErrUserAlreadyExists:
 			return c.JSON(http.StatusConflict, ac.responseBuilder.Error(err))
@@ -65,7 +57,6 @@ func (ac *authHandler) SignUp(c echo.Context) error {
 		}
 	}
 
-	finish("success")
 	return c.JSON(http.StatusCreated, ac.responseBuilder.Success(constants.UserSignedUpSuccessfully, mapper.UserToResponseDTO(user)))
 }
 
@@ -81,18 +72,13 @@ func (ac *authHandler) SignUp(c echo.Context) error {
 // @Failure      500          {object}  response.StandardResponse
 // @Router       /auth/signin [post]
 func (ac *authHandler) SignIn(c echo.Context) error {
-	ctx := c.Request().Context()
-	finish := ac.metrics.StartRequest(ctx, "auth", "signin")
-
 	req, err := request.BindAndValidate[dto.SignInRequest](c)
 	if err != nil {
-		finish("error")
 		return c.JSON(http.StatusBadRequest, ac.responseBuilder.Error(apperrors.ErrInvalidPayload))
 	}
-
+	ctx := c.Request().Context()
 	token, err := ac.authService.SignInUser(ctx, req)
 	if err != nil {
-		finish("error")
 		switch err {
 		case apperrors.ErrInvalidCredentials:
 			return c.JSON(http.StatusUnauthorized, ac.responseBuilder.Error(err))
@@ -100,7 +86,5 @@ func (ac *authHandler) SignIn(c echo.Context) error {
 			return c.JSON(http.StatusInternalServerError, ac.responseBuilder.Error(err))
 		}
 	}
-
-	finish("success")
 	return c.JSON(http.StatusOK, ac.responseBuilder.Success(constants.UserSignedInSuccessfully, token))
 }

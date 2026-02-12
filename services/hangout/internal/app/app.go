@@ -18,6 +18,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/middlewares"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router"
@@ -106,7 +107,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
 
 	// Repository Layer
-	userRepo := repository.NewUserRepository(dbConn)
+	userRepo := repository.NewUserRepository(dbConn, metricsRecorder)
 	hangoutRepo := repository.NewHangoutRepository(dbConn)
 	activityRepo := repository.NewActivityRepository(dbConn)
 	memoryRepo := repository.NewMemoryRepository(dbConn)
@@ -119,7 +120,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	memoryService := services.NewMemoryService(dbConn, memoryRepo, hangoutRepo, fileClient)
 
 	// handler Layer
-	authHandler := handlers.NewAuthHandler(authService, responseBuilder, metricsRecorder)
+	authHandler := handlers.NewAuthHandler(authService, responseBuilder)
 	hangoutHandler := handlers.NewHangoutHandler(hangoutService, responseBuilder)
 	activityHandler := handlers.NewActivityHandler(activityService, responseBuilder)
 	memoryHandler := handlers.NewMemoryHandler(memoryService, responseBuilder)
@@ -131,6 +132,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	// middleware
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
 	e.Use(middleware.Decompress())
+	e.Use(middlewares.MetricsMiddleware(metricsRecorder))
 
 	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler, memoryHandler)
 
