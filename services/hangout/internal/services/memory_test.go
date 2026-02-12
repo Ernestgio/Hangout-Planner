@@ -147,7 +147,7 @@ func TestMemoryService_GenerateUploadURLs(t *testing.T) {
 			hangoutRepo := new(MockHangoutRepository)
 			fileService := new(MockFileService)
 			tt.setup(memRepo, hangoutRepo, fileService, sqlMock)
-			svc := services.NewMemoryService(db, memRepo, hangoutRepo, fileService)
+			svc := services.NewMemoryService(db, memRepo, hangoutRepo, fileService, nil)
 			resp, err := svc.GenerateUploadURLs(ctx, userID, hangoutID, tt.req)
 			if tt.wantError != nil {
 				require.Error(t, err)
@@ -247,7 +247,7 @@ func TestMemoryService_ConfirmUpload(t *testing.T) {
 			memRepo := new(MockMemoryRepository)
 			fileService := new(MockFileService)
 			tt.setup(memRepo, fileService)
-			svc := services.NewMemoryService(db, memRepo, nil, fileService)
+			svc := services.NewMemoryService(db, memRepo, nil, fileService, nil)
 			err := svc.ConfirmUpload(ctx, userID, tt.req)
 			if tt.wantError != nil {
 				require.Error(t, err)
@@ -313,7 +313,7 @@ func TestMemoryService_GetMemory(t *testing.T) {
 			memRepo := new(MockMemoryRepository)
 			fileService := new(MockFileService)
 			tt.setup(memRepo, fileService)
-			svc := services.NewMemoryService(db, memRepo, nil, fileService)
+			svc := services.NewMemoryService(db, memRepo, nil, fileService, nil)
 			resp, err := svc.GetMemory(ctx, userID, memoryID)
 			if tt.wantError != nil {
 				require.Error(t, err)
@@ -420,7 +420,7 @@ func TestMemoryService_ListMemories(t *testing.T) {
 			hangoutRepo := new(MockHangoutRepository)
 			fileService := new(MockFileService)
 			tt.setup(memRepo, hangoutRepo, fileService)
-			svc := services.NewMemoryService(db, memRepo, hangoutRepo, fileService)
+			svc := services.NewMemoryService(db, memRepo, hangoutRepo, fileService, nil)
 			resp, err := svc.ListMemories(ctx, userID, hangoutID, tt.pagination)
 			if tt.wantError != nil {
 				require.Error(t, err)
@@ -511,7 +511,7 @@ func TestMemoryService_DeleteMemory(t *testing.T) {
 			memRepo := new(MockMemoryRepository)
 			fileService := new(MockFileService)
 			tt.setup(memRepo, fileService, sqlMock)
-			svc := services.NewMemoryService(db, memRepo, nil, fileService)
+			svc := services.NewMemoryService(db, memRepo, nil, fileService, nil)
 			err := svc.DeleteMemory(ctx, userID, memoryID)
 			if tt.wantError != nil {
 				require.Error(t, err)

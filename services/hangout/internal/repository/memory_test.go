@@ -45,7 +45,7 @@ func TestCreateMemory_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryRepository(db)
+			r := repo.NewMemoryRepository(db, nil)
 			m := &domain.Memory{Name: "m", HangoutID: uuid.New(), UserID: uuid.New()}
 			tt.prepare(mock)
 			got, err := r.CreateMemory(ctx, m)
@@ -94,7 +94,7 @@ func TestGetMemoryByID_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryRepository(db)
+			r := repo.NewMemoryRepository(db, nil)
 			id := uuid.New()
 			userID := uuid.New()
 			tt.prepare(mock, id, userID)
@@ -149,7 +149,7 @@ func TestGetMemoriesByHangoutID_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryRepository(db)
+			r := repo.NewMemoryRepository(db, nil)
 			hid := uuid.New()
 			tt.prepare(mock, hid, tt.pagination)
 			res, err := r.GetMemoriesByHangoutID(ctx, hid, tt.pagination)
@@ -194,7 +194,7 @@ func TestDeleteMemory_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryRepository(db)
+			r := repo.NewMemoryRepository(db, nil)
 			id := uuid.New()
 			tt.prepare(mock, id)
 			err := r.DeleteMemory(ctx, id)
@@ -222,7 +222,7 @@ func TestGetMemoriesByHangoutID_WithCursor_TableDriven(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryRepository(db)
+			r := repo.NewMemoryRepository(db, nil)
 
 			hid := uuid.New()
 			cursorID := uuid.New()
@@ -254,7 +254,7 @@ func TestMemoryRepository_WithTx(t *testing.T) {
 	dbMain, mockMain := newDBWithRegexp(t)
 	dbTx, mockTx := newDBWithRegexp(t)
 
-	mainRepo := repo.NewMemoryRepository(dbMain)
+	mainRepo := repo.NewMemoryRepository(dbMain, nil)
 	m := &domain.Memory{Name: "txm", HangoutID: uuid.New(), UserID: uuid.New()}
 
 	mockTx.ExpectBegin()
@@ -300,7 +300,7 @@ func TestCreateMemoriesBatch_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryRepository(db)
+			r := repo.NewMemoryRepository(db, nil)
 			mems := []*domain.Memory{
 				{Name: "m1", HangoutID: uuid.New(), UserID: uuid.New()},
 				{Name: "m2", HangoutID: uuid.New(), UserID: uuid.New()},
@@ -366,7 +366,7 @@ func TestUpdateFileIDs_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryRepository(db)
+			r := repo.NewMemoryRepository(db, nil)
 			tt.prepare(mock, tt.updates)
 			err := r.UpdateFileIDs(ctx, tt.updates)
 			if tt.wantError {
@@ -445,7 +445,7 @@ func TestGetMemoriesByIDs_TableDriven(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			db, mock := newDBWithRegexp(t)
-			r := repo.NewMemoryRepository(db)
+			r := repo.NewMemoryRepository(db, nil)
 			userID := uuid.New()
 			tt.prepare(mock, tt.ids, userID)
 			res, err := r.GetMemoriesByIDs(ctx, tt.ids, userID)

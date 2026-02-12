@@ -110,14 +110,14 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	userRepo := repository.NewUserRepository(dbConn, metricsRecorder)
 	hangoutRepo := repository.NewHangoutRepository(dbConn, metricsRecorder)
 	activityRepo := repository.NewActivityRepository(dbConn, metricsRecorder)
-	memoryRepo := repository.NewMemoryRepository(dbConn)
+	memoryRepo := repository.NewMemoryRepository(dbConn, metricsRecorder)
 
 	// Service Layer
 	userService := services.NewUserService(dbConn, userRepo, bcryptUtils, metricsRecorder)
 	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils, metricsRecorder)
 	hangoutService := services.NewHangoutService(dbConn, hangoutRepo, activityRepo, metricsRecorder)
 	activityService := services.NewActivityService(dbConn, activityRepo, metricsRecorder)
-	memoryService := services.NewMemoryService(dbConn, memoryRepo, hangoutRepo, fileClient)
+	memoryService := services.NewMemoryService(dbConn, memoryRepo, hangoutRepo, fileClient, metricsRecorder)
 
 	// handler Layer
 	authHandler := handlers.NewAuthHandler(authService, responseBuilder)

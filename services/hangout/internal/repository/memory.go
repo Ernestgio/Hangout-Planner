@@ -3,11 +3,13 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -24,26 +26,34 @@ type MemoryRepository interface {
 }
 
 type memoryRepository struct {
-	db *gorm.DB
+	db      *gorm.DB
+	metrics *otel.MetricsRecorder
 }
 
-func NewMemoryRepository(db *gorm.DB) MemoryRepository {
-	return &memoryRepository{db: db}
+func NewMemoryRepository(db *gorm.DB, metrics *otel.MetricsRecorder) MemoryRepository {
+	return &memoryRepository{db: db, metrics: metrics}
 }
 
 func (r *memoryRepository) WithTx(tx *gorm.DB) MemoryRepository {
-	return &memoryRepository{db: tx}
+	return &memoryRepository{db: tx, metrics: r.metrics}
 }
 
 func (r *memoryRepository) CreateMemory(ctx context.Context, memory *domain.Memory) (*domain.Memory, error) {
-	if err := r.db.WithContext(ctx).Create(memory).Error; err != nil {
+	start := time.Now()
+	err := r.db.WithContext(ctx).Create(memory).Error
+	r.metrics.RecordDBOperation(ctx, "insert", "memories", time.Since(start), 1)
+
+	if err != nil {
 		return nil, err
 	}
 	return memory, nil
 }
 
 func (r *memoryRepository) CreateMemoriesBatch(ctx context.Context, memories []*domain.Memory) error {
-	return r.db.WithContext(ctx).Create(&memories).Error
+	start := time.Now()
+	err := r.db.WithContext(ctx).Create(&memories).Error
+	r.metrics.RecordDBOperation(ctx, "insert", "memories", time.Since(start), len(memories))
+	return err
 }
 
 func (r *memoryRepository) UpdateFileIDs(ctx context.Context, updates map[uuid.UUID]uuid.UUID) error {
@@ -65,7 +75,11 @@ func (r *memoryRepository) UpdateFileIDs(ctx context.Context, updates map[uuid.U
 	sql := fmt.Sprintf("UPDATE memories SET file_id = %s WHERE id IN (?%s)", caseSQL, RepeatPlaceholder(len(ids)-1))
 	args = append(args, ids...)
 
-	return r.db.WithContext(ctx).Exec(sql, args...).Error
+	start := time.Now()
+	err := r.db.WithContext(ctx).Exec(sql, args...).Error
+	r.metrics.RecordDBOperation(ctx, "update", "memories", time.Since(start), len(updates))
+
+	return err
 }
 
 func RepeatPlaceholder(count int) string {
@@ -81,7 +95,12 @@ func RepeatPlaceholder(count int) string {
 
 func (r *memoryRepository) GetMemoryByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Memory, error) {
 	var memory domain.Memory
-	if err := r.db.WithContext(ctx).First(&memory, "id = ? AND user_id = ?", id, userID).Error; err != nil {
+
+	start := time.Now()
+	err := r.db.WithContext(ctx).First(&memory, "id = ? AND user_id = ?", id, userID).Error
+	r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), 1)
+
+	if err != nil {
 		return nil, err
 	}
 	return &memory, nil
@@ -89,13 +108,19 @@ func (r *memoryRepository) GetMemoryByID(ctx context.Context, id uuid.UUID, user
 
 func (r *memoryRepository) GetMemoriesByIDs(ctx context.Context, ids []uuid.UUID, userID uuid.UUID) ([]domain.Memory, error) {
 	var memories []domain.Memory
-	if err := r.db.WithContext(ctx).Where("id IN ? AND user_id = ?", ids, userID).Find(&memories).Error; err != nil {
+
+	start := time.Now()
+	err := r.db.WithContext(ctx).Where("id IN ? AND user_id = ?", ids, userID).Find(&memories).Error
+	r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), len(memories))
+
+	if err != nil {
 		return nil, err
 	}
 	return memories, nil
 }
 
 func (r *memoryRepository) GetMemoriesByHangoutID(ctx context.Context, hangoutID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Memory, error) {
+	start := time.Now()
 	var memories []domain.Memory
 	limitToFetch := pagination.GetLimit() + 1
 	sortByColumn := constants.SortByCreatedAt
@@ -125,12 +150,17 @@ func (r *memoryRepository) GetMemoriesByHangoutID(ctx context.Context, hangoutID
 	query = query.Order(fmt.Sprintf("%s %s, id %s", sortByColumn, sortDir, sortDir)).Limit(limitToFetch)
 
 	if err := query.Find(&memories).Error; err != nil {
+		r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), 0)
 		return nil, err
 	}
 
+	r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), len(memories))
 	return memories, nil
 }
 
 func (r *memoryRepository) DeleteMemory(ctx context.Context, id uuid.UUID) error {
-	return r.db.WithContext(ctx).Delete(&domain.Memory{}, "id = ?", id).Error
+	start := time.Now()
+	err := r.db.WithContext(ctx).Delete(&domain.Memory{}, "id = ?", id).Error
+	r.metrics.RecordDBOperation(ctx, "delete", "memories", time.Since(start), 1)
+	return err
 }
