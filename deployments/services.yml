@@ -32,8 +32,6 @@ services:
     restart: on-failure
     env_file:
       - ../services/file/.env
-    environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=otelcollector:4317
     expose:
       - "9001"
     volumes:

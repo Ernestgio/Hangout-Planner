@@ -17,6 +17,7 @@ type Config struct {
 	DBConfig         *DBConfig
 	JwtConfig        *JwtConfig
 	GRPCClientConfig *GRPCClientConfig
+	OTELConfig       *OTELConfig
 	BcryptCost       int
 }
 
@@ -32,6 +33,7 @@ func Load() (*Config, error) {
 		DBConfig:         NewDBConfig(),
 		JwtConfig:        NewJwtConfig(),
 		GRPCClientConfig: NewGRPCClientConfig(),
+		OTELConfig:       NewOTELConfig(),
 		BcryptCost:       bcrypt.DefaultCost,
 	}
 

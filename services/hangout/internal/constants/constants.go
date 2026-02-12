@@ -83,4 +83,7 @@ const (
 	DefaultMTLSCertPath   = "/app/certs/mtls/hangout-client.crt"
 	DefaultMTLSKeyPath    = "/app/certs/mtls/hangout-client.key"
 	DefaultMTLSCAPath     = "/app/certs/mtls/ca.crt"
+
+	// OTEL default configs
+	DefaultOTELEndpoint = "otelcollector:4317"
 )
