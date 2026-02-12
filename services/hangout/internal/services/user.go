@@ -3,11 +3,13 @@ package services
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
 	"gorm.io/gorm"
@@ -22,13 +24,20 @@ type userService struct {
 	db          *gorm.DB
 	userRepo    repository.UserRepository
 	bcryptUtils utils.BcryptUtils
+	metrics     *otel.MetricsRecorder
 }
 
-func NewUserService(db *gorm.DB, userRepo repository.UserRepository, bcryptUtils utils.BcryptUtils) UserService {
-	return &userService{db: db, userRepo: userRepo, bcryptUtils: bcryptUtils}
+func NewUserService(db *gorm.DB, userRepo repository.UserRepository, bcryptUtils utils.BcryptUtils, metrics *otel.MetricsRecorder) UserService {
+	return &userService{
+		db:          db,
+		userRepo:    userRepo,
+		bcryptUtils: bcryptUtils,
+		metrics:     metrics,
+	}
 }
 
 func (s *userService) CreateUser(ctx context.Context, request dto.CreateUserRequest) (*domain.User, error) {
+	start := time.Now()
 	var createdUser *domain.User
 
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -55,12 +64,17 @@ func (s *userService) CreateUser(ctx context.Context, request dto.CreateUserRequ
 	})
 
 	if err != nil {
+		s.metrics.RecordDBOperation(ctx, "transaction", "users", time.Since(start), 0)
 		return nil, err
 	}
 
+	s.metrics.RecordDBOperation(ctx, "insert", "users", time.Since(start), 1)
 	return createdUser, nil
 }
 
 func (s *userService) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
-	return s.userRepo.GetUserByEmail(ctx, email)
+	start := time.Now()
+	user, err := s.userRepo.GetUserByEmail(ctx, email)
+	s.metrics.RecordDBOperation(ctx, "select", "users", time.Since(start), 0)
+	return user, err
 }

@@ -51,7 +51,7 @@ func TestAuthService_SignUser(t *testing.T) {
 			mockUserSvc := new(MockUserService)
 			tt.setupMock(mockUserSvc)
 
-			authSvc := services.NewAuthService(mockUserSvc, mockJwtSvc, mockBcrypt)
+			authSvc := services.NewAuthService(mockUserSvc, mockJwtSvc, mockBcrypt, nil)
 			user, err := authSvc.SignUser(ctx, tt.input)
 
 			if tt.wantErr != "" {
@@ -164,7 +164,7 @@ func TestAuthService_SignInUser(t *testing.T) {
 			tt.setupBcryptMock(mockBcrypt)
 			tt.setupJWTMock(mockJwtSvc)
 
-			authSvc := services.NewAuthService(mockUserSvc, mockJwtSvc, mockBcrypt)
+			authSvc := services.NewAuthService(mockUserSvc, mockJwtSvc, mockBcrypt, nil)
 			response, err := authSvc.SignInUser(ctx, tt.input)
 
 			if tt.wantErr != nil {
