@@ -7,6 +7,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -24,19 +25,24 @@ type hangoutService struct {
 	db           *gorm.DB
 	hangoutRepo  repository.HangoutRepository
 	activityRepo repository.ActivityRepository
+	metrics      *otel.MetricsRecorder
 }
 
-func NewHangoutService(db *gorm.DB, hangoutRepo repository.HangoutRepository, activityRepo repository.ActivityRepository) HangoutService {
+func NewHangoutService(db *gorm.DB, hangoutRepo repository.HangoutRepository, activityRepo repository.ActivityRepository, metrics *otel.MetricsRecorder) HangoutService {
 	return &hangoutService{
 		db:           db,
 		hangoutRepo:  hangoutRepo,
 		activityRepo: activityRepo,
+		metrics:      metrics,
 	}
 }
 
 func (s *hangoutService) CreateHangout(ctx context.Context, userID uuid.UUID, req *dto.CreateHangoutRequest) (*dto.HangoutDetailResponse, error) {
+	recordMetrics := s.metrics.StartRequest(ctx, "hangout", "create")
+
 	hangoutModel, err := mapper.HangoutCreateRequestToModel(req)
 	if err != nil {
+		recordMetrics("error")
 		return nil, err
 	}
 	hangoutModel.UserID = &userID
@@ -77,22 +83,30 @@ func (s *hangoutService) CreateHangout(ctx context.Context, userID uuid.UUID, re
 		return nil
 	})
 	if err != nil {
+		recordMetrics("error")
 		return nil, err
 	}
 
+	recordMetrics("success")
 	return mapper.HangoutToDetailResponseDTO(created), nil
 }
 
 func (s *hangoutService) GetHangoutByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*dto.HangoutDetailResponse, error) {
+	recordMetrics := s.metrics.StartRequest(ctx, "hangout", "get")
+
 	hangout, err := s.hangoutRepo.GetHangoutByID(ctx, id, userID)
 	if err != nil {
+		recordMetrics("error")
 		return nil, err
 	}
 
+	recordMetrics("success")
 	return mapper.HangoutToDetailResponseDTO(hangout), nil
 }
 
 func (s *hangoutService) UpdateHangout(ctx context.Context, id uuid.UUID, userID uuid.UUID, req *dto.UpdateHangoutRequest) (*dto.HangoutDetailResponse, error) {
+	recordMetrics := s.metrics.StartRequest(ctx, "hangout", "update")
+
 	var updatedHangout *domain.Hangout
 
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -174,14 +188,18 @@ func (s *hangoutService) UpdateHangout(ctx context.Context, id uuid.UUID, userID
 	})
 
 	if err != nil {
+		recordMetrics("error")
 		return nil, err
 	}
 
+	recordMetrics("success")
 	return mapper.HangoutToDetailResponseDTO(updatedHangout), nil
 }
 
 func (s *hangoutService) DeleteHangout(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
-	return s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+	recordMetrics := s.metrics.StartRequest(ctx, "hangout", "delete")
+
+	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		txRepo := s.hangoutRepo.WithTx(tx)
 		_, err := txRepo.GetHangoutByID(ctx, id, userID)
 		if err != nil {
@@ -189,11 +207,21 @@ func (s *hangoutService) DeleteHangout(ctx context.Context, id uuid.UUID, userID
 		}
 		return txRepo.DeleteHangout(ctx, id)
 	})
+
+	if err != nil {
+		recordMetrics("error")
+	} else {
+		recordMetrics("success")
+	}
+	return err
 }
 
 func (s *hangoutService) GetHangoutsByUserID(ctx context.Context, userID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedHangouts, error) {
+	recordMetrics := s.metrics.StartRequest(ctx, "hangout", "list")
+
 	hangouts, err := s.hangoutRepo.GetHangoutsByUserID(ctx, userID, pagination)
 	if err != nil {
+		recordMetrics("error")
 		return nil, err
 	}
 
@@ -209,6 +237,7 @@ func (s *hangoutService) GetHangoutsByUserID(ctx context.Context, userID uuid.UU
 
 	responseDTOs := mapper.HangoutsToListItemResponseDTOs(hangouts)
 
+	recordMetrics("success")
 	return &dto.PaginatedHangouts{
 		Data:       responseDTOs,
 		NextCursor: nextCursor,

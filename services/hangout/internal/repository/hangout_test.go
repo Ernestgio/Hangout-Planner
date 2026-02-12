@@ -19,13 +19,13 @@ import (
 
 func TestNewHangoutRepository(t *testing.T) {
 	db, _ := setupDB(t)
-	repo := repository.NewHangoutRepository(db)
+	repo := repository.NewHangoutRepository(db, nil)
 	require.NotNil(t, repo)
 }
 
 func TestHangoutRepository_WithTx(t *testing.T) {
 	db, _ := setupDB(t)
-	repo := repository.NewHangoutRepository(db)
+	repo := repository.NewHangoutRepository(db, nil)
 
 	tx := db.Begin()
 	txRepo := repo.WithTx(tx)
@@ -72,7 +72,7 @@ func TestHangoutRepository_CreateHangout(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewHangoutRepository(db)
+			repo := repository.NewHangoutRepository(db, nil)
 			tc.setupMock(mock)
 
 			result, err := repo.CreateHangout(ctx, hangout)
@@ -163,7 +163,7 @@ func TestHangoutRepository_GetHangoutByID(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewHangoutRepository(db)
+			repo := repository.NewHangoutRepository(db, nil)
 			tc.setupMock(mock)
 			result, err := repo.GetHangoutByID(ctx, hangoutID, userID)
 			tc.checkResult(t, result, err)
@@ -222,7 +222,7 @@ func TestHangoutRepository_UpdateHangout(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewHangoutRepository(db)
+			repo := repository.NewHangoutRepository(db, nil)
 			tc.setupMock(mock, tc.hangout)
 
 			result, err := repo.UpdateHangout(ctx, tc.hangout)
@@ -325,7 +325,7 @@ func TestHangoutRepository_DeleteHangout(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewHangoutRepository(db)
+			repo := repository.NewHangoutRepository(db, nil)
 
 			tc.setupMock(mock, tc.id)
 
@@ -421,7 +421,7 @@ func TestHangoutRepository_GetHangoutsByUserID(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewHangoutRepository(db)
+			repo := repository.NewHangoutRepository(db, nil)
 			tc.setupMock(mock)
 
 			results, err := repo.GetHangoutsByUserID(ctx, userID, tc.pagination)
@@ -495,7 +495,7 @@ func TestHangoutRepository_GetHangoutActivityIDs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewHangoutRepository(db)
+			repo := repository.NewHangoutRepository(db, nil)
 			tc.setupMock(mock)
 
 			ids, err := repo.GetHangoutActivityIDs(ctx, hangoutID)
@@ -565,7 +565,7 @@ func TestHangoutRepository_AddHangoutActivities(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewHangoutRepository(db)
+			repo := repository.NewHangoutRepository(db, nil)
 			tc.setupMock(mock)
 
 			err := repo.AddHangoutActivities(ctx, hangoutID, tc.activityIDs)
@@ -634,7 +634,7 @@ func TestHangoutRepository_RemoveHangoutActivities(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewHangoutRepository(db)
+			repo := repository.NewHangoutRepository(db, nil)
 			tc.setupMock(mock)
 
 			err := repo.RemoveHangoutActivities(ctx, hangoutID, tc.activityIDs)

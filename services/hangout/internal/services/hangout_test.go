@@ -331,7 +331,7 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 			db, sqlMock := setupDB(t)
 			mockHangoutRepo := new(MockHangoutRepository)
 			mockActivityRepo := new(MockActivityRepository)
-			service := services.NewHangoutService(db, mockHangoutRepo, mockActivityRepo)
+			service := services.NewHangoutService(db, mockHangoutRepo, mockActivityRepo, nil)
 
 			tc.setupMock(mockHangoutRepo, mockActivityRepo, sqlMock)
 
@@ -384,7 +384,7 @@ func TestHangoutService_GetHangoutByID(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockHangoutRepo := new(MockHangoutRepository)
 			mockActivityRepo := new(MockActivityRepository)
-			hangoutService := services.NewHangoutService(nil, mockHangoutRepo, mockActivityRepo)
+			hangoutService := services.NewHangoutService(nil, mockHangoutRepo, mockActivityRepo, nil)
 			tc.setupMock(mockHangoutRepo)
 
 			result, err := hangoutService.GetHangoutByID(ctx, hangoutID, tc.userID)
@@ -444,7 +444,7 @@ func TestHangoutService_DeleteHangout(t *testing.T) {
 			db, sqlMock := setupDB(t)
 			mockRepo := new(MockHangoutRepository)
 			mockActivityRepo := new(MockActivityRepository)
-			service := services.NewHangoutService(db, mockRepo, mockActivityRepo)
+			service := services.NewHangoutService(db, mockRepo, mockActivityRepo, nil)
 			tc.setupMock(mockRepo, sqlMock)
 
 			err := service.DeleteHangout(ctx, hangoutID, userID)
@@ -555,7 +555,7 @@ func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			mockHangoutRepo := new(MockHangoutRepository)
 			mockActivityRepo := new(MockActivityRepository)
-			hangoutService := services.NewHangoutService(nil, mockHangoutRepo, mockActivityRepo)
+			hangoutService := services.NewHangoutService(nil, mockHangoutRepo, mockActivityRepo, nil)
 			tc.setupMock(mockHangoutRepo)
 
 			result, err := hangoutService.GetHangoutsByUserID(ctx, userID, tc.pagination)
@@ -880,7 +880,7 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 			db, sqlMock := setupDB(t)
 			mockHangoutRepo := new(MockHangoutRepository)
 			mockActivityRepo := new(MockActivityRepository)
-			service := services.NewHangoutService(db, mockHangoutRepo, mockActivityRepo)
+			service := services.NewHangoutService(db, mockHangoutRepo, mockActivityRepo, nil)
 
 			tc.setupMock(mockHangoutRepo, mockActivityRepo, sqlMock)
 
