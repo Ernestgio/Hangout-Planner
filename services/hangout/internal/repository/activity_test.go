@@ -16,13 +16,13 @@ import (
 
 func TestNewActivityRepository(t *testing.T) {
 	db, _ := setupDB(t)
-	repo := repository.NewActivityRepository(db)
+	repo := repository.NewActivityRepository(db, nil)
 	require.NotNil(t, repo)
 }
 
 func TestActivityRepository_WithTx(t *testing.T) {
 	db, _ := setupDB(t)
-	repo := repository.NewActivityRepository(db)
+	repo := repository.NewActivityRepository(db, nil)
 
 	tx := db.Begin()
 	txRepo := repo.WithTx(tx)
@@ -68,7 +68,7 @@ func TestActivityRepository_CreateActivity(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewActivityRepository(db)
+			repo := repository.NewActivityRepository(db, nil)
 			tc.setupMock(mock)
 
 			result, err := repo.CreateActivity(ctx, activity)
@@ -151,7 +151,7 @@ func TestActivityRepository_GetActivityByID(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewActivityRepository(db)
+			repo := repository.NewActivityRepository(db, nil)
 			tc.setupMock(mock)
 
 			act, count, err := repo.GetActivityByID(ctx, activityID, userID)
@@ -216,7 +216,7 @@ func TestActivityRepository_GetAllActivities(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewActivityRepository(db)
+			repo := repository.NewActivityRepository(db, nil)
 			tc.setupMock(mock)
 
 			results, err := repo.GetAllActivities(ctx, userID)
@@ -266,7 +266,7 @@ func TestActivityRepository_UpdateActivity(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewActivityRepository(db)
+			repo := repository.NewActivityRepository(db, nil)
 			tc.setupMock(mock)
 
 			originalUpdatedAt := activity.UpdatedAt
@@ -325,7 +325,7 @@ func TestActivityRepository_DeleteActivity(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewActivityRepository(db)
+			repo := repository.NewActivityRepository(db, nil)
 			tc.setupMock(mock)
 
 			err := repo.DeleteActivity(ctx, activityID)
@@ -427,7 +427,7 @@ func TestGormActivityRepository_GetActivitiesByIDs(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			db, mock := setupDB(t)
-			repo := repository.NewActivityRepository(db)
+			repo := repository.NewActivityRepository(db, nil)
 			tc.setupMock(mock)
 
 			activities, err := repo.GetActivitiesByIDs(ctx, tc.inputIDs)

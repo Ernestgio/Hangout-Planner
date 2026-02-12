@@ -12,7 +12,6 @@ func MetricsMiddleware(metrics *otel.MetricsRecorder) echo.MiddlewareFunc {
 			ctx := req.Context()
 
 			path := c.Path()
-			method := req.Method
 
 			finish := metrics.StartRequest(ctx, extractDomain(path), extractOperation(path))
 

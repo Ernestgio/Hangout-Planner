@@ -113,7 +113,7 @@ func TestActivityService_CreateActivity(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockActivityRepo := new(MockActivityRepository)
-			service := services.NewActivityService(nil, mockActivityRepo)
+			service := services.NewActivityService(nil, mockActivityRepo, nil)
 			tc.setupMock(mockActivityRepo)
 
 			result, err := service.CreateActivity(ctx, userID, req)
@@ -176,7 +176,7 @@ func TestActivityService_GetActivityByID(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockRepo := new(MockActivityRepository)
-			service := services.NewActivityService(nil, mockRepo)
+			service := services.NewActivityService(nil, mockRepo, nil)
 			tc.setupMock(mockRepo)
 
 			result, err := service.GetActivityByID(ctx, activityID, userID)
@@ -235,7 +235,7 @@ func TestActivityService_GetAllActivities(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockRepo := new(MockActivityRepository)
-			service := services.NewActivityService(nil, mockRepo)
+			service := services.NewActivityService(nil, mockRepo, nil)
 			tc.setupMock(mockRepo)
 
 			result, err := service.GetAllActivities(ctx, userID)
@@ -340,7 +340,7 @@ func TestActivityService_UpdateActivity(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			db, sqlMock := setupDB(t)
 			mockRepo := new(MockActivityRepository)
-			service := services.NewActivityService(db, mockRepo)
+			service := services.NewActivityService(db, mockRepo, nil)
 
 			tc.setupMock(mockRepo, sqlMock)
 			result, err := service.UpdateActivity(ctx, activityID, userID, req)
@@ -427,7 +427,7 @@ func TestActivityService_DeleteActivity(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			db, sqlMock := setupDB(t)
 			mockRepo := new(MockActivityRepository)
-			service := services.NewActivityService(db, mockRepo)
+			service := services.NewActivityService(db, mockRepo, nil)
 
 			tc.setupMock(mockRepo, sqlMock)
 			err := service.DeleteActivity(ctx, activityID, userID)
