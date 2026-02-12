@@ -59,7 +59,6 @@ extensions:
 
   pprof:
     endpoint: 0.0.0.0:1777
-  # zpages extension: live debugging pages
   zpages:
     endpoint: 0.0.0.0:55679
 
