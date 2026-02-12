@@ -1,0 +1,54 @@
+global:
+  scrape_interval: 15s
+
+  evaluation_interval: 15s
+
+  scrape_timeout: 10s
+
+  external_labels:
+    cluster: "hangout-planner-local"
+    environment: "local"
+
+scrape_configs:
+  - job_name: "otel-collector"
+    static_configs:
+      - targets: ["otelcollector:8889"]
+
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: "go_gc_.*"
+        action: drop
+
+      - source_labels: [job]
+        target_label: scrape_job
+        replacement: "otel-collector"
+
+  - job_name: "otel-collector-internal"
+    static_configs:
+      - targets: ["otelcollector:8888"]
+
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: "otelcol_.*"
+        action: keep
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: "prometheus_(tsdb_|http_|build_info)"
+        action: keep
+
+  # Future: Direct instrumentation endpoints (if needed)
+  # - job_name: 'file-service'
+  #   static_configs:
+  #     - targets: ['file-service:9001']
+  #   metrics_path: '/metrics'
+
+  # Future: Hangout service metrics
+  # - job_name: 'hangout-service'
+  #   static_configs:
+  #     - targets: ['hangout-service:9000']
+  #   metrics_path: '/metrics'
