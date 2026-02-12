@@ -1,0 +1,71 @@
+# Telemetry Stack - Observability Services
+
+services:
+  otelcollector:
+    build:
+      context: ../components/otelcollector
+      dockerfile: Dockerfile
+    restart: on-failure
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8888:8888"
+      - "8889:8889"
+      - "13133:13133"
+      - "1777:1777"
+      - "55679:55679"
+    environment:
+      - ENVIRONMENT=local
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:13133/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  prometheus:
+    build:
+      context: ../components/prometheus
+      dockerfile: Dockerfile
+    restart: on-failure
+    ports:
+      - "9090:9090"
+    volumes:
+      - prometheus_data:/prometheus
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  grafana:
+    build:
+      context: ../components/grafana
+      dockerfile: Dockerfile
+    restart: on-failure
+    ports:
+      - "3000:3000"
+    env_file:
+      - ../components/grafana/.env
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - default
+    healthcheck:
+      test:
+        ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

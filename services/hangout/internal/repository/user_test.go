@@ -17,13 +17,13 @@ import (
 
 func TestNewUserRepository(t *testing.T) {
 	db, _ := setupDB(t)
-	repo := repository.NewUserRepository(db)
+	repo := repository.NewUserRepository(db, nil)
 	require.NotNil(t, repo)
 }
 
 func TestUserRepository_WithTx(t *testing.T) {
 	db, mock := setupDB(t)
-	repo := repository.NewUserRepository(db)
+	repo := repository.NewUserRepository(db, nil)
 
 	mock.ExpectBegin()
 	tx := db.Begin()
@@ -36,7 +36,7 @@ func TestUserRepository_WithTx(t *testing.T) {
 
 func TestCreateUser_Success(t *testing.T) {
 	db, mock := setupDB(t)
-	repo := repository.NewUserRepository(db)
+	repo := repository.NewUserRepository(db, nil)
 	ctx := context.Background()
 
 	user := &domain.User{
@@ -58,7 +58,7 @@ func TestCreateUser_Success(t *testing.T) {
 
 func TestCreateUser_Error(t *testing.T) {
 	db, mock := setupDB(t)
-	repo := repository.NewUserRepository(db)
+	repo := repository.NewUserRepository(db, nil)
 	dbError := errors.New("db error")
 	ctx := context.Background()
 
@@ -82,7 +82,7 @@ func TestCreateUser_Error(t *testing.T) {
 
 func TestGetUserByEmail_Success(t *testing.T) {
 	db, mock := setupDB(t)
-	repo := repository.NewUserRepository(db)
+	repo := repository.NewUserRepository(db, nil)
 	ctx := context.Background()
 
 	id := uuid.New()
@@ -104,7 +104,7 @@ func TestGetUserByEmail_Success(t *testing.T) {
 
 func TestGetUserByEmail_NotFound(t *testing.T) {
 	db, mock := setupDB(t)
-	repo := repository.NewUserRepository(db)
+	repo := repository.NewUserRepository(db, nil)
 	email := "notfound@example.com"
 	ctx := context.Background()
 
@@ -120,7 +120,7 @@ func TestGetUserByEmail_NotFound(t *testing.T) {
 
 func TestGetUserByEmail_DBError(t *testing.T) {
 	db, mock := setupDB(t)
-	repo := repository.NewUserRepository(db)
+	repo := repository.NewUserRepository(db, nil)
 	email := "error@example.com"
 	dbError := errors.New("db error")
 	ctx := context.Background()

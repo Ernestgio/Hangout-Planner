@@ -20,3 +20,12 @@ const (
 	FileServiceClientInitialized = "File service client initialized: %s"
 	FileServiceClientInitFailed  = "Failed to initialize file service client: %v"
 )
+
+// otel constants
+const (
+	OTELMeterProviderInitFailed = "Failed to initialize OTEL meter provider: %v"
+	OTELRuntimeMetricsFailed    = "Failed to start OTEL runtime metrics: %v"
+	OTELMetricsInitFailed       = "Failed to initialize OTEL metrics: %v"
+	OTELShutdownFailed          = "Failed to shutdown OTEL provider: %v"
+	OTELInitialized             = "OTEL initialized successfully"
+)

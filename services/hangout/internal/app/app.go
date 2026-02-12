@@ -18,6 +18,8 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/middlewares"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/router"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/services"
@@ -29,15 +31,47 @@ import (
 )
 
 type App struct {
-	server     *echo.Echo
-	db         *gorm.DB
-	fileClient grpc.FileService
-	closer     func() error
-	cfg        *config.Config
+	server      *echo.Echo
+	db          *gorm.DB
+	fileClient  grpc.FileService
+	closer      func() error
+	cfg         *config.Config
+	meterCloser func(context.Context) error
 }
 
 func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
-	// Initialize external resources with automatic cleanup on error
+
+	// OTEL Metrics Provider
+	meterProvider, err := otel.NewMeterProvider(ctx, cfg.OTELConfig)
+	if err != nil {
+		log.Printf(logmsg.OTELMeterProviderInitFailed, err)
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			if closeErr := meterProvider.Shutdown(ctx); closeErr != nil {
+				log.Printf("Failed to shutdown OTEL meter provider: %v", closeErr)
+			}
+		}
+	}()
+
+	// Start Go runtime metrics collection
+	if err := otel.StartRuntimeMetrics(); err != nil {
+		log.Printf(logmsg.OTELRuntimeMetricsFailed, err)
+		return nil, err
+	}
+
+	// Initialize metrics collectors
+	otelMetrics, err := otel.InitMetrics()
+	if err != nil {
+		log.Printf(logmsg.OTELMetricsInitFailed, err)
+		return nil, err
+	}
+
+	// Create metrics recorder (handles nil checks internally)
+	metricsRecorder := otel.NewMetricsRecorder(otelMetrics)
+
+	log.Println(logmsg.OTELInitialized)
 
 	// DB Connection
 	dbConn, dbCloser, err := db.Connect(cfg.DBConfig)
@@ -73,17 +107,17 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	bcryptUtils := utils.NewBcryptUtils(bcrypt.DefaultCost)
 
 	// Repository Layer
-	userRepo := repository.NewUserRepository(dbConn)
-	hangoutRepo := repository.NewHangoutRepository(dbConn)
-	activityRepo := repository.NewActivityRepository(dbConn)
-	memoryRepo := repository.NewMemoryRepository(dbConn)
+	userRepo := repository.NewUserRepository(dbConn, metricsRecorder)
+	hangoutRepo := repository.NewHangoutRepository(dbConn, metricsRecorder)
+	activityRepo := repository.NewActivityRepository(dbConn, metricsRecorder)
+	memoryRepo := repository.NewMemoryRepository(dbConn, metricsRecorder)
 
 	// Service Layer
-	userService := services.NewUserService(dbConn, userRepo, bcryptUtils)
-	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils)
-	hangoutService := services.NewHangoutService(dbConn, hangoutRepo, activityRepo)
-	activityService := services.NewActivityService(dbConn, activityRepo)
-	memoryService := services.NewMemoryService(dbConn, memoryRepo, hangoutRepo, fileClient)
+	userService := services.NewUserService(dbConn, userRepo, bcryptUtils, metricsRecorder)
+	authService := services.NewAuthService(userService, jwtUtils, bcryptUtils, metricsRecorder)
+	hangoutService := services.NewHangoutService(dbConn, hangoutRepo, activityRepo, metricsRecorder)
+	activityService := services.NewActivityService(dbConn, activityRepo, metricsRecorder)
+	memoryService := services.NewMemoryService(dbConn, memoryRepo, hangoutRepo, fileClient, metricsRecorder)
 
 	// handler Layer
 	authHandler := handlers.NewAuthHandler(authService, responseBuilder)
@@ -98,15 +132,17 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	// middleware
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
 	e.Use(middleware.Decompress())
+	e.Use(middlewares.MetricsMiddleware(metricsRecorder))
 
 	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler, memoryHandler)
 
 	return &App{
-		server:     e,
-		db:         dbConn,
-		fileClient: fileClient,
-		closer:     dbCloser,
-		cfg:        cfg,
+		server:      e,
+		db:          dbConn,
+		fileClient:  fileClient,
+		closer:      dbCloser,
+		cfg:         cfg,
+		meterCloser: meterProvider.Shutdown,
 	}, nil
 }
 
@@ -139,6 +175,12 @@ func (a *App) Shutdown() error {
 
 	if err := a.server.Shutdown(ctx); err != nil {
 		return err
+	}
+
+	if a.meterCloser != nil {
+		if err := a.meterCloser(ctx); err != nil {
+			log.Printf(logmsg.OTELShutdownFailed, err)
+		}
 	}
 
 	if a.fileClient != nil {

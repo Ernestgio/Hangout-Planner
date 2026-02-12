@@ -3,11 +3,13 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/constants"
 	domain "github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -25,19 +27,24 @@ type HangoutRepository interface {
 }
 
 type hangoutRepository struct {
-	db *gorm.DB
+	db      *gorm.DB
+	metrics *otel.MetricsRecorder
 }
 
-func NewHangoutRepository(db *gorm.DB) HangoutRepository {
-	return &hangoutRepository{db: db}
+func NewHangoutRepository(db *gorm.DB, metrics *otel.MetricsRecorder) HangoutRepository {
+	return &hangoutRepository{db: db, metrics: metrics}
 }
 
 func (r *hangoutRepository) WithTx(tx *gorm.DB) HangoutRepository {
-	return &hangoutRepository{db: tx}
+	return &hangoutRepository{db: tx, metrics: r.metrics}
 }
 
 func (r *hangoutRepository) CreateHangout(ctx context.Context, hangout *domain.Hangout) (*domain.Hangout, error) {
-	if err := r.db.WithContext(ctx).Create(hangout).Error; err != nil {
+	start := time.Now()
+	err := r.db.WithContext(ctx).Create(hangout).Error
+	r.metrics.RecordDBOperation(ctx, "insert", "hangouts", time.Since(start), 1)
+
+	if err != nil {
 		return nil, err
 	}
 	return hangout, nil
@@ -45,17 +52,26 @@ func (r *hangoutRepository) CreateHangout(ctx context.Context, hangout *domain.H
 
 func (r *hangoutRepository) GetHangoutByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Hangout, error) {
 	var hangout domain.Hangout
-	if err := r.db.WithContext(ctx).Preload("Activities").First(&hangout, "id = ? AND user_id = ?", id, userID).Error; err != nil {
+
+	start := time.Now()
+	err := r.db.WithContext(ctx).Preload("Activities").First(&hangout, "id = ? AND user_id = ?", id, userID).Error
+	r.metrics.RecordDBOperation(ctx, "select", "hangouts", time.Since(start), 1)
+
+	if err != nil {
 		return nil, err
 	}
 	return &hangout, nil
 }
 
 func (r *hangoutRepository) UpdateHangout(ctx context.Context, hangout *domain.Hangout) (*domain.Hangout, error) {
-	if err := r.db.WithContext(ctx).
+	start := time.Now()
+	err := r.db.WithContext(ctx).
 		Model(&domain.Hangout{}).
 		Where("id = ?", hangout.ID).
-		Updates(hangout).Error; err != nil {
+		Updates(hangout).Error
+	r.metrics.RecordDBOperation(ctx, "update", "hangouts", time.Since(start), 1)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -63,25 +79,32 @@ func (r *hangoutRepository) UpdateHangout(ctx context.Context, hangout *domain.H
 }
 
 func (r *hangoutRepository) DeleteHangout(ctx context.Context, id uuid.UUID) error {
+	start := time.Now()
 	tx := r.db.WithContext(ctx).Begin()
 	if tx.Error != nil {
+		r.metrics.RecordDBOperation(ctx, "delete", "hangouts", time.Since(start), 0)
 		return tx.Error
 	}
 
 	if err := tx.Exec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?", id).Error; err != nil {
 		tx.Rollback()
+		r.metrics.RecordDBOperation(ctx, "delete", "hangouts", time.Since(start), 0)
 		return err
 	}
 
 	if err := tx.Delete(&domain.Hangout{}, "id = ?", id).Error; err != nil {
 		tx.Rollback()
+		r.metrics.RecordDBOperation(ctx, "delete", "hangouts", time.Since(start), 0)
 		return err
 	}
 
-	return tx.Commit().Error
+	err := tx.Commit().Error
+	r.metrics.RecordDBOperation(ctx, "delete", "hangouts", time.Since(start), 1)
+	return err
 }
 
 func (r *hangoutRepository) GetHangoutsByUserID(ctx context.Context, userID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Hangout, error) {
+	start := time.Now()
 	var hangouts []domain.Hangout
 	limitToFetch := pagination.GetLimit() + 1
 	sortByColumn := pagination.GetSortBy()
@@ -115,6 +138,7 @@ func (r *hangoutRepository) GetHangoutsByUserID(ctx context.Context, userID uuid
 		Order(pagination.GetOrderByClause()).
 		Limit(limitToFetch).
 		Find(&hangouts).Error
+	r.metrics.RecordDBOperation(ctx, "select", "hangouts", time.Since(start), len(hangouts))
 
 	if err != nil {
 		return nil, err
@@ -125,10 +149,13 @@ func (r *hangoutRepository) GetHangoutsByUserID(ctx context.Context, userID uuid
 
 func (r *hangoutRepository) GetHangoutActivityIDs(ctx context.Context, hangoutID uuid.UUID) ([]uuid.UUID, error) {
 	var ids []uuid.UUID
+
+	start := time.Now()
 	err := r.db.WithContext(ctx).
 		Table("hangout_activities").
 		Where("hangout_id = ?", hangoutID).
 		Pluck("activity_id", &ids).Error
+	r.metrics.RecordDBOperation(ctx, "select", "hangout_activities", time.Since(start), len(ids))
 
 	return ids, err
 }
@@ -145,7 +172,12 @@ func (r *hangoutRepository) AddHangoutActivities(ctx context.Context, hangoutID 
 			"activity_id": id,
 		})
 	}
-	return r.db.WithContext(ctx).Table("hangout_activities").Create(rows).Error
+
+	start := time.Now()
+	err := r.db.WithContext(ctx).Table("hangout_activities").Create(rows).Error
+	r.metrics.RecordDBOperation(ctx, "insert", "hangout_activities", time.Since(start), len(activityIDs))
+
+	return err
 }
 
 func (r *hangoutRepository) RemoveHangoutActivities(ctx context.Context, hangoutID uuid.UUID, activityIDs []uuid.UUID) error {
@@ -153,8 +185,12 @@ func (r *hangoutRepository) RemoveHangoutActivities(ctx context.Context, hangout
 		return nil
 	}
 
-	return r.db.WithContext(ctx).
+	start := time.Now()
+	err := r.db.WithContext(ctx).
 		Table("hangout_activities").
 		Where("hangout_id = ? AND activity_id IN ?", hangoutID, activityIDs).
 		Delete(nil).Error
+	r.metrics.RecordDBOperation(ctx, "delete", "hangout_activities", time.Since(start), len(activityIDs))
+
+	return err
 }

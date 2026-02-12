@@ -8,6 +8,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/domain"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/mapper"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/utils"
 	"gorm.io/gorm"
@@ -22,13 +23,20 @@ type userService struct {
 	db          *gorm.DB
 	userRepo    repository.UserRepository
 	bcryptUtils utils.BcryptUtils
+	metrics     *otel.MetricsRecorder
 }
 
-func NewUserService(db *gorm.DB, userRepo repository.UserRepository, bcryptUtils utils.BcryptUtils) UserService {
-	return &userService{db: db, userRepo: userRepo, bcryptUtils: bcryptUtils}
+func NewUserService(db *gorm.DB, userRepo repository.UserRepository, bcryptUtils utils.BcryptUtils, metrics *otel.MetricsRecorder) UserService {
+	return &userService{
+		db:          db,
+		userRepo:    userRepo,
+		bcryptUtils: bcryptUtils,
+		metrics:     metrics,
+	}
 }
 
 func (s *userService) CreateUser(ctx context.Context, request dto.CreateUserRequest) (*domain.User, error) {
+	recordMetrics := s.metrics.StartRequest(ctx, "user", "create")
 	var createdUser *domain.User
 
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -54,6 +62,7 @@ func (s *userService) CreateUser(ctx context.Context, request dto.CreateUserRequ
 		return nil
 	})
 
+	recordMetrics(getStatus(err))
 	if err != nil {
 		return nil, err
 	}
@@ -62,5 +71,15 @@ func (s *userService) CreateUser(ctx context.Context, request dto.CreateUserRequ
 }
 
 func (s *userService) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
-	return s.userRepo.GetUserByEmail(ctx, email)
+	recordMetrics := s.metrics.StartRequest(ctx, "user", "get_by_email")
+	user, err := s.userRepo.GetUserByEmail(ctx, email)
+	recordMetrics(getStatus(err))
+	return user, err
+}
+
+func getStatus(err error) string {
+	if err != nil {
+		return "error"
+	}
+	return "success"
 }

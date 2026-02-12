@@ -237,7 +237,7 @@ func TestFileService_GenerateUploadURLs(t *testing.T) {
 			store := new(MockStorage)
 			val := new(MockFileValidator)
 			tt.setup(repo, store, val, sqlMock)
-			svc := services.NewFileService(db, repo, store, val)
+			svc := services.NewFileService(db, repo, store, val, nil)
 			resp, err := svc.GenerateUploadURLs(ctx, tt.req)
 			if tt.wantError != nil {
 				require.Error(t, err)
@@ -306,7 +306,7 @@ func TestFileService_ConfirmUpload(t *testing.T) {
 			db, sqlMock := setupDB(t)
 			repo := new(MockMemoryFileRepository)
 			tt.setup(repo, sqlMock)
-			svc := services.NewFileService(db, repo, nil, nil)
+			svc := services.NewFileService(db, repo, nil, nil, nil)
 			resp, err := svc.ConfirmUpload(ctx, tt.req)
 			if tt.wantError != nil {
 				require.Error(t, err)
@@ -394,7 +394,7 @@ func TestFileService_GetFileByMemoryID(t *testing.T) {
 			repo := new(MockMemoryFileRepository)
 			store := new(MockStorage)
 			tt.setup(repo, store)
-			svc := services.NewFileService(db, repo, store, nil)
+			svc := services.NewFileService(db, repo, store, nil, nil)
 			resp, err := svc.GetFileByMemoryID(ctx, tt.req)
 			if tt.wantError != nil {
 				require.Error(t, err)
@@ -479,7 +479,7 @@ func TestFileService_GetFilesByMemoryIDs(t *testing.T) {
 			repo := new(MockMemoryFileRepository)
 			store := new(MockStorage)
 			tt.setup(repo, store)
-			svc := services.NewFileService(db, repo, store, nil)
+			svc := services.NewFileService(db, repo, store, nil, nil)
 			resp, err := svc.GetFilesByMemoryIDs(ctx, tt.req)
 			if tt.wantError != nil {
 				require.Error(t, err)
@@ -589,7 +589,7 @@ func TestFileService_DeleteFile(t *testing.T) {
 			repo := new(MockMemoryFileRepository)
 			store := new(MockStorage)
 			tt.setup(repo, store, sqlMock)
-			svc := services.NewFileService(db, repo, store, nil)
+			svc := services.NewFileService(db, repo, store, nil, nil)
 			resp, err := svc.DeleteFile(ctx, tt.req)
 			if tt.wantError != nil {
 				require.Error(t, err)

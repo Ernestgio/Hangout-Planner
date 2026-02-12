@@ -99,7 +99,7 @@ func TestUserService_CreateUser(t *testing.T) {
 			db, sqlMock := setupDB(t)
 			mockRepo := new(MockUserRepository)
 			mockBcrypt := new(MockBcryptUtils)
-			service := services.NewUserService(db, mockRepo, mockBcrypt)
+			service := services.NewUserService(db, mockRepo, mockBcrypt, nil)
 			tc.setupMocks(mockRepo, mockBcrypt, sqlMock)
 
 			user, err := service.CreateUser(ctx, req)
@@ -160,7 +160,7 @@ func TestUserService_GetUserByEmail(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			mockRepo := new(MockUserRepository)
-			service := services.NewUserService(nil, mockRepo, nil)
+			service := services.NewUserService(nil, mockRepo, nil, nil)
 			tc.setupMock(mockRepo)
 
 			user, err := service.GetUserByEmail(ctx, email)

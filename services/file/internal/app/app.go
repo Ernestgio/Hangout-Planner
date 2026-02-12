@@ -40,6 +40,8 @@ type App struct {
 	listener       net.Listener
 	db             *gorm.DB
 	tracerProvider *otel.TracerProvider
+	meterProvider  *otel.MeterProvider
+	metrics        *otel.Metrics
 	closer         func() error
 	cfg            *config.Config
 }
@@ -56,31 +58,13 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		return nil, err
 	}
 
-	// Storage Layer
-	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config)
-	if err != nil {
-		logger.Error(ctx, logmsg.S3ConnectionFailed, err,
-			slog.String("endpoint", cfg.S3Config.Endpoint),
-			slog.String("bucket", cfg.S3Config.BucketName),
-		)
-		_ = dbCloser()
-		return nil, err
-	}
-
-	// Repository Layer
-	repo := repository.NewMemoryFileRepository(dbConn)
-
 	// Initialize validator
 	fileValidator := validator.NewFileValidator()
 
-	// Initialize service
-	fileService := services.NewFileService(dbConn, repo, s3Client, fileValidator)
-
-	// Initialize handler
-	fileHandler := handlers.NewFileHandler(fileService)
-
 	// Initialize OpenTelemetry (if enabled)
 	var tracerProvider *otel.TracerProvider
+	var meterProvider *otel.MeterProvider
+	var metrics *otel.Metrics
 	if cfg.OTELConfig.Enabled {
 		otelCfg := otel.Config{
 			ServiceName:    cfg.AppName,
@@ -95,11 +79,67 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 			_ = dbCloser()
 			return nil, err
 		}
+
+		meterProvider, err = otel.NewMeterProvider(ctx, otelCfg)
+		if err != nil {
+			logger.Error(ctx, logmsg.OTELInitFailed, err)
+			_ = dbCloser()
+			_ = tracerProvider.Shutdown(ctx)
+			return nil, err
+		}
+
+		metrics, err = otel.InitMetrics(constants.MeterName)
+		if err != nil {
+			logger.Error(ctx, logmsg.OTELInitFailed, err)
+			_ = dbCloser()
+			_ = tracerProvider.Shutdown(ctx)
+			_ = meterProvider.Shutdown(ctx)
+			return nil, err
+		}
+
+		// Start Go runtime instrumentation
+		if err := otel.StartRuntimeInstrumentation(); err != nil {
+			logger.Error(ctx, logmsg.OTELInitFailed, err)
+			_ = dbCloser()
+			_ = tracerProvider.Shutdown(ctx)
+			_ = meterProvider.Shutdown(ctx)
+			return nil, err
+		}
+
 		logger.Info(ctx, logmsg.OTELInitialized,
 			slog.String("endpoint", cfg.OTELConfig.Endpoint),
 			slog.Bool("use_stdout", cfg.OTELConfig.UseStdout),
 		)
 	}
+
+	// Initialize metrics recorder (after OTEL)
+	metricsRecorder := otel.NewMetricsRecorder(metrics)
+
+	// Repository Layer (after metrics to pass metrics)
+	repo := repository.NewMemoryFileRepository(dbConn, metricsRecorder)
+
+	// Storage Layer (after OTEL to pass metrics)
+	s3Client, err := storage.NewS3Client(ctx, cfg.S3Config, metricsRecorder)
+	if err != nil {
+		logger.Error(ctx, logmsg.S3ConnectionFailed, err,
+			slog.String("endpoint", cfg.S3Config.Endpoint),
+			slog.String("bucket", cfg.S3Config.BucketName),
+		)
+		_ = dbCloser()
+		if tracerProvider != nil {
+			_ = tracerProvider.Shutdown(ctx)
+		}
+		if meterProvider != nil {
+			_ = meterProvider.Shutdown(ctx)
+		}
+		return nil, err
+	}
+
+	// Initialize service
+	fileService := services.NewFileService(dbConn, repo, s3Client, fileValidator, metricsRecorder)
+
+	// Initialize handler
+	fileHandler := handlers.NewFileHandler(fileService)
 
 	// Setup network listener
 	addr := fmt.Sprintf(":%s", cfg.AppPort)
@@ -109,6 +149,9 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		_ = dbCloser()
 		if tracerProvider != nil {
 			_ = tracerProvider.Shutdown(ctx)
+		}
+		if meterProvider != nil {
+			_ = meterProvider.Shutdown(ctx)
 		}
 		return nil, err
 	}
@@ -124,6 +167,9 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 			_ = dbCloser()
 			if tracerProvider != nil {
 				_ = tracerProvider.Shutdown(ctx)
+			}
+			if meterProvider != nil {
+				_ = meterProvider.Shutdown(ctx)
 			}
 			return nil, err
 		}
@@ -159,6 +205,8 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 		listener:       lis,
 		db:             dbConn,
 		tracerProvider: tracerProvider,
+		meterProvider:  meterProvider,
+		metrics:        metrics,
 		closer:         dbCloser,
 		cfg:            cfg,
 	}, nil
@@ -223,6 +271,13 @@ func (a *App) Shutdown() error {
 	// Shutdown tracer provider to flush pending spans
 	if a.tracerProvider != nil {
 		if err := a.tracerProvider.Shutdown(ctx); err != nil {
+			logger.Error(ctx, logmsg.OTELShutdownFailed, err)
+		}
+	}
+
+	// Shutdown meter provider to flush pending metrics
+	if a.meterProvider != nil {
+		if err := a.meterProvider.Shutdown(ctx); err != nil {
 			logger.Error(ctx, logmsg.OTELShutdownFailed, err)
 		}
 	}
