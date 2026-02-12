@@ -4,12 +4,17 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
 	gormmysql "gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 func Connect(cfg *config.DBConfig) (*gorm.DB, func() error, error) {
 	dsn := buildDSN(cfg)
 	gormDB, err := gorm.Open(gormmysql.Open(dsn), &gorm.Config{})
 	if err != nil {
+		return nil, nil, err
+	}
+
+	if err := gormDB.Use(tracing.NewPlugin()); err != nil {
 		return nil, nil, err
 	}
 
