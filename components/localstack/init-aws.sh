@@ -16,3 +16,4 @@ else
 fi
 
 echo "S3 initialization complete"
+

@@ -13,10 +13,6 @@ distributor:
 ingester:
   max_block_duration: 5m
 
-compactor:
-  compaction:
-    block_retention: 48h
-
 storage:
   trace:
     backend: s3
@@ -32,8 +28,22 @@ storage:
     local:
       path: /var/tempo/blocks
 
+metrics_generator:
+  registry:
+    external_labels:
+      source: tempo
+  processor:
+    service_graphs:
+      dimensions: []
+    span_metrics:
+      dimensions: []
+  storage:
+    path: /var/tempo/generator/wal
+    remote_write:
+      - url: http://prometheus:9090/api/v1/write
+        send_exemplars: true
+
 overrides:
   defaults:
     metrics_generator:
       processors: [service-graphs, span-metrics]
-      generate_native_histograms: both
