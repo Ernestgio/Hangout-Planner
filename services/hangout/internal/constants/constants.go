@@ -85,5 +85,8 @@ const (
 	DefaultMTLSCAPath     = "/app/certs/mtls/ca.crt"
 
 	// OTEL default configs
-	DefaultOTELEndpoint = "otelcollector:4317"
+	DefaultOTELEndpoint       = "otelcollector:4317"
+	DefaultOTELServiceVersion = "1.0.0"
+	DefaultOTELUseStdout      = "false"
+	DefaultTraceSampleRate    = 1.0
 )

@@ -31,15 +31,38 @@ import (
 )
 
 type App struct {
-	server      *echo.Echo
-	db          *gorm.DB
-	fileClient  grpc.FileService
-	closer      func() error
-	cfg         *config.Config
-	meterCloser func(context.Context) error
+	server       *echo.Echo
+	db           *gorm.DB
+	fileClient   grpc.FileService
+	closer       func() error
+	cfg          *config.Config
+	tracerCloser func(context.Context) error
+	meterCloser  func(context.Context) error
 }
 
 func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
+
+	// OTEL Tracer Provider
+	otelCfg := otel.Config{
+		ServiceName:     cfg.AppName,
+		ServiceVersion:  cfg.OTELConfig.ServiceVersion,
+		Environment:     cfg.Env,
+		Endpoint:        cfg.OTELConfig.TraceEndpoint,
+		UseStdout:       cfg.OTELConfig.UseStdout,
+		TraceSampleRate: cfg.OTELConfig.TraceSampleRate,
+	}
+	tracerProvider, err := otel.NewTracerProvider(ctx, otelCfg)
+	if err != nil {
+		log.Printf(logmsg.OTELTracerProviderInitFailed, err)
+		return nil, err
+	}
+	defer func() {
+		if err != nil {
+			if closeErr := tracerProvider.Shutdown(ctx); closeErr != nil {
+				log.Printf(logmsg.OTELShutdownFailed, closeErr)
+			}
+		}
+	}()
 
 	// OTEL Metrics Provider
 	meterProvider, err := otel.NewMeterProvider(ctx, cfg.OTELConfig)
@@ -50,7 +73,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	defer func() {
 		if err != nil {
 			if closeErr := meterProvider.Shutdown(ctx); closeErr != nil {
-				log.Printf("Failed to shutdown OTEL meter provider: %v", closeErr)
+				log.Printf(logmsg.OTELShutdownFailed, closeErr)
 			}
 		}
 	}()
@@ -137,12 +160,13 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler, memoryHandler)
 
 	return &App{
-		server:      e,
-		db:          dbConn,
-		fileClient:  fileClient,
-		closer:      dbCloser,
-		cfg:         cfg,
-		meterCloser: meterProvider.Shutdown,
+		server:       e,
+		db:           dbConn,
+		fileClient:   fileClient,
+		closer:       dbCloser,
+		cfg:          cfg,
+		tracerCloser: tracerProvider.Shutdown,
+		meterCloser:  meterProvider.Shutdown,
 	}, nil
 }
 
@@ -175,6 +199,12 @@ func (a *App) Shutdown() error {
 
 	if err := a.server.Shutdown(ctx); err != nil {
 		return err
+	}
+
+	if a.tracerCloser != nil {
+		if err := a.tracerCloser(ctx); err != nil {
+			log.Printf(logmsg.OTELShutdownFailed, err)
+		}
 	}
 
 	if a.meterCloser != nil {
