@@ -64,8 +64,32 @@ services:
       retries: 3
       start_period: 15s
 
+  tempo:
+    image: grafana/tempo:latest
+    restart: on-failure
+    command: ["-config.file=/etc/tempo.yaml"]
+    ports:
+      - "3200:3200"   # Tempo HTTP
+      - "4317"        # OTLP gRPC (internal)
+      - "4318"        # OTLP HTTP (internal)
+    env_file:
+      - ../components/tempo/.env
+    volumes:
+      - ../components/tempo/tempo.yaml:/etc/tempo.yaml:ro
+      - tempo_data:/var/tempo
+    networks:
+      - default
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3200/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
 volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  tempo_data:
     driver: local
