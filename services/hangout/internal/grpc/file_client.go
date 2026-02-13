@@ -10,6 +10,7 @@ import (
 	filepb "github.com/Ernestgio/Hangout-Planner/pkg/shared/proto/gen/go/file"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/apperrors"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/config"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -31,6 +32,9 @@ type fileServiceClient struct {
 
 func NewFileServiceClient(cfg *config.GRPCClientConfig) (FileService, error) {
 	var opts []grpc.DialOption
+
+	// Add OTEL instrumentation for trace propagation
+	opts = append(opts, grpc.WithStatsHandler(otelgrpc.NewClientHandler()))
 
 	if cfg.MTLSEnabled {
 		tlsConfig, err := loadClientTLSConfig(cfg)

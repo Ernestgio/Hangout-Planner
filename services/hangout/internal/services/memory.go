@@ -14,6 +14,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gorm"
 )
 
@@ -47,8 +48,16 @@ func NewMemoryService(db *gorm.DB, memoryRepo repository.MemoryRepository, hango
 func (s *memoryService) GenerateUploadURLs(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, req *dto.GenerateUploadURLsRequest) (*dto.MemoryUploadResponse, error) {
 	recordMetrics := s.metrics.StartRequest(ctx, "memory", "generate_upload")
 
+	ctx, span := otel.StartServiceSpan(ctx, "GenerateUploadURLs",
+		attribute.String("user.id", userID.String()),
+		attribute.String("hangout.id", hangoutID.String()),
+		attribute.Int("file.count", len(req.Files)),
+	)
+	defer span.End()
+
 	if len(req.Files) > constants.MaxFilePerUpload {
 		recordMetrics("error")
+		span.RecordErrorWithStatus(apperrors.ErrTooManyFiles)
 		return nil, apperrors.ErrTooManyFiles
 	}
 
@@ -118,9 +127,12 @@ func (s *memoryService) GenerateUploadURLs(ctx context.Context, userID uuid.UUID
 	})
 	if err != nil {
 		recordMetrics("error")
+		span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
+	span.SetAttributes(attribute.Int("memory.count", len(memories)))
+	span.SetStatusOk()
 	recordMetrics("success")
 	return mapper.ToMemoryUploadResponse(uploadURLsResp.Urls), nil
 }
@@ -128,14 +140,22 @@ func (s *memoryService) GenerateUploadURLs(ctx context.Context, userID uuid.UUID
 func (s *memoryService) ConfirmUpload(ctx context.Context, userID uuid.UUID, req *dto.ConfirmUploadRequest) error {
 	recordMetrics := s.metrics.StartRequest(ctx, "memory", "confirm_upload")
 
+	ctx, span := otel.StartServiceSpan(ctx, "ConfirmUpload",
+		attribute.String("user.id", userID.String()),
+		attribute.Int("memory.count", len(req.MemoryIDs)),
+	)
+	defer span.End()
+
 	memories, err := s.memoryRepo.GetMemoriesByIDs(ctx, req.MemoryIDs, userID)
 	if err != nil {
 		recordMetrics("error")
+		span.RecordErrorWithStatus(err)
 		return err
 	}
 
 	if len(memories) != len(req.MemoryIDs) {
 		recordMetrics("error")
+		span.RecordErrorWithStatus(apperrors.ErrMemoryNotFound)
 		return apperrors.ErrMemoryNotFound
 	}
 
@@ -143,6 +163,7 @@ func (s *memoryService) ConfirmUpload(ctx context.Context, userID uuid.UUID, req
 	for _, memory := range memories {
 		if memory.FileID == nil {
 			recordMetrics("error")
+			span.RecordErrorWithStatus(apperrors.ErrMemoryNotFound)
 			return apperrors.ErrMemoryNotFound
 		}
 		fileIDs = append(fileIDs, memory.FileID.String())
@@ -158,7 +179,9 @@ func (s *memoryService) ConfirmUpload(ctx context.Context, userID uuid.UUID, req
 
 	if err != nil {
 		recordMetrics("error")
+		span.RecordErrorWithStatus(err)
 	} else {
+		span.SetStatusOk()
 		recordMetrics("success")
 	}
 	return err
@@ -166,6 +189,12 @@ func (s *memoryService) ConfirmUpload(ctx context.Context, userID uuid.UUID, req
 
 func (s *memoryService) GetMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) (*dto.MemoryResponse, error) {
 	recordMetrics := s.metrics.StartRequest(ctx, "memory", "get")
+
+	ctx, span := otel.StartServiceSpan(ctx, "GetMemory",
+		attribute.String("user.id", userID.String()),
+		attribute.String("memory.id", memoryID.String()),
+	)
+	defer span.End()
 
 	memory, err := s.memoryRepo.GetMemoryByID(ctx, memoryID, userID)
 	if err != nil {
@@ -186,9 +215,11 @@ func (s *memoryService) GetMemory(ctx context.Context, userID uuid.UUID, memoryI
 
 	if err != nil {
 		recordMetrics("error")
+		span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
+	span.SetStatusOk()
 	recordMetrics("success")
 	return mapper.MemoryToResponseDTO(memory, fileWithURL.DownloadUrl, fileWithURL.FileSize, fileWithURL.MimeType), nil
 }
@@ -196,9 +227,17 @@ func (s *memoryService) GetMemory(ctx context.Context, userID uuid.UUID, memoryI
 func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hangoutID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedMemories, error) {
 	recordMetrics := s.metrics.StartRequest(ctx, "memory", "list")
 
+	ctx, span := otel.StartServiceSpan(ctx, "ListMemories",
+		attribute.String("user.id", userID.String()),
+		attribute.String("hangout.id", hangoutID.String()),
+		attribute.Int("pagination.limit", pagination.GetLimit()),
+	)
+	defer span.End()
+
 	_, err := s.hangoutRepo.GetHangoutByID(ctx, hangoutID, userID)
 	if err != nil {
 		recordMetrics("error")
+		span.RecordErrorWithStatus(err)
 		if err == gorm.ErrRecordNotFound {
 			return nil, apperrors.ErrInvalidHangoutID
 		}
@@ -208,6 +247,7 @@ func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hang
 	memories, err := s.memoryRepo.GetMemoriesByHangoutID(ctx, hangoutID, pagination)
 	if err != nil {
 		recordMetrics("error")
+		span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -232,6 +272,7 @@ func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hang
 
 	if err != nil {
 		recordMetrics("error")
+		span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -254,6 +295,11 @@ func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hang
 		nextCursor = &lastID
 	}
 
+	span.SetAttributes(
+		attribute.Int("memory.count", len(responses)),
+		attribute.Bool("pagination.has_more", hasMore),
+	)
+	span.SetStatusOk()
 	recordMetrics("success")
 	return &dto.PaginatedMemories{
 		Data:       responses,
@@ -264,6 +310,12 @@ func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hang
 
 func (s *memoryService) DeleteMemory(ctx context.Context, userID uuid.UUID, memoryID uuid.UUID) error {
 	recordMetrics := s.metrics.StartRequest(ctx, "memory", "delete")
+
+	ctx, span := otel.StartServiceSpan(ctx, "DeleteMemory",
+		attribute.String("user.id", userID.String()),
+		attribute.String("memory.id", memoryID.String()),
+	)
+	defer span.End()
 
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		_, err := s.memoryRepo.WithTx(tx).GetMemoryByID(ctx, memoryID, userID)
@@ -295,7 +347,9 @@ func (s *memoryService) DeleteMemory(ctx context.Context, userID uuid.UUID, memo
 
 	if err != nil {
 		recordMetrics("error")
+		span.RecordErrorWithStatus(err)
 	} else {
+		span.SetStatusOk()
 		recordMetrics("success")
 	}
 	return err

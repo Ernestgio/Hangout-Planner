@@ -11,6 +11,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/dto"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gorm"
 )
 
@@ -39,25 +40,56 @@ func (r *memoryRepository) WithTx(tx *gorm.DB) MemoryRepository {
 }
 
 func (r *memoryRepository) CreateMemory(ctx context.Context, memory *domain.Memory) (*domain.Memory, error) {
+	ctx, span := otel.StartRepositorySpan(ctx, "CreateMemory",
+		attribute.String("db.operation", "insert"),
+		attribute.String("db.table", "memories"),
+	)
+	defer span.End()
+
 	start := time.Now()
 	err := r.db.WithContext(ctx).Create(memory).Error
 	r.metrics.RecordDBOperation(ctx, "insert", "memories", time.Since(start), 1)
 
 	if err != nil {
+		span.RecordErrorWithStatus(err)
 		return nil, err
 	}
+
+	span.SetAttributes(attribute.String("memory.id", memory.ID.String()))
+	span.SetStatusOk()
 	return memory, nil
 }
 
 func (r *memoryRepository) CreateMemoriesBatch(ctx context.Context, memories []*domain.Memory) error {
+	ctx, span := otel.StartRepositorySpan(ctx, "CreateMemoriesBatch",
+		attribute.String("db.operation", "insert"),
+		attribute.String("db.table", "memories"),
+		attribute.Int("memory.count", len(memories)),
+	)
+	defer span.End()
+
 	start := time.Now()
 	err := r.db.WithContext(ctx).Create(&memories).Error
 	r.metrics.RecordDBOperation(ctx, "insert", "memories", time.Since(start), len(memories))
+
+	if err != nil {
+		span.RecordErrorWithStatus(err)
+	} else {
+		span.SetStatusOk()
+	}
 	return err
 }
 
 func (r *memoryRepository) UpdateFileIDs(ctx context.Context, updates map[uuid.UUID]uuid.UUID) error {
+	ctx, span := otel.StartRepositorySpan(ctx, "UpdateFileIDs",
+		attribute.String("db.operation", "update"),
+		attribute.String("db.table", "memories"),
+		attribute.Int("update.count", len(updates)),
+	)
+	defer span.End()
+
 	if len(updates) == 0 {
+		span.SetStatusOk()
 		return nil
 	}
 
@@ -79,6 +111,11 @@ func (r *memoryRepository) UpdateFileIDs(ctx context.Context, updates map[uuid.U
 	err := r.db.WithContext(ctx).Exec(sql, args...).Error
 	r.metrics.RecordDBOperation(ctx, "update", "memories", time.Since(start), len(updates))
 
+	if err != nil {
+		span.RecordErrorWithStatus(err)
+	} else {
+		span.SetStatusOk()
+	}
 	return err
 }
 
@@ -94,6 +131,14 @@ func RepeatPlaceholder(count int) string {
 }
 
 func (r *memoryRepository) GetMemoryByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*domain.Memory, error) {
+	ctx, span := otel.StartRepositorySpan(ctx, "GetMemoryByID",
+		attribute.String("db.operation", "select"),
+		attribute.String("db.table", "memories"),
+		attribute.String("memory.id", id.String()),
+		attribute.String("user.id", userID.String()),
+	)
+	defer span.End()
+
 	var memory domain.Memory
 
 	start := time.Now()
@@ -101,12 +146,23 @@ func (r *memoryRepository) GetMemoryByID(ctx context.Context, id uuid.UUID, user
 	r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), 1)
 
 	if err != nil {
+		span.RecordErrorWithStatus(err)
 		return nil, err
 	}
+
+	span.SetStatusOk()
 	return &memory, nil
 }
 
 func (r *memoryRepository) GetMemoriesByIDs(ctx context.Context, ids []uuid.UUID, userID uuid.UUID) ([]domain.Memory, error) {
+	ctx, span := otel.StartRepositorySpan(ctx, "GetMemoriesByIDs",
+		attribute.String("db.operation", "select"),
+		attribute.String("db.table", "memories"),
+		attribute.String("user.id", userID.String()),
+		attribute.Int("id.count", len(ids)),
+	)
+	defer span.End()
+
 	var memories []domain.Memory
 
 	start := time.Now()
@@ -114,12 +170,24 @@ func (r *memoryRepository) GetMemoriesByIDs(ctx context.Context, ids []uuid.UUID
 	r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), len(memories))
 
 	if err != nil {
+		span.RecordErrorWithStatus(err)
 		return nil, err
 	}
+
+	span.SetAttributes(attribute.Int("memory.count", len(memories)))
+	span.SetStatusOk()
 	return memories, nil
 }
 
 func (r *memoryRepository) GetMemoriesByHangoutID(ctx context.Context, hangoutID uuid.UUID, pagination *dto.CursorPagination) ([]domain.Memory, error) {
+	ctx, span := otel.StartRepositorySpan(ctx, "GetMemoriesByHangoutID",
+		attribute.String("db.operation", "select"),
+		attribute.String("db.table", "memories"),
+		attribute.String("hangout.id", hangoutID.String()),
+		attribute.Int("pagination.limit", pagination.GetLimit()),
+	)
+	defer span.End()
+
 	start := time.Now()
 	var memories []domain.Memory
 	limitToFetch := pagination.GetLimit() + 1
@@ -151,16 +219,32 @@ func (r *memoryRepository) GetMemoriesByHangoutID(ctx context.Context, hangoutID
 
 	if err := query.Find(&memories).Error; err != nil {
 		r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), 0)
+		span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
 	r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), len(memories))
+	span.SetAttributes(attribute.Int("memory.count", len(memories)))
+	span.SetStatusOk()
 	return memories, nil
 }
 
 func (r *memoryRepository) DeleteMemory(ctx context.Context, id uuid.UUID) error {
+	ctx, span := otel.StartRepositorySpan(ctx, "DeleteMemory",
+		attribute.String("db.operation", "delete"),
+		attribute.String("db.table", "memories"),
+		attribute.String("memory.id", id.String()),
+	)
+	defer span.End()
+
 	start := time.Now()
 	err := r.db.WithContext(ctx).Delete(&domain.Memory{}, "id = ?", id).Error
 	r.metrics.RecordDBOperation(ctx, "delete", "memories", time.Since(start), 1)
+
+	if err != nil {
+		span.RecordErrorWithStatus(err)
+	} else {
+		span.SetStatusOk()
+	}
 	return err
 }

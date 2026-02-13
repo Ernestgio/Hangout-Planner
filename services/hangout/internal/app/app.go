@@ -155,6 +155,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	// middleware
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
 	e.Use(middleware.Decompress())
+	e.Use(middlewares.TracingMiddleware(cfg.AppName))
 	e.Use(middlewares.MetricsMiddleware(metricsRecorder))
 
 	router.NewRouter(e, cfg, responseBuilder, authHandler, hangoutHandler, activityHandler, memoryHandler)
