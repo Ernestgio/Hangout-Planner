@@ -67,11 +67,12 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 	var metrics *otel.Metrics
 	if cfg.OTELConfig.Enabled {
 		otelCfg := otel.Config{
-			ServiceName:    cfg.AppName,
-			ServiceVersion: cfg.OTELConfig.ServiceVersion,
-			Environment:    cfg.Env,
-			Endpoint:       cfg.OTELConfig.Endpoint,
-			UseStdout:      cfg.OTELConfig.UseStdout,
+			ServiceName:     cfg.AppName,
+			ServiceVersion:  cfg.OTELConfig.ServiceVersion,
+			Environment:     cfg.Env,
+			Endpoint:        cfg.OTELConfig.TraceEndpoint,
+			UseStdout:       cfg.OTELConfig.UseStdout,
+			TraceSampleRate: cfg.OTELConfig.TraceSampleRate,
 		}
 		tracerProvider, err = otel.NewTracerProvider(ctx, otelCfg)
 		if err != nil {
@@ -80,6 +81,7 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 			return nil, err
 		}
 
+		otelCfg.Endpoint = cfg.OTELConfig.Endpoint
 		meterProvider, err = otel.NewMeterProvider(ctx, otelCfg)
 		if err != nil {
 			logger.Error(ctx, logmsg.OTELInitFailed, err)
@@ -97,7 +99,6 @@ func NewApp(ctx context.Context, cfg *config.Config) (*App, error) {
 			return nil, err
 		}
 
-		// Start Go runtime instrumentation
 		if err := otel.StartRuntimeInstrumentation(); err != nil {
 			logger.Error(ctx, logmsg.OTELInitFailed, err)
 			_ = dbCloser()

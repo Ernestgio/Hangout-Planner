@@ -20,11 +20,12 @@ type TracerProvider struct {
 }
 
 type Config struct {
-	ServiceName    string
-	ServiceVersion string
-	Environment    string
-	Endpoint       string
-	UseStdout      bool
+	ServiceName     string
+	ServiceVersion  string
+	Environment     string
+	Endpoint        string
+	UseStdout       bool
+	TraceSampleRate float64
 }
 
 // NewTracerProvider initializes and configures an OpenTelemetry tracer provider
@@ -67,10 +68,19 @@ func NewTracerProvider(ctx context.Context, cfg Config) (*TracerProvider, error)
 		}
 	}
 
+	var sampler sdktrace.Sampler
+	if cfg.TraceSampleRate >= 1.0 {
+		sampler = sdktrace.AlwaysSample()
+	} else if cfg.TraceSampleRate <= 0.0 {
+		sampler = sdktrace.NeverSample()
+	} else {
+		sampler = sdktrace.TraceIDRatioBased(cfg.TraceSampleRate)
+	}
+
 	tp := sdktrace.NewTracerProvider(
 		sdktrace.WithBatcher(exporter),
 		sdktrace.WithResource(res),
-		sdktrace.WithSampler(sdktrace.AlwaysSample()),
+		sdktrace.WithSampler(sampler),
 	)
 
 	otel.SetTracerProvider(tp)

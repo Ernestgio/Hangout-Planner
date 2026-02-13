@@ -34,7 +34,11 @@ const (
 	DefaultS3Bucket           = "hangout-files"
 
 	// OTEL Config - Default values constants
-	DefaultOTELEndpoint = "localhost:4317"
+	DefaultOTELEndpoint    = "localhost:4317"
+	DefaultTraceSampleRate = 1.0
+	DefaultServiceVersion  = "1.0.0"
+	DefaultOtelEnabled     = "true"
+	DefaultOtelUseStdout   = "false"
 
 	// Metrics Constants - Operation labels
 	MetricOpGenerateUploadURL = "generate_upload_url"
