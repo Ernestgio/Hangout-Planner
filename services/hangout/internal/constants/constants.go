@@ -22,8 +22,7 @@ const (
 	DefaultDBNetwork = "tcp"
 
 	// Application constants
-	LoggerFormat = "[${time_rfc3339}] ${method} ${host}${uri} ${status} ${latency_human}\n"
-
+	LoggerFormat = "%s | %3d | %13s | %-7s %s (%s) | proto=%s | ip=%s | len=%s | res=%d | err=%v\n"
 	// Application Timeouts
 	GracefulShutdownTimeout = 10 // seconds
 
@@ -85,5 +84,8 @@ const (
 	DefaultMTLSCAPath     = "/app/certs/mtls/ca.crt"
 
 	// OTEL default configs
-	DefaultOTELEndpoint = "otelcollector:4317"
+	DefaultOTELEndpoint       = "otelcollector:4317"
+	DefaultOTELServiceVersion = "1.0.0"
+	DefaultOTELUseStdout      = "false"
+	DefaultTraceSampleRate    = 1.0
 )

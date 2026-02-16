@@ -124,11 +124,11 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				createdHangout := &domain.Hangout{ID: uuid.New(), Title: "Test Hangout"}
-				hRepo.On("CreateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool {
+				hRepo.On("CreateHangout", mock.Anything, mock.MatchedBy(func(h *domain.Hangout) bool {
 					return h.Title == "Test Hangout" && h.Status == enums.StatusPlanning
 				})).Return(createdHangout, nil).Once()
 
-				hRepo.On("GetHangoutByID", ctx, createdHangout.ID, userID).Return(createdHangout, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, createdHangout.ID, userID).Return(createdHangout, nil).Once()
 
 				sqlMock.ExpectCommit()
 			},
@@ -151,11 +151,11 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				createdHangout := &domain.Hangout{ID: uuid.New(), Title: "Empty Activities"}
-				hRepo.On("CreateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool {
+				hRepo.On("CreateHangout", mock.Anything, mock.MatchedBy(func(h *domain.Hangout) bool {
 					return h.Title == "Empty Activities"
 				})).Return(createdHangout, nil).Once()
 
-				hRepo.On("GetHangoutByID", ctx, createdHangout.ID, userID).Return(createdHangout, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, createdHangout.ID, userID).Return(createdHangout, nil).Once()
 
 				sqlMock.ExpectCommit()
 			},
@@ -178,15 +178,15 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				mockActivities := []*domain.Activity{{ID: activityID1}, {ID: activityID2}}
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return(mockActivities, nil).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1, activityID2}).Return(mockActivities, nil).Once()
 
 				createdHangout := &domain.Hangout{ID: uuid.New(), Title: "Hangout with activities"}
-				hRepo.On("CreateHangout", ctx, mock.Anything).Return(createdHangout, nil).Once()
+				hRepo.On("CreateHangout", mock.Anything, mock.Anything).Return(createdHangout, nil).Once()
 
-				hRepo.On("AddHangoutActivities", ctx, createdHangout.ID, []uuid.UUID{activityID1, activityID2}).Return(nil).Once()
+				hRepo.On("AddHangoutActivities", mock.Anything, createdHangout.ID, []uuid.UUID{activityID1, activityID2}).Return(nil).Once()
 
 				finalHangout := &domain.Hangout{ID: createdHangout.ID, Title: "Hangout with activities", Activities: []*domain.Activity{{ID: activityID1}, {ID: activityID2}}}
-				hRepo.On("GetHangoutByID", ctx, createdHangout.ID, userID).Return(finalHangout, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, createdHangout.ID, userID).Return(finalHangout, nil).Once()
 
 				sqlMock.ExpectCommit()
 			},
@@ -222,7 +222,7 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1, activityID2}).
 					Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
 
 				sqlMock.ExpectRollback()
@@ -244,7 +244,7 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return(nil, dbError).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1}).Return(nil, dbError).Once()
 
 				sqlMock.ExpectRollback()
 			},
@@ -265,7 +265,7 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
-				hRepo.On("CreateHangout", ctx, mock.Anything).Return(nil, dbError).Once()
+				hRepo.On("CreateHangout", mock.Anything, mock.Anything).Return(nil, dbError).Once()
 
 				sqlMock.ExpectRollback()
 			},
@@ -287,12 +287,12 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				mockActivities := []*domain.Activity{{ID: activityID1}}
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return(mockActivities, nil).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1}).Return(mockActivities, nil).Once()
 
 				createdHangout := &domain.Hangout{ID: uuid.New()}
-				hRepo.On("CreateHangout", ctx, mock.Anything).Return(createdHangout, nil).Once()
+				hRepo.On("CreateHangout", mock.Anything, mock.Anything).Return(createdHangout, nil).Once()
 
-				hRepo.On("AddHangoutActivities", ctx, createdHangout.ID, []uuid.UUID{activityID1}).Return(dbError).Once()
+				hRepo.On("AddHangoutActivities", mock.Anything, createdHangout.ID, []uuid.UUID{activityID1}).Return(dbError).Once()
 
 				sqlMock.ExpectRollback()
 			},
@@ -313,8 +313,8 @@ func TestHangoutService_CreateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				createdHangout := &domain.Hangout{ID: uuid.New()}
-				hRepo.On("CreateHangout", ctx, mock.Anything).Return(createdHangout, nil).Once()
-				hRepo.On("GetHangoutByID", ctx, createdHangout.ID, userID).Return(nil, dbError).Once()
+				hRepo.On("CreateHangout", mock.Anything, mock.Anything).Return(createdHangout, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, createdHangout.ID, userID).Return(nil, dbError).Once()
 
 				sqlMock.ExpectRollback()
 			},
@@ -359,7 +359,7 @@ func TestHangoutService_GetHangoutByID(t *testing.T) {
 			name:   "success",
 			userID: ownerID,
 			setupMock: func(repo *MockHangoutRepository) {
-				repo.On("GetHangoutByID", ctx, hangoutID, ownerID).Return(&domain.Hangout{ID: hangoutID, UserID: &ownerID}, nil).Once()
+				repo.On("GetHangoutByID", mock.Anything, hangoutID, ownerID).Return(&domain.Hangout{ID: hangoutID, UserID: &ownerID}, nil).Once()
 			},
 			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
 				require.NoError(t, err)
@@ -371,7 +371,7 @@ func TestHangoutService_GetHangoutByID(t *testing.T) {
 			name:   "not found",
 			userID: ownerID,
 			setupMock: func(repo *MockHangoutRepository) {
-				repo.On("GetHangoutByID", ctx, hangoutID, ownerID).Return(nil, gorm.ErrRecordNotFound).Once()
+				repo.On("GetHangoutByID", mock.Anything, hangoutID, ownerID).Return(nil, gorm.ErrRecordNotFound).Once()
 			},
 			checkResult: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
 				require.Error(t, err)
@@ -410,8 +410,8 @@ func TestHangoutService_DeleteHangout(t *testing.T) {
 			setupMock: func(repo *MockHangoutRepository, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo).Once()
-				repo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
-				repo.On("DeleteHangout", ctx, hangoutID).Return(nil).Once()
+				repo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
+				repo.On("DeleteHangout", mock.Anything, hangoutID).Return(nil).Once()
 				sqlMock.ExpectCommit()
 			},
 			expectedErr: nil,
@@ -421,7 +421,7 @@ func TestHangoutService_DeleteHangout(t *testing.T) {
 			setupMock: func(repo *MockHangoutRepository, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo).Once()
-				repo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, gorm.ErrRecordNotFound).Once()
+				repo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(nil, gorm.ErrRecordNotFound).Once()
 				sqlMock.ExpectRollback()
 			},
 			expectedErr: gorm.ErrRecordNotFound,
@@ -431,8 +431,8 @@ func TestHangoutService_DeleteHangout(t *testing.T) {
 			setupMock: func(repo *MockHangoutRepository, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo).Once()
-				repo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
-				repo.On("DeleteHangout", ctx, hangoutID).Return(dbError).Once()
+				repo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID, UserID: &userID}, nil).Once()
+				repo.On("DeleteHangout", mock.Anything, hangoutID).Return(dbError).Once()
 				sqlMock.ExpectRollback()
 			},
 			expectedErr: dbError,
@@ -476,7 +476,7 @@ func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
 			name:       "success - first page, less results than limit",
 			pagination: &dto.CursorPagination{Limit: 10},
 			setupMock: func(repo *MockHangoutRepository) {
-				repo.On("GetHangoutsByUserID", ctx, userID, mock.AnythingOfType("*dto.CursorPagination")).Return([]domain.Hangout{{ID: uuid.New()}, {ID: uuid.New()}}, nil).Once()
+				repo.On("GetHangoutsByUserID", mock.Anything, userID, mock.AnythingOfType("*dto.CursorPagination")).Return([]domain.Hangout{{ID: uuid.New()}, {ID: uuid.New()}}, nil).Once()
 			},
 			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
 				require.NoError(t, err)
@@ -494,7 +494,7 @@ func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
 				for i := range mockHangouts {
 					mockHangouts[i] = domain.Hangout{ID: uuid.New()}
 				}
-				repo.On("GetHangoutsByUserID", ctx, userID, mock.AnythingOfType("*dto.CursorPagination")).Return(mockHangouts, nil).Once()
+				repo.On("GetHangoutsByUserID", mock.Anything, userID, mock.AnythingOfType("*dto.CursorPagination")).Return(mockHangouts, nil).Once()
 			},
 			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
 				require.NoError(t, err)
@@ -513,7 +513,7 @@ func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
 				for i := range mockHangouts {
 					mockHangouts[i] = domain.Hangout{ID: uuid.New()}
 				}
-				repo.On("GetHangoutsByUserID", ctx, userID, mock.AnythingOfType("*dto.CursorPagination")).Return(mockHangouts, nil).Once()
+				repo.On("GetHangoutsByUserID", mock.Anything, userID, mock.AnythingOfType("*dto.CursorPagination")).Return(mockHangouts, nil).Once()
 			},
 			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
 				require.NoError(t, err)
@@ -527,7 +527,7 @@ func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
 			name:       "success - no results",
 			pagination: &dto.CursorPagination{Limit: 10},
 			setupMock: func(repo *MockHangoutRepository) {
-				repo.On("GetHangoutsByUserID", ctx, userID, mock.AnythingOfType("*dto.CursorPagination")).Return([]domain.Hangout{}, nil).Once()
+				repo.On("GetHangoutsByUserID", mock.Anything, userID, mock.AnythingOfType("*dto.CursorPagination")).Return([]domain.Hangout{}, nil).Once()
 			},
 			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
 				require.NoError(t, err)
@@ -541,7 +541,7 @@ func TestHangoutService_GetHangoutsByUserID(t *testing.T) {
 			name:       "repository error",
 			pagination: &dto.CursorPagination{},
 			setupMock: func(repo *MockHangoutRepository) {
-				repo.On("GetHangoutsByUserID", ctx, userID, mock.AnythingOfType("*dto.CursorPagination")).Return(nil, dbError).Once()
+				repo.On("GetHangoutsByUserID", mock.Anything, userID, mock.AnythingOfType("*dto.CursorPagination")).Return(nil, dbError).Once()
 			},
 			checkResult: func(t *testing.T, res *dto.PaginatedHangouts, err error) {
 				require.Error(t, err)
@@ -594,16 +594,16 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(existing, nil).Once()
 
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
 
-				hRepo.On("UpdateHangout", ctx, mock.MatchedBy(func(h *domain.Hangout) bool {
+				hRepo.On("UpdateHangout", mock.Anything, mock.MatchedBy(func(h *domain.Hangout) bool {
 					return h.ID == hangoutID && h.Title == "Updated Title"
 				})).Return(existing, nil).Once()
 
 				final := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Updated Title", Activities: []*domain.Activity{{ID: activityID1}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(final, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(final, nil).Once()
 				sqlMock.ExpectCommit()
 			},
 			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
@@ -626,16 +626,16 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(existing, nil).Once()
 
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}, {ID: activityID2}}, nil).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}, {ID: activityID2}}, nil).Once()
 
-				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(existing, nil).Once()
+				hRepo.On("UpdateHangout", mock.Anything, mock.Anything).Return(existing, nil).Once()
 
-				hRepo.On("AddHangoutActivities", ctx, hangoutID, []uuid.UUID{activityID2}).Return(nil).Once()
+				hRepo.On("AddHangoutActivities", mock.Anything, hangoutID, []uuid.UUID{activityID2}).Return(nil).Once()
 
 				final := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Updated Title", Activities: []*domain.Activity{{ID: activityID1}, {ID: activityID2}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(final, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(final, nil).Once()
 				sqlMock.ExpectCommit()
 			},
 			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
@@ -657,9 +657,9 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(existing, nil).Once()
 
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
 
 				sqlMock.ExpectRollback()
 			},
@@ -681,7 +681,7 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				hRepo.On("WithTx", mock.Anything).Return(hRepo).Once()
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, gorm.ErrRecordNotFound).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(nil, gorm.ErrRecordNotFound).Once()
 				sqlMock.ExpectRollback()
 			},
 			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
@@ -703,16 +703,16 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}, {ID: activityID2}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(existing, nil).Once()
 
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
 
-				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(existing, nil).Once()
+				hRepo.On("UpdateHangout", mock.Anything, mock.Anything).Return(existing, nil).Once()
 
-				hRepo.On("RemoveHangoutActivities", ctx, hangoutID, []uuid.UUID{activityID2}).Return(nil).Once()
+				hRepo.On("RemoveHangoutActivities", mock.Anything, hangoutID, []uuid.UUID{activityID2}).Return(nil).Once()
 
 				final := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Updated Title", Activities: []*domain.Activity{{ID: activityID1}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(final, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(final, nil).Once()
 				sqlMock.ExpectCommit()
 			},
 			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
@@ -734,11 +734,11 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(existing, nil).Once()
 
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
 
-				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(nil, dbError).Once()
+				hRepo.On("UpdateHangout", mock.Anything, mock.Anything).Return(nil, dbError).Once()
 				sqlMock.ExpectRollback()
 			},
 			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
@@ -760,12 +760,12 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}, {ID: activityID2}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(existing, nil).Once()
 
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
 
-				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(existing, nil).Once()
-				hRepo.On("RemoveHangoutActivities", ctx, hangoutID, []uuid.UUID{activityID2}).Return(dbError).Once()
+				hRepo.On("UpdateHangout", mock.Anything, mock.Anything).Return(existing, nil).Once()
+				hRepo.On("RemoveHangoutActivities", mock.Anything, hangoutID, []uuid.UUID{activityID2}).Return(dbError).Once()
 				sqlMock.ExpectRollback()
 			},
 			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
@@ -787,12 +787,12 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(existing, nil).Once()
 
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}, {ID: activityID2}}, nil).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1, activityID2}).Return([]*domain.Activity{{ID: activityID1}, {ID: activityID2}}, nil).Once()
 
-				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(existing, nil).Once()
-				hRepo.On("AddHangoutActivities", ctx, hangoutID, []uuid.UUID{activityID2}).Return(dbError).Once()
+				hRepo.On("UpdateHangout", mock.Anything, mock.Anything).Return(existing, nil).Once()
+				hRepo.On("AddHangoutActivities", mock.Anything, hangoutID, []uuid.UUID{activityID2}).Return(dbError).Once()
 				sqlMock.ExpectRollback()
 			},
 			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
@@ -814,10 +814,10 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
-				hRepo.On("UpdateHangout", ctx, mock.Anything).Return(existing, nil).Once()
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, dbError).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(existing, nil).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1}).Return([]*domain.Activity{{ID: activityID1}}, nil).Once()
+				hRepo.On("UpdateHangout", mock.Anything, mock.Anything).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(nil, dbError).Once()
 				sqlMock.ExpectRollback()
 			},
 			check: func(t *testing.T, res *dto.HangoutDetailResponse, err error) {
@@ -839,9 +839,9 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(existing, nil).Once()
 
-				aRepo.On("GetActivitiesByIDs", ctx, []uuid.UUID{activityID1}).Return(nil, dbError).Once()
+				aRepo.On("GetActivitiesByIDs", mock.Anything, []uuid.UUID{activityID1}).Return(nil, dbError).Once()
 
 				sqlMock.ExpectRollback()
 			},
@@ -864,7 +864,7 @@ func TestHangoutService_UpdateHangout(t *testing.T) {
 				aRepo.On("WithTx", mock.Anything).Return(aRepo).Once()
 
 				existing := &domain.Hangout{ID: hangoutID, UserID: &userID, Title: "Old", Activities: []*domain.Activity{{ID: activityID1}}}
-				hRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(existing, nil).Once()
+				hRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(existing, nil).Once()
 
 				sqlMock.ExpectRollback()
 			},

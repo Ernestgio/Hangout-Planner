@@ -19,15 +19,6 @@ type TracerProvider struct {
 	provider *sdktrace.TracerProvider
 }
 
-type Config struct {
-	ServiceName     string
-	ServiceVersion  string
-	Environment     string
-	Endpoint        string
-	UseStdout       bool
-	TraceSampleRate float64
-}
-
 // NewTracerProvider initializes and configures an OpenTelemetry tracer provider
 func NewTracerProvider(ctx context.Context, cfg Config) (*TracerProvider, error) {
 	res, err := resource.New(ctx,

@@ -156,9 +156,9 @@ func TestFileService_GenerateUploadURLs(t *testing.T) {
 				val.On("ValidateFileUploadIntent", "photo.jpg", int64(1024), "image/jpeg").Return(nil)
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo)
-				repo.On("CreateBatch", ctx, mock.Anything).Return(nil)
+				repo.On("CreateBatch", mock.Anything, mock.Anything).Return(nil)
 				store.On("GetPresignedURLExpiry").Return(1 * time.Hour)
-				store.On("GeneratePresignedUploadURL", ctx, mock.Anything, "image/jpeg").Return("https://s3/upload", nil)
+				store.On("GeneratePresignedUploadURL", mock.Anything, mock.Anything, "image/jpeg").Return("https://s3/upload", nil)
 				sqlMock.ExpectCommit()
 			},
 		},
@@ -204,7 +204,7 @@ func TestFileService_GenerateUploadURLs(t *testing.T) {
 				val.On("ValidateFileUploadIntent", "photo.jpg", int64(1024), "image/jpeg").Return(nil)
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo)
-				repo.On("CreateBatch", ctx, mock.Anything).Return(dbError)
+				repo.On("CreateBatch", mock.Anything, mock.Anything).Return(dbError)
 				sqlMock.ExpectRollback()
 			},
 			wantError: apperrors.ErrFileCreationFailed,
@@ -221,9 +221,9 @@ func TestFileService_GenerateUploadURLs(t *testing.T) {
 				val.On("ValidateFileUploadIntent", "photo.jpg", int64(1024), "image/jpeg").Return(nil)
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo)
-				repo.On("CreateBatch", ctx, mock.Anything).Return(nil)
+				repo.On("CreateBatch", mock.Anything, mock.Anything).Return(nil)
 				store.On("GetPresignedURLExpiry").Return(1 * time.Hour)
-				store.On("GeneratePresignedUploadURL", ctx, mock.Anything, "image/jpeg").Return("", apperrors.ErrPresignedUploadURLFailed)
+				store.On("GeneratePresignedUploadURL", mock.Anything, mock.Anything, "image/jpeg").Return("", apperrors.ErrPresignedUploadURLFailed)
 				sqlMock.ExpectRollback()
 			},
 			wantError: apperrors.ErrPresignedUploadURLFailed,
@@ -274,7 +274,7 @@ func TestFileService_ConfirmUpload(t *testing.T) {
 			setup: func(repo *MockMemoryFileRepository, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo)
-				repo.On("UpdateStatusBatch", ctx, []uuid.UUID{fileID}, string(enums.FileUploadStatusUploaded)).Return(nil)
+				repo.On("UpdateStatusBatch", mock.Anything, []uuid.UUID{fileID}, string(enums.FileUploadStatusUploaded)).Return(nil)
 				sqlMock.ExpectCommit()
 			},
 		},
@@ -294,7 +294,7 @@ func TestFileService_ConfirmUpload(t *testing.T) {
 			setup: func(repo *MockMemoryFileRepository, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo)
-				repo.On("UpdateStatusBatch", ctx, []uuid.UUID{fileID}, string(enums.FileUploadStatusUploaded)).Return(dbError)
+				repo.On("UpdateStatusBatch", mock.Anything, []uuid.UUID{fileID}, string(enums.FileUploadStatusUploaded)).Return(dbError)
 				sqlMock.ExpectRollback()
 			},
 			wantError: apperrors.ErrFileStatusUpdateFailed,
@@ -340,7 +340,7 @@ func TestFileService_GetFileByMemoryID(t *testing.T) {
 				MemoryId: memoryID.String(),
 			},
 			setup: func(repo *MockMemoryFileRepository, store *MockStorage) {
-				repo.On("GetByMemoryID", ctx, memoryID).Return(&domain.MemoryFile{
+				repo.On("GetByMemoryID", mock.Anything, memoryID).Return(&domain.MemoryFile{
 					ID:           fileID,
 					MemoryID:     memoryID,
 					OriginalName: "photo.jpg",
@@ -348,7 +348,7 @@ func TestFileService_GetFileByMemoryID(t *testing.T) {
 					FileSize:     1024,
 					MimeType:     "image/jpeg",
 				}, nil)
-				store.On("GeneratePresignedDownloadURL", ctx, "path/photo.jpg").Return("https://s3/download", nil)
+				store.On("GeneratePresignedDownloadURL", mock.Anything, "path/photo.jpg").Return("https://s3/download", nil)
 				store.On("GetPresignedURLExpiry").Return(1 * time.Hour)
 			},
 		},
@@ -366,7 +366,7 @@ func TestFileService_GetFileByMemoryID(t *testing.T) {
 				MemoryId: memoryID.String(),
 			},
 			setup: func(repo *MockMemoryFileRepository, store *MockStorage) {
-				repo.On("GetByMemoryID", ctx, memoryID).Return(nil, gorm.ErrRecordNotFound)
+				repo.On("GetByMemoryID", mock.Anything, memoryID).Return(nil, gorm.ErrRecordNotFound)
 			},
 			wantError: apperrors.ErrInvalidMemoryID,
 		},
@@ -376,13 +376,13 @@ func TestFileService_GetFileByMemoryID(t *testing.T) {
 				MemoryId: memoryID.String(),
 			},
 			setup: func(repo *MockMemoryFileRepository, store *MockStorage) {
-				repo.On("GetByMemoryID", ctx, memoryID).Return(&domain.MemoryFile{
+				repo.On("GetByMemoryID", mock.Anything, memoryID).Return(&domain.MemoryFile{
 					ID:           fileID,
 					MemoryID:     memoryID,
 					StoragePath:  "path/photo.jpg",
 					OriginalName: "photo.jpg",
 				}, nil)
-				store.On("GeneratePresignedDownloadURL", ctx, "path/photo.jpg").Return("", dbError)
+				store.On("GeneratePresignedDownloadURL", mock.Anything, "path/photo.jpg").Return("", dbError)
 			},
 			wantError: dbError,
 		},
@@ -431,12 +431,12 @@ func TestFileService_GetFilesByMemoryIDs(t *testing.T) {
 				MemoryIds: []string{memoryID1.String(), memoryID2.String()},
 			},
 			setup: func(repo *MockMemoryFileRepository, store *MockStorage) {
-				repo.On("GetByMemoryIDs", ctx, []uuid.UUID{memoryID1, memoryID2}).Return([]*domain.MemoryFile{
+				repo.On("GetByMemoryIDs", mock.Anything, []uuid.UUID{memoryID1, memoryID2}).Return([]*domain.MemoryFile{
 					{ID: fileID1, MemoryID: memoryID1, StoragePath: "path1/photo1.jpg", OriginalName: "photo1.jpg"},
 					{ID: fileID2, MemoryID: memoryID2, StoragePath: "path2/photo2.jpg", OriginalName: "photo2.jpg"},
 				}, nil)
-				store.On("GeneratePresignedDownloadURL", ctx, "path1/photo1.jpg").Return("https://s3/download1", nil)
-				store.On("GeneratePresignedDownloadURL", ctx, "path2/photo2.jpg").Return("https://s3/download2", nil)
+				store.On("GeneratePresignedDownloadURL", mock.Anything, "path1/photo1.jpg").Return("https://s3/download1", nil)
+				store.On("GeneratePresignedDownloadURL", mock.Anything, "path2/photo2.jpg").Return("https://s3/download2", nil)
 				store.On("GetPresignedURLExpiry").Return(1 * time.Hour)
 			},
 		},
@@ -454,7 +454,7 @@ func TestFileService_GetFilesByMemoryIDs(t *testing.T) {
 				MemoryIds: []string{memoryID1.String()},
 			},
 			setup: func(repo *MockMemoryFileRepository, store *MockStorage) {
-				repo.On("GetByMemoryIDs", ctx, []uuid.UUID{memoryID1}).Return(nil, gorm.ErrRecordNotFound)
+				repo.On("GetByMemoryIDs", mock.Anything, []uuid.UUID{memoryID1}).Return(nil, gorm.ErrRecordNotFound)
 			},
 			wantError: apperrors.ErrInvalidMemoryID,
 		},
@@ -464,10 +464,10 @@ func TestFileService_GetFilesByMemoryIDs(t *testing.T) {
 				MemoryIds: []string{memoryID1.String()},
 			},
 			setup: func(repo *MockMemoryFileRepository, store *MockStorage) {
-				repo.On("GetByMemoryIDs", ctx, []uuid.UUID{memoryID1}).Return([]*domain.MemoryFile{
-					{ID: fileID1, MemoryID: memoryID1, StoragePath: "path1/photo1.jpg"},
+				repo.On("GetByMemoryIDs", mock.Anything, []uuid.UUID{memoryID1}).Return([]*domain.MemoryFile{
+					{ID: uuid.New(), MemoryID: memoryID1, StoragePath: "path1/photo1.jpg"},
 				}, nil)
-				store.On("GeneratePresignedDownloadURL", ctx, "path1/photo1.jpg").Return("", dbError)
+				store.On("GeneratePresignedDownloadURL", mock.Anything, "path1/photo1.jpg").Return("", dbError)
 			},
 			wantError: dbError,
 		},
@@ -514,16 +514,16 @@ func TestFileService_DeleteFile(t *testing.T) {
 				MemoryId: memoryID.String(),
 			},
 			setup: func(repo *MockMemoryFileRepository, store *MockStorage, sqlMock sqlmock.Sqlmock) {
-				repo.On("GetByMemoryID", ctx, memoryID).Return(&domain.MemoryFile{
+				repo.On("GetByMemoryID", mock.Anything, memoryID).Return(&domain.MemoryFile{
 					ID:          fileID,
 					MemoryID:    memoryID,
 					StoragePath: "path/photo.jpg",
 				}, nil)
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo)
-				repo.On("Delete", ctx, fileID).Return(nil)
+				repo.On("Delete", mock.Anything, fileID).Return(nil)
 				sqlMock.ExpectCommit()
-				store.On("Delete", ctx, "path/photo.jpg").Return(nil)
+				store.On("Delete", mock.Anything, "path/photo.jpg").Return(nil)
 			},
 		},
 		{
@@ -540,7 +540,7 @@ func TestFileService_DeleteFile(t *testing.T) {
 				MemoryId: memoryID.String(),
 			},
 			setup: func(repo *MockMemoryFileRepository, store *MockStorage, sqlMock sqlmock.Sqlmock) {
-				repo.On("GetByMemoryID", ctx, memoryID).Return(nil, gorm.ErrRecordNotFound)
+				repo.On("GetByMemoryID", mock.Anything, memoryID).Return(nil, gorm.ErrRecordNotFound)
 			},
 			wantError: apperrors.ErrInvalidMemoryID,
 		},
@@ -550,14 +550,14 @@ func TestFileService_DeleteFile(t *testing.T) {
 				MemoryId: memoryID.String(),
 			},
 			setup: func(repo *MockMemoryFileRepository, store *MockStorage, sqlMock sqlmock.Sqlmock) {
-				repo.On("GetByMemoryID", ctx, memoryID).Return(&domain.MemoryFile{
+				repo.On("GetByMemoryID", mock.Anything, memoryID).Return(&domain.MemoryFile{
 					ID:          fileID,
 					MemoryID:    memoryID,
 					StoragePath: "path/photo.jpg",
 				}, nil)
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo)
-				repo.On("Delete", ctx, fileID).Return(dbError)
+				repo.On("Delete", mock.Anything, fileID).Return(dbError)
 				sqlMock.ExpectRollback()
 			},
 			wantError: apperrors.ErrFileDeleteFailed,
@@ -568,16 +568,16 @@ func TestFileService_DeleteFile(t *testing.T) {
 				MemoryId: memoryID.String(),
 			},
 			setup: func(repo *MockMemoryFileRepository, store *MockStorage, sqlMock sqlmock.Sqlmock) {
-				repo.On("GetByMemoryID", ctx, memoryID).Return(&domain.MemoryFile{
+				repo.On("GetByMemoryID", mock.Anything, memoryID).Return(&domain.MemoryFile{
 					ID:          fileID,
 					MemoryID:    memoryID,
 					StoragePath: "path/photo.jpg",
 				}, nil)
 				sqlMock.ExpectBegin()
 				repo.On("WithTx", mock.Anything).Return(repo)
-				repo.On("Delete", ctx, fileID).Return(nil)
+				repo.On("Delete", mock.Anything, fileID).Return(nil)
 				sqlMock.ExpectCommit()
-				store.On("Delete", ctx, "path/photo.jpg").Return(dbError)
+				store.On("Delete", mock.Anything, "path/photo.jpg").Return(dbError)
 			},
 			wantError: apperrors.ErrFileDeleteFailed,
 		},

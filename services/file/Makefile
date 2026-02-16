@@ -94,6 +94,10 @@ otel-run:
 prometheus-run:
 	docker compose up -d prometheus
 
+## Tempo
+tempo-run:
+	docker compose up -d tempo
+
 #grafana
 grafana-run:
 	docker compose up -d grafana

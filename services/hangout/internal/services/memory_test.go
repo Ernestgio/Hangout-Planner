@@ -37,16 +37,16 @@ func TestMemoryService_GenerateUploadURLs(t *testing.T) {
 				},
 			},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
 				sqlMock.ExpectBegin()
 				memRepo.On("WithTx", mock.Anything).Return(memRepo)
-				memRepo.On("CreateMemoriesBatch", ctx, mock.Anything).Return(nil)
-				fileService.On("GenerateUploadURLs", ctx, "hangouts/"+hangoutID.String()+"/memories", mock.Anything).Return(&filepb.GenerateUploadURLsResponse{
+				memRepo.On("CreateMemoriesBatch", mock.Anything, mock.Anything).Return(nil)
+				fileService.On("GenerateUploadURLs", mock.Anything, "hangouts/"+hangoutID.String()+"/memories", mock.Anything).Return(&filepb.GenerateUploadURLsResponse{
 					Urls: []*filepb.PresignedUploadURL{
 						{FileId: uuid.New().String(), MemoryId: uuid.New().String(), Filename: "photo.jpg", UploadUrl: "https://s3/upload", ExpiresAt: 123456789},
 					},
 				}, nil)
-				memRepo.On("UpdateFileIDs", ctx, mock.Anything).Return(nil)
+				memRepo.On("UpdateFileIDs", mock.Anything, mock.Anything).Return(nil)
 				sqlMock.ExpectCommit()
 			},
 		},
@@ -67,7 +67,7 @@ func TestMemoryService_GenerateUploadURLs(t *testing.T) {
 				},
 			},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, gorm.ErrRecordNotFound)
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(nil, gorm.ErrRecordNotFound)
 			},
 			wantError: apperrors.ErrInvalidHangoutID,
 		},
@@ -79,7 +79,7 @@ func TestMemoryService_GenerateUploadURLs(t *testing.T) {
 				},
 			},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, dbError)
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(nil, dbError)
 			},
 			wantError: dbError,
 		},
@@ -91,10 +91,10 @@ func TestMemoryService_GenerateUploadURLs(t *testing.T) {
 				},
 			},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
 				sqlMock.ExpectBegin()
 				memRepo.On("WithTx", mock.Anything).Return(memRepo)
-				memRepo.On("CreateMemoriesBatch", ctx, mock.Anything).Return(dbError)
+				memRepo.On("CreateMemoriesBatch", mock.Anything, mock.Anything).Return(dbError)
 				sqlMock.ExpectRollback()
 			},
 			wantError: dbError,
@@ -107,11 +107,11 @@ func TestMemoryService_GenerateUploadURLs(t *testing.T) {
 				},
 			},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
 				sqlMock.ExpectBegin()
 				memRepo.On("WithTx", mock.Anything).Return(memRepo)
-				memRepo.On("CreateMemoriesBatch", ctx, mock.Anything).Return(nil)
-				fileService.On("GenerateUploadURLs", ctx, "hangouts/"+hangoutID.String()+"/memories", mock.Anything).Return(nil, dbError)
+				memRepo.On("CreateMemoriesBatch", mock.Anything, mock.Anything).Return(nil)
+				fileService.On("GenerateUploadURLs", mock.Anything, "hangouts/"+hangoutID.String()+"/memories", mock.Anything).Return(nil, dbError)
 				sqlMock.ExpectRollback()
 			},
 			wantError: dbError,
@@ -124,16 +124,16 @@ func TestMemoryService_GenerateUploadURLs(t *testing.T) {
 				},
 			},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
 				sqlMock.ExpectBegin()
 				memRepo.On("WithTx", mock.Anything).Return(memRepo)
-				memRepo.On("CreateMemoriesBatch", ctx, mock.Anything).Return(nil)
-				fileService.On("GenerateUploadURLs", ctx, "hangouts/"+hangoutID.String()+"/memories", mock.Anything).Return(&filepb.GenerateUploadURLsResponse{
+				memRepo.On("CreateMemoriesBatch", mock.Anything, mock.Anything).Return(nil)
+				fileService.On("GenerateUploadURLs", mock.Anything, "hangouts/"+hangoutID.String()+"/memories", mock.Anything).Return(&filepb.GenerateUploadURLsResponse{
 					Urls: []*filepb.PresignedUploadURL{
 						{FileId: uuid.New().String(), MemoryId: uuid.New().String(), Filename: "photo.jpg", UploadUrl: "https://s3/upload", ExpiresAt: 123456789},
 					},
 				}, nil)
-				memRepo.On("UpdateFileIDs", ctx, mock.Anything).Return(dbError)
+				memRepo.On("UpdateFileIDs", mock.Anything, mock.Anything).Return(dbError)
 				sqlMock.ExpectRollback()
 			},
 			wantError: dbError,
@@ -185,11 +185,11 @@ func TestMemoryService_ConfirmUpload(t *testing.T) {
 				MemoryIDs: []uuid.UUID{memoryID1, memoryID2},
 			},
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService) {
-				memRepo.On("GetMemoriesByIDs", ctx, []uuid.UUID{memoryID1, memoryID2}, userID).Return([]domain.Memory{
+				memRepo.On("GetMemoriesByIDs", mock.Anything, []uuid.UUID{memoryID1, memoryID2}, userID).Return([]domain.Memory{
 					{ID: memoryID1, FileID: &fileID1},
 					{ID: memoryID2, FileID: &fileID2},
 				}, nil)
-				fileService.On("ConfirmUpload", ctx, []string{fileID1.String(), fileID2.String()}).Return(nil)
+				fileService.On("ConfirmUpload", mock.Anything, []string{fileID1.String(), fileID2.String()}).Return(nil)
 			},
 		},
 		{
@@ -198,7 +198,7 @@ func TestMemoryService_ConfirmUpload(t *testing.T) {
 				MemoryIDs: []uuid.UUID{memoryID1},
 			},
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService) {
-				memRepo.On("GetMemoriesByIDs", ctx, []uuid.UUID{memoryID1}, userID).Return(nil, dbError)
+				memRepo.On("GetMemoriesByIDs", mock.Anything, []uuid.UUID{memoryID1}, userID).Return(nil, dbError)
 			},
 			wantError: dbError,
 		},
@@ -208,7 +208,7 @@ func TestMemoryService_ConfirmUpload(t *testing.T) {
 				MemoryIDs: []uuid.UUID{memoryID1, memoryID2},
 			},
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService) {
-				memRepo.On("GetMemoriesByIDs", ctx, []uuid.UUID{memoryID1, memoryID2}, userID).Return([]domain.Memory{
+				memRepo.On("GetMemoriesByIDs", mock.Anything, []uuid.UUID{memoryID1, memoryID2}, userID).Return([]domain.Memory{
 					{ID: memoryID1, FileID: &fileID1},
 				}, nil)
 			},
@@ -220,7 +220,7 @@ func TestMemoryService_ConfirmUpload(t *testing.T) {
 				MemoryIDs: []uuid.UUID{memoryID1},
 			},
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService) {
-				memRepo.On("GetMemoriesByIDs", ctx, []uuid.UUID{memoryID1}, userID).Return([]domain.Memory{
+				memRepo.On("GetMemoriesByIDs", mock.Anything, []uuid.UUID{memoryID1}, userID).Return([]domain.Memory{
 					{ID: memoryID1, FileID: nil},
 				}, nil)
 			},
@@ -232,10 +232,10 @@ func TestMemoryService_ConfirmUpload(t *testing.T) {
 				MemoryIDs: []uuid.UUID{memoryID1},
 			},
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService) {
-				memRepo.On("GetMemoriesByIDs", ctx, []uuid.UUID{memoryID1}, userID).Return([]domain.Memory{
+				memRepo.On("GetMemoriesByIDs", mock.Anything, []uuid.UUID{memoryID1}, userID).Return([]domain.Memory{
 					{ID: memoryID1, FileID: &fileID1},
 				}, nil)
-				fileService.On("ConfirmUpload", ctx, []string{fileID1.String()}).Return(dbError)
+				fileService.On("ConfirmUpload", mock.Anything, []string{fileID1.String()}).Return(dbError)
 			},
 			wantError: dbError,
 		},
@@ -275,8 +275,8 @@ func TestMemoryService_GetMemory(t *testing.T) {
 		{
 			name: "success",
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService) {
-				memRepo.On("GetMemoryByID", ctx, memoryID, userID).Return(&domain.Memory{ID: memoryID, Name: "photo.jpg"}, nil)
-				fileService.On("GetFileByMemoryID", ctx, memoryID.String()).Return(&filepb.FileWithURL{
+				memRepo.On("GetMemoryByID", mock.Anything, memoryID, userID).Return(&domain.Memory{ID: memoryID, Name: "photo.jpg"}, nil)
+				fileService.On("GetFileByMemoryID", mock.Anything, memoryID.String()).Return(&filepb.FileWithURL{
 					DownloadUrl: "https://s3/download",
 					FileSize:    1024,
 					MimeType:    "image/jpeg",
@@ -286,22 +286,22 @@ func TestMemoryService_GetMemory(t *testing.T) {
 		{
 			name: "memory not found",
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService) {
-				memRepo.On("GetMemoryByID", ctx, memoryID, userID).Return(nil, gorm.ErrRecordNotFound)
+				memRepo.On("GetMemoryByID", mock.Anything, memoryID, userID).Return(nil, gorm.ErrRecordNotFound)
 			},
 			wantError: apperrors.ErrMemoryNotFound,
 		},
 		{
 			name: "memory repo error",
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService) {
-				memRepo.On("GetMemoryByID", ctx, memoryID, userID).Return(nil, dbError)
+				memRepo.On("GetMemoryByID", mock.Anything, memoryID, userID).Return(nil, dbError)
 			},
 			wantError: dbError,
 		},
 		{
 			name: "file service error",
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService) {
-				memRepo.On("GetMemoryByID", ctx, memoryID, userID).Return(&domain.Memory{ID: memoryID, Name: "photo.jpg"}, nil)
-				fileService.On("GetFileByMemoryID", ctx, memoryID.String()).Return(nil, dbError)
+				memRepo.On("GetMemoryByID", mock.Anything, memoryID, userID).Return(&domain.Memory{ID: memoryID, Name: "photo.jpg"}, nil)
+				fileService.On("GetFileByMemoryID", mock.Anything, memoryID.String()).Return(nil, dbError)
 			},
 			wantError: dbError,
 		},
@@ -348,12 +348,12 @@ func TestMemoryService_ListMemories(t *testing.T) {
 			name:       "success with results",
 			pagination: &dto.CursorPagination{Limit: 2},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
-				memRepo.On("GetMemoriesByHangoutID", ctx, hangoutID, mock.Anything).Return([]domain.Memory{
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
+				memRepo.On("GetMemoriesByHangoutID", mock.Anything, hangoutID, mock.Anything).Return([]domain.Memory{
 					{ID: memoryID1, Name: "photo1.jpg"},
 					{ID: memoryID2, Name: "photo2.jpg"},
 				}, nil)
-				fileService.On("GetFilesByMemoryIDs", ctx, []string{memoryID1.String(), memoryID2.String()}).Return(map[string]*filepb.FileWithURL{
+				fileService.On("GetFilesByMemoryIDs", mock.Anything, []string{memoryID1.String(), memoryID2.String()}).Return(map[string]*filepb.FileWithURL{
 					memoryID1.String(): {DownloadUrl: "https://s3/file1", FileSize: 1024, MimeType: "image/jpeg"},
 					memoryID2.String(): {DownloadUrl: "https://s3/file2", FileSize: 2048, MimeType: "image/png"},
 				}, nil)
@@ -363,12 +363,12 @@ func TestMemoryService_ListMemories(t *testing.T) {
 			name:       "success with more results",
 			pagination: &dto.CursorPagination{Limit: 1},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
-				memRepo.On("GetMemoriesByHangoutID", ctx, hangoutID, mock.Anything).Return([]domain.Memory{
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
+				memRepo.On("GetMemoriesByHangoutID", mock.Anything, hangoutID, mock.Anything).Return([]domain.Memory{
 					{ID: memoryID1, Name: "photo1.jpg"},
 					{ID: memoryID2, Name: "photo2.jpg"},
 				}, nil)
-				fileService.On("GetFilesByMemoryIDs", ctx, []string{memoryID1.String()}).Return(map[string]*filepb.FileWithURL{
+				fileService.On("GetFilesByMemoryIDs", mock.Anything, []string{memoryID1.String()}).Return(map[string]*filepb.FileWithURL{
 					memoryID1.String(): {DownloadUrl: "https://s3/file1", FileSize: 1024, MimeType: "image/jpeg"},
 				}, nil)
 			},
@@ -378,7 +378,7 @@ func TestMemoryService_ListMemories(t *testing.T) {
 			name:       "hangout not found",
 			pagination: &dto.CursorPagination{Limit: 2},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, gorm.ErrRecordNotFound)
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(nil, gorm.ErrRecordNotFound)
 			},
 			wantError: apperrors.ErrInvalidHangoutID,
 		},
@@ -386,7 +386,7 @@ func TestMemoryService_ListMemories(t *testing.T) {
 			name:       "hangout repo error",
 			pagination: &dto.CursorPagination{Limit: 2},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(nil, dbError)
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(nil, dbError)
 			},
 			wantError: dbError,
 		},
@@ -394,8 +394,8 @@ func TestMemoryService_ListMemories(t *testing.T) {
 			name:       "memory repo error",
 			pagination: &dto.CursorPagination{Limit: 2},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
-				memRepo.On("GetMemoriesByHangoutID", ctx, hangoutID, mock.Anything).Return(nil, dbError)
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
+				memRepo.On("GetMemoriesByHangoutID", mock.Anything, hangoutID, mock.Anything).Return(nil, dbError)
 			},
 			wantError: dbError,
 		},
@@ -403,11 +403,11 @@ func TestMemoryService_ListMemories(t *testing.T) {
 			name:       "file service error",
 			pagination: &dto.CursorPagination{Limit: 2},
 			setup: func(memRepo *MockMemoryRepository, hangoutRepo *MockHangoutRepository, fileService *MockFileService) {
-				hangoutRepo.On("GetHangoutByID", ctx, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
-				memRepo.On("GetMemoriesByHangoutID", ctx, hangoutID, mock.Anything).Return([]domain.Memory{
+				hangoutRepo.On("GetHangoutByID", mock.Anything, hangoutID, userID).Return(&domain.Hangout{ID: hangoutID}, nil)
+				memRepo.On("GetMemoriesByHangoutID", mock.Anything, hangoutID, mock.Anything).Return([]domain.Memory{
 					{ID: memoryID1, Name: "photo1.jpg"},
 				}, nil)
-				fileService.On("GetFilesByMemoryIDs", ctx, []string{memoryID1.String()}).Return(nil, dbError)
+				fileService.On("GetFilesByMemoryIDs", mock.Anything, []string{memoryID1.String()}).Return(nil, dbError)
 			},
 			wantError: dbError,
 		},
@@ -454,9 +454,9 @@ func TestMemoryService_DeleteMemory(t *testing.T) {
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				memRepo.On("WithTx", mock.Anything).Return(memRepo)
-				memRepo.On("GetMemoryByID", ctx, memoryID, userID).Return(&domain.Memory{ID: memoryID}, nil)
-				fileService.On("DeleteFile", ctx, memoryID.String()).Return(nil)
-				memRepo.On("DeleteMemory", ctx, memoryID).Return(nil)
+				memRepo.On("GetMemoryByID", mock.Anything, memoryID, userID).Return(&domain.Memory{ID: memoryID}, nil)
+				fileService.On("DeleteFile", mock.Anything, memoryID.String()).Return(nil)
+				memRepo.On("DeleteMemory", mock.Anything, memoryID).Return(nil)
 				sqlMock.ExpectCommit()
 			},
 		},
@@ -465,7 +465,7 @@ func TestMemoryService_DeleteMemory(t *testing.T) {
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				memRepo.On("WithTx", mock.Anything).Return(memRepo)
-				memRepo.On("GetMemoryByID", ctx, memoryID, userID).Return(nil, gorm.ErrRecordNotFound)
+				memRepo.On("GetMemoryByID", mock.Anything, memoryID, userID).Return(nil, gorm.ErrRecordNotFound)
 				sqlMock.ExpectRollback()
 			},
 			wantError: apperrors.ErrMemoryNotFound,
@@ -475,7 +475,7 @@ func TestMemoryService_DeleteMemory(t *testing.T) {
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				memRepo.On("WithTx", mock.Anything).Return(memRepo)
-				memRepo.On("GetMemoryByID", ctx, memoryID, userID).Return(nil, dbError)
+				memRepo.On("GetMemoryByID", mock.Anything, memoryID, userID).Return(nil, dbError)
 				sqlMock.ExpectRollback()
 			},
 			wantError: dbError,
@@ -485,8 +485,8 @@ func TestMemoryService_DeleteMemory(t *testing.T) {
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				memRepo.On("WithTx", mock.Anything).Return(memRepo)
-				memRepo.On("GetMemoryByID", ctx, memoryID, userID).Return(&domain.Memory{ID: memoryID}, nil)
-				fileService.On("DeleteFile", ctx, memoryID.String()).Return(dbError)
+				memRepo.On("GetMemoryByID", mock.Anything, memoryID, userID).Return(&domain.Memory{ID: memoryID}, nil)
+				fileService.On("DeleteFile", mock.Anything, memoryID.String()).Return(dbError)
 				sqlMock.ExpectRollback()
 			},
 			wantError: dbError,
@@ -496,9 +496,9 @@ func TestMemoryService_DeleteMemory(t *testing.T) {
 			setup: func(memRepo *MockMemoryRepository, fileService *MockFileService, sqlMock sqlmock.Sqlmock) {
 				sqlMock.ExpectBegin()
 				memRepo.On("WithTx", mock.Anything).Return(memRepo)
-				memRepo.On("GetMemoryByID", ctx, memoryID, userID).Return(&domain.Memory{ID: memoryID}, nil)
-				fileService.On("DeleteFile", ctx, memoryID.String()).Return(nil)
-				memRepo.On("DeleteMemory", ctx, memoryID).Return(dbError)
+				memRepo.On("GetMemoryByID", mock.Anything, memoryID, userID).Return(&domain.Memory{ID: memoryID}, nil)
+				fileService.On("DeleteFile", mock.Anything, memoryID.String()).Return(nil)
+				memRepo.On("DeleteMemory", mock.Anything, memoryID).Return(dbError)
 				sqlMock.ExpectRollback()
 			},
 			wantError: dbError,

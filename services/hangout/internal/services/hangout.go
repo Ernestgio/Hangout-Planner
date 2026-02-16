@@ -10,6 +10,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
 	"github.com/google/uuid"
+	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/gorm"
 )
 
@@ -39,6 +40,12 @@ func NewHangoutService(db *gorm.DB, hangoutRepo repository.HangoutRepository, ac
 
 func (s *hangoutService) CreateHangout(ctx context.Context, userID uuid.UUID, req *dto.CreateHangoutRequest) (*dto.HangoutDetailResponse, error) {
 	recordMetrics := s.metrics.StartRequest(ctx, "hangout", "create")
+
+	ctx, span := otel.StartServiceSpan(ctx, "CreateHangout",
+		attribute.String("user.id", userID.String()),
+		attribute.Int("activity.count", len(req.ActivityIDs)),
+	)
+	defer span.End()
 
 	hangoutModel, err := mapper.HangoutCreateRequestToModel(req)
 	if err != nil {
@@ -84,9 +91,12 @@ func (s *hangoutService) CreateHangout(ctx context.Context, userID uuid.UUID, re
 	})
 	if err != nil {
 		recordMetrics("error")
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
+	span.SetAttributes(attribute.String("hangout.id", created.ID.String()))
+	span.SetStatusOk()
 	recordMetrics("success")
 	return mapper.HangoutToDetailResponseDTO(created), nil
 }
@@ -94,18 +104,32 @@ func (s *hangoutService) CreateHangout(ctx context.Context, userID uuid.UUID, re
 func (s *hangoutService) GetHangoutByID(ctx context.Context, id uuid.UUID, userID uuid.UUID) (*dto.HangoutDetailResponse, error) {
 	recordMetrics := s.metrics.StartRequest(ctx, "hangout", "get")
 
+	ctx, span := otel.StartServiceSpan(ctx, "GetHangoutByID",
+		attribute.String("hangout.id", id.String()),
+		attribute.String("user.id", userID.String()),
+	)
+	defer span.End()
+
 	hangout, err := s.hangoutRepo.GetHangoutByID(ctx, id, userID)
 	if err != nil {
 		recordMetrics("error")
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
+	span.SetStatusOk()
 	recordMetrics("success")
 	return mapper.HangoutToDetailResponseDTO(hangout), nil
 }
 
 func (s *hangoutService) UpdateHangout(ctx context.Context, id uuid.UUID, userID uuid.UUID, req *dto.UpdateHangoutRequest) (*dto.HangoutDetailResponse, error) {
 	recordMetrics := s.metrics.StartRequest(ctx, "hangout", "update")
+
+	ctx, span := otel.StartServiceSpan(ctx, "UpdateHangout",
+		attribute.String("hangout.id", id.String()),
+		attribute.String("user.id", userID.String()),
+	)
+	defer span.End()
 
 	var updatedHangout *domain.Hangout
 
@@ -189,15 +213,23 @@ func (s *hangoutService) UpdateHangout(ctx context.Context, id uuid.UUID, userID
 
 	if err != nil {
 		recordMetrics("error")
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
+	span.SetStatusOk()
 	recordMetrics("success")
 	return mapper.HangoutToDetailResponseDTO(updatedHangout), nil
 }
 
 func (s *hangoutService) DeleteHangout(ctx context.Context, id uuid.UUID, userID uuid.UUID) error {
 	recordMetrics := s.metrics.StartRequest(ctx, "hangout", "delete")
+
+	ctx, span := otel.StartServiceSpan(ctx, "DeleteHangout",
+		attribute.String("hangout.id", id.String()),
+		attribute.String("user.id", userID.String()),
+	)
+	defer span.End()
 
 	err := s.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		txRepo := s.hangoutRepo.WithTx(tx)
@@ -210,7 +242,9 @@ func (s *hangoutService) DeleteHangout(ctx context.Context, id uuid.UUID, userID
 
 	if err != nil {
 		recordMetrics("error")
+		_ = span.RecordErrorWithStatus(err)
 	} else {
+		span.SetStatusOk()
 		recordMetrics("success")
 	}
 	return err
@@ -218,6 +252,12 @@ func (s *hangoutService) DeleteHangout(ctx context.Context, id uuid.UUID, userID
 
 func (s *hangoutService) GetHangoutsByUserID(ctx context.Context, userID uuid.UUID, pagination *dto.CursorPagination) (*dto.PaginatedHangouts, error) {
 	recordMetrics := s.metrics.StartRequest(ctx, "hangout", "list")
+
+	ctx, span := otel.StartServiceSpan(ctx, "GetHangoutsByUserID",
+		attribute.String("user.id", userID.String()),
+		attribute.Int("pagination.limit", pagination.GetLimit()),
+	)
+	defer span.End()
 
 	hangouts, err := s.hangoutRepo.GetHangoutsByUserID(ctx, userID, pagination)
 	if err != nil {
@@ -237,6 +277,11 @@ func (s *hangoutService) GetHangoutsByUserID(ctx context.Context, userID uuid.UU
 
 	responseDTOs := mapper.HangoutsToListItemResponseDTOs(hangouts)
 
+	span.SetAttributes(
+		attribute.Int("hangout.count", len(responseDTOs)),
+		attribute.Bool("pagination.has_more", hasMore),
+	)
+	span.SetStatusOk()
 	recordMetrics("success")
 	return &dto.PaginatedHangouts{
 		Data:       responseDTOs,
