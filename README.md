@@ -2,9 +2,43 @@
 
 Hangout Planner is a microservices-based backend platform for planning and managing hangouts with photo memory uploads. The architecture features a REST API service for business logic and a dedicated gRPC File Service for storage operations, fronted by an NGINX gateway handling TLS termination, HTTP/2, and path-based routing.
 
-This project is built to demonstrate production-minded backend engineering: layered architecture, automated database migrations, CI, grpc microservices integration (with mTLS), file upload with S3-compatible storage, and a local environment that mirrors common deployment topology (gateway → services → database → object storage).
+This project demonstrates production-oriented backend engineering: layered architecture, automated database migrations, CI pipelines, secure gRPC microservices integration with mTLS, presigned S3 uploads, distributed tracing, metrics instrumentation, and a local environment that mirrors real-world deployment topology:
 
-Designed with **clean architecture**, **SOLID principles**, and **future-proof modular design** for microservices scalability.
+**Gateway → Services → Databases → Object Storage → Observability Stack**
+
+Designed with clean architecture, SOLID principles, and modular boundaries to support long-term microservices scalability.
+
+## System Architecture
+
+![Hangout Planner Architecture](./Hangout-Planner-Architecture-Diagram.png)
+
+### High-Level Flow
+
+1. Client sends HTTPS request to NGINX gateway
+
+2. NGINX terminates TLS and routes traffic to the appropriate service
+
+3. Hangout Service handles business logic and authentication
+
+4. Hangout Service communicates with File Service over gRPC secured by mTLS
+
+5. File Service generates presigned S3 URLs via AWS SDK (LocalStack in development)
+
+6. Metrics and traces are exported via OpenTelemetry
+
+7. Prometheus scrapes metrics
+
+8. Grafana visualizes metrics and traces (via Tempo)
+
+Each service:
+
+- Owns its own database
+
+- Exposes health endpoints
+
+- Exposes Prometheus metrics
+
+- Emits OpenTelemetry traces
 
 ## Tech Stack
 
@@ -18,7 +52,7 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 - go-playground/validator (request validation)
 - GORM + MySQL driver
 - MySQL 8.0 (separate databases per service)
-- Localstack
+- Localstack (S3 Emulation)
 
 **API & Documentation**
 
@@ -30,6 +64,14 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 - NGINX (reverse proxy, TLS termination, HTTP/2, gzip compression, header forwarding)
 - LocalStack (local AWS S3 emulation for development)
 - AWS SDK for Go v2 (S3 client, presigned URLs)
+
+**Observability**
+
+- OpenTelemetry (traces + metrics instrumentation)
+- OpenTelemetry Collector
+- Prometheus (metrics scraping)
+- Grafana (dashboards and visualization)
+- Grafana Tempo (distributed tracing backend)
 
 **Engineering Practices**
 
@@ -47,6 +89,11 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 - `pkg/shared/`: shared contracts (Protocol Buffers, enums, types)
 - `components/nginx/`: edge gateway (reverse proxy, HTTPS, HTTP/2)
 - `components/database/`: local database bootstrap
+- `components/grafana/` : dashboards and tracing configuration
+- `components/otelcollector` : Open Telemetry Collector Configurations
+- `components/prometheus` : Prometheus Configurations
+- `components/tempo` : Grafana Tempo Configurations
+- `deployments/` : Whole stack docker compose configurations
 
 ## Local Development
 
@@ -64,8 +111,9 @@ Designed with **clean architecture**, **SOLID principles**, and **future-proof m
 
 1. Copy `.env.example` to `.env` in each service directory
 2. Generate TLS certificates (one-time): see `components/nginx/README.md`
-3. Start services: `make up`
-4. Run migrations: `cd services/hangout && make migrate && cd ../file && make migrate`
+3. Start dependencies stack (database, localstack, observability stack)
+4. Start services: `make up`
+5. Run migrations: `cd services/hangout && make migrate && cd ../file && make migrate`
 
 Each service has its own database. Set `{SERVICE}_DB_URL` environment variables for Atlas migrations.
 
@@ -79,7 +127,7 @@ Each service has its own database. Set `{SERVICE}_DB_URL` environment variables 
 - **File Service**: gRPC file lifecycle management with mTLS authentication
 - **Protocol Buffers**: Shared contracts in `pkg/shared` for service communication
 - **Separate databases**: Each service owns its schema with Atlas migrations
-- **Service discovery**: Docker DNS for internal routing
+- Docker-based service discovery
 
 ### File Upload Architecture
 
@@ -96,6 +144,20 @@ Each service has its own database. Set `{SERVICE}_DB_URL` environment variables 
 - JWT authentication for client requests
 - TLS termination at Nginx gateway
 - Certificate-based authentication with CA validation
+- Strict upload validation and content-type enforcement
+
+### Observability
+
+- OpenTelemetry instrumentation in both services
+- HTTP and gRPC trace propagation across service boundaries
+- Prometheus metrics exposure per service
+- Grafana dashboards for:
+  - Service latency
+  - Request throughput
+  - Error rates
+  - File upload performance
+- Distributed tracing via Grafana Tempo
+- End-to-end trace visibility from API request → gRPC call → S3 interaction
 
 ### Infrastructure
 
@@ -114,20 +176,14 @@ Each service has its own database. Set `{SERVICE}_DB_URL` environment variables 
 - **mkcert**: Local TLS certificate generation for HTTPS development
 - **Atlas**: Database schema migrations with diff and apply capabilities
 
-## Roadmap
+## Long-Term Vision
 
-### Short-Term Goals
-
-- **Observability stack**: Prometheus (metrics), Grafana (visualization), Grafana Tempo (distributed tracing), OpenTelemetry Collector (instrumentation)
-
-### Long-Term Vision
-
-- Security, between services, port protection, cors, permissions and roles for services and users
+- Port protection and stricter network segmentation
+- RBAC for multi-user scenarios
+- OAuth / federated logins
+- - Redis caching layer for session management and rate limiting
 - Excel export service
   - RabbitMQ service interconnect
   - background worker service
 - Notification Emails + SMTP
-- OAuth / federated logins
-- Role-based access control (RBAC) for multi-user scenarios
-- Redis caching layer for session management and rate limiting
 - Implement file scanning using opengovsg [lambda-virus-scanner](https://github.com/opengovsg/lambda-virus-scanner) + 3 S3 buckets architecture (dirty, clean, and thumbnail / resized image bucket)
