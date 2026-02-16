@@ -181,7 +181,7 @@ Each service has its own database. Set `{SERVICE}_DB_URL` environment variables 
 - Port protection and stricter network segmentation
 - RBAC for multi-user scenarios
 - OAuth / federated logins
-- - Redis caching layer for session management and rate limiting
+  - Redis caching layer for session management and rate limiting
 - Excel export service
   - RabbitMQ service interconnect
   - background worker service

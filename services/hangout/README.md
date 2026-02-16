@@ -1,10 +1,22 @@
 # Hangout Service - Core REST API Microservice
 
-A production-grade RESTful API service for social event management, implementing modern backend patterns with clean architecture, gRPC client integration, and comprehensive observability. Serves as the primary business logic layer in a distributed microservices architecture.
+A production-grade RESTful API service for social event management, implementing modern backend patterns with clean architecture, secure gRPC client integration, and full-stack observability.
+
+The Hangout Service acts as the primary business logic layer in a distributed microservices architecture, coordinating authentication, hangout lifecycle management, and memory orchestration.
 
 ## Overview
 
-The Hangout Service is the main backend service handling user authentication, hangout management, activity coordination, and memory storage orchestration. It integrates with the File Service via gRPC for distributed file operations, demonstrating service mesh patterns and secure inter-service communication.
+The Hangout Service is responsible for:
+
+- User authentication and authorization
+
+- Hangout and activity management
+
+- Hangout Memories lifecycle orchestration
+
+- Coordinating file operations via the File Service (gRPC + mTLS)
+
+It demonstrates real-world microservice design principles including service boundaries, contract-driven communication, observability instrumentation, and layered architecture.
 
 ## Technical Architecture
 
@@ -17,8 +29,9 @@ The Hangout Service is the main backend service handling user authentication, ha
 - **API Documentation**: Swagger/OpenAPI 3.0 via swag
 - **Database Migrations**: Atlas CLI with declarative schema
 - **Service Communication**: gRPC client with mTLS for File Service integration
-- **Storage Integration**: S3-compatible via File Service abstraction
 - **Development Tools**: Air for live reload, golangci-lint for code quality
+
+---
 
 ### Architecture Patterns
 
@@ -33,22 +46,30 @@ The Hangout Service is the main backend service handling user authentication, ha
 
 ### Authentication & Authorization
 
-- **JWT Authentication**: RS256 asymmetric signing with configurable expiry
-- **Secure Password Storage**: bcrypt hashing with adjustable cost factor
-- **Middleware Protection**: Route-level authentication enforcement
-- **User Context Propagation**: Request-scoped user information across layers
-- **Token Claims**: Custom JWT payload with user metadata
+- JWT authentication (RS256 asymmetric signing)
+- Configurable token expiration
+- Secure password hashing via bcrypt
+- Route-level middleware enforcement
+- User context propagation across request lifecycle
+- Custom JWT claims payload
+
+---
 
 ### Hangout Management
 
 - **CRUD Operations**: Full lifecycle management for hangout events
 - **Ownership Validation**: Users can only modify their own hangouts
 - **Listing & Pagination**: Efficient bulk retrieval with cursor-based pagination
+- Optimized DB queries for bulk retrieval
+
+---
 
 ### Activity Coordination
 
 - **Activity CRUD**: Manage activities within hangout contexts
 - **Bulk Retrieval**: Efficient listing with pagination support
+
+---
 
 ### Memory Management (Client-Side Upload Pattern)
 
@@ -61,9 +82,33 @@ The Hangout Service is the main backend service handling user authentication, ha
 - **File Service Integration**: gRPC client with mTLS for secure communication
 - **Cursor-Based Pagination**: Efficient memory listing with hasMore/nextCursor
 
-### gRPC Client Integration
+---
 
-Integrates with File Service via gRPC with mTLS for secure file operations (generate presigned URLs, confirm uploads, retrieve files, delete files).
+## API Documentation
+
+The Hangout Service exposes a fully documented OpenAPI 3.0 specification generated directly from code annotations.
+
+Interactive Swagger UI:
+
+![Hangout Service Swagger UI](hangout-service-swagger.jpg)
+
+Access locally:
+
+https://localhost/rp-api/hangout-service/swagger/index.html
+
+Swagger documentation includes:
+
+- Request and response schemas
+- Authentication requirements
+- Pagination contracts
+- Error response formats
+- Example payloads
+
+Generate documentation:
+
+```bash
+make swag
+```
 
 ## Service Integration
 
@@ -81,6 +126,54 @@ File Service (gRPC:9001)
 S3 / LocalStack (S3:4566)
 ```
 
+gRPC Client Integration
+
+The Hangout Service communicates with the File Service via:
+
+- mTLS-secured gRPC connection
+- Shared Protocol Buffer contracts
+- Context propagation for tracing
+- Timeout and error handling boundaries
+
+Operations include:
+
+- Generate presigned upload URLs
+- Confirm upload completion
+- Retrieve file metadata
+- Delete files
+
+## Observability
+
+The Hangout Service is instrumented using OpenTelemetry and exports telemetry to a centralized observability stack.
+
+### Metrics
+
+- HTTP request duration (latency histograms)
+- Request throughput
+- Error rate tracking
+- Database query timing
+- gRPC client latency
+
+### Distributed Tracing
+
+- OpenTelemetry HTTP middleware instrumentation
+
+- Context propagation across service boundaries
+
+- End-to-end trace visibility:
+  - Incoming HTTP request
+  - Business logic execution
+  - gRPC call to File Service
+  - Downstream S3 interaction (via File Service)
+
+Traces are exported to Grafana Tempo and visualized in Grafana dashboards.
+
+This enables:
+
+- Latency bottleneck detection
+- Cross-service request correlation
+- Root cause analysis for production failures
+
 ## Development Setup
 
 ### Prerequisites
@@ -95,6 +188,14 @@ S3 / LocalStack (S3:4566)
 ### Environment Configuration
 
 Copy `.env.example` to `.env` and configure your environment variables.
+
+Configure:
+
+- Database connection
+- JWT keys and configs
+- gRPC TLS certificates
+- File Service endpoint
+- Observability exporter configuration
 
 ### Running the Service
 
@@ -114,18 +215,6 @@ make air
 
 ```bash
 make migrate
-```
-
-**Generate Swagger documentation**:
-
-```bash
-make swag
-```
-
-**Access API documentation**:
-
-```
-https://localhost/rp-api/hangout-service/swagger/index.html
 ```
 
 ## Testing & Quality
@@ -154,8 +243,10 @@ Runs golangci-lint with project configuration.
 
 ### Test Structure
 
-- Table-driven tests for comprehensive scenarios
-- Mock repositories for service layer testing
+- Table-driven tests
+- Mock repositories for service isolation
+- Layer-specific validation tests
+- Business logic validation without HTTP layer coupling
 
 ## Future Enhancements
 
@@ -166,10 +257,3 @@ Runs golangci-lint with project configuration.
 - Activity voting and RSVP
 - Memory reactions and comments
 - Redis session management (prevent concurrent sessions)
-
-### Observability
-
-- Distributed tracing with Jaeger
-- Centralized logging with ELK/Loki
-- Alerting with Prometheus Alertmanager
-- Custom Grafana dashboards
