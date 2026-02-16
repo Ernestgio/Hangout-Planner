@@ -1,12 +1,22 @@
 # Hangout Planner — Scalable Go Backend Platform
 
-Hangout Planner is a microservices-based backend platform for planning and managing hangouts with photo memory uploads. The architecture features a REST API service for business logic and a dedicated gRPC File Service for storage operations, fronted by an NGINX gateway handling TLS termination, HTTP/2, and path-based routing.
+Hangout Planner is a production-oriented microservices backend system built in Go to simulate real-world scalable architecture.
 
-This project demonstrates production-oriented backend engineering: layered architecture, automated database migrations, CI pipelines, secure gRPC microservices integration with mTLS, presigned S3 uploads, distributed tracing, metrics instrumentation, and a local environment that mirrors real-world deployment topology:
+This project demonstrates how distributed systems handle:
+
+- Secure file uploads using presigned S3 URLs
+- Service-to-service communication via gRPC secured with mTLS
+- Independent service databases
+- TLS termination and API gateway routing
+- Distributed tracing and metrics instrumentation
+- CI automation and schema migrations
+- Containerized multi-service orchestration
+
+The system mirrors real-world deployment topology:
 
 **Gateway → Services → Databases → Object Storage → Observability Stack**
 
-Designed with clean architecture, SOLID principles, and modular boundaries to support long-term microservices scalability.
+Built to deepen backend engineering skills in distributed systems, cloud-native architecture, and production observability.
 
 ## System Architecture
 
@@ -15,30 +25,34 @@ Designed with clean architecture, SOLID principles, and modular boundaries to su
 ### High-Level Flow
 
 1. Client sends HTTPS request to NGINX gateway
-
 2. NGINX terminates TLS and routes traffic to the appropriate service
-
 3. Hangout Service handles business logic and authentication
-
 4. Hangout Service communicates with File Service over gRPC secured by mTLS
-
 5. File Service generates presigned S3 URLs via AWS SDK (LocalStack in development)
-
 6. Metrics and traces are exported via OpenTelemetry
-
 7. Prometheus scrapes metrics
-
 8. Grafana visualizes metrics and traces (via Tempo)
 
 Each service:
 
 - Owns its own database
-
 - Exposes health endpoints
-
 - Exposes Prometheus metrics
-
 - Emits OpenTelemetry traces
+
+## What Has Been Designed & Implemented
+
+- Designed microservices boundaries and service contracts
+- Implemented REST API using Echo (JWT auth, validation, middleware)
+- Built gRPC File Service with mutual TLS authentication
+- Designed presigned S3 upload workflow (no file bytes pass through API)
+- Configured NGINX as TLS-terminating reverse proxy with HTTP/2
+- Instrumented distributed tracing using OpenTelemetry
+- Exposed Prometheus metrics and built Grafana dashboards
+- Configured Grafana Tempo for end-to-end trace visibility
+- Implemented database schema migrations using Atlas (diff/apply workflow)
+- Built Docker Compose stack simulating production topology
+- Implemented GitHub Actions CI pipeline (lint + tests + coverage)
 
 ## Tech Stack
 
@@ -84,16 +98,23 @@ Each service:
 
 ## Repository Layout
 
-- `services/hangout/`: REST API service (auth, hangouts, activities, memories)
-- `services/file/`: gRPC File Service (file lifecycle, S3 operations)
-- `pkg/shared/`: shared contracts (Protocol Buffers, enums, types)
-- `components/nginx/`: edge gateway (reverse proxy, HTTPS, HTTP/2)
-- `components/database/`: local database bootstrap
-- `components/grafana/` : dashboards and tracing configuration
-- `components/otelcollector` : Open Telemetry Collector Configurations
-- `components/prometheus` : Prometheus Configurations
-- `components/tempo` : Grafana Tempo Configurations
-- `deployments/` : Whole stack docker compose configurations
+```
+services/
+  hangout/      → REST API service
+  file/         → gRPC file lifecycle service
+
+pkg/shared/     → Shared protobuf contracts
+
+components/
+  nginx/        → Gateway configuration
+  database/     → DB bootstrap
+  grafana/      → Dashboards
+  prometheus/   → Metrics config
+  tempo/        → Tracing backend
+  otelcollector → OTel configuration
+
+deployments/    → Docker Compose stack
+```
 
 ## Local Development
 
