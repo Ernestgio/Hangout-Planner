@@ -57,7 +57,7 @@ func (s *memoryService) GenerateUploadURLs(ctx context.Context, userID uuid.UUID
 
 	if len(req.Files) > constants.MaxFilePerUpload {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(apperrors.ErrTooManyFiles)
+		_ = span.RecordErrorWithStatus(apperrors.ErrTooManyFiles)
 		return nil, apperrors.ErrTooManyFiles
 	}
 
@@ -127,7 +127,7 @@ func (s *memoryService) GenerateUploadURLs(ctx context.Context, userID uuid.UUID
 	})
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -149,13 +149,13 @@ func (s *memoryService) ConfirmUpload(ctx context.Context, userID uuid.UUID, req
 	memories, err := s.memoryRepo.GetMemoriesByIDs(ctx, req.MemoryIDs, userID)
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return err
 	}
 
 	if len(memories) != len(req.MemoryIDs) {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(apperrors.ErrMemoryNotFound)
+		_ = span.RecordErrorWithStatus(apperrors.ErrMemoryNotFound)
 		return apperrors.ErrMemoryNotFound
 	}
 
@@ -163,7 +163,7 @@ func (s *memoryService) ConfirmUpload(ctx context.Context, userID uuid.UUID, req
 	for _, memory := range memories {
 		if memory.FileID == nil {
 			recordMetrics("error")
-			span.RecordErrorWithStatus(apperrors.ErrMemoryNotFound)
+			_ = span.RecordErrorWithStatus(apperrors.ErrMemoryNotFound)
 			return apperrors.ErrMemoryNotFound
 		}
 		fileIDs = append(fileIDs, memory.FileID.String())
@@ -179,7 +179,7 @@ func (s *memoryService) ConfirmUpload(ctx context.Context, userID uuid.UUID, req
 
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 	} else {
 		span.SetStatusOk()
 		recordMetrics("success")
@@ -215,7 +215,7 @@ func (s *memoryService) GetMemory(ctx context.Context, userID uuid.UUID, memoryI
 
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -237,7 +237,7 @@ func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hang
 	_, err := s.hangoutRepo.GetHangoutByID(ctx, hangoutID, userID)
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		if err == gorm.ErrRecordNotFound {
 			return nil, apperrors.ErrInvalidHangoutID
 		}
@@ -247,7 +247,7 @@ func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hang
 	memories, err := s.memoryRepo.GetMemoriesByHangoutID(ctx, hangoutID, pagination)
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -272,7 +272,7 @@ func (s *memoryService) ListMemories(ctx context.Context, userID uuid.UUID, hang
 
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -347,7 +347,7 @@ func (s *memoryService) DeleteMemory(ctx context.Context, userID uuid.UUID, memo
 
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 	} else {
 		span.SetStatusOk()
 		recordMetrics("success")

@@ -91,7 +91,7 @@ func (s *hangoutService) CreateHangout(ctx context.Context, userID uuid.UUID, re
 	})
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -113,7 +113,7 @@ func (s *hangoutService) GetHangoutByID(ctx context.Context, id uuid.UUID, userI
 	hangout, err := s.hangoutRepo.GetHangoutByID(ctx, id, userID)
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -213,7 +213,7 @@ func (s *hangoutService) UpdateHangout(ctx context.Context, id uuid.UUID, userID
 
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -242,7 +242,7 @@ func (s *hangoutService) DeleteHangout(ctx context.Context, id uuid.UUID, userID
 
 	if err != nil {
 		recordMetrics("error")
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 	} else {
 		span.SetStatusOk()
 		recordMetrics("success")

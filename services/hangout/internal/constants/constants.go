@@ -22,8 +22,7 @@ const (
 	DefaultDBNetwork = "tcp"
 
 	// Application constants
-	LoggerFormat = "[${time_rfc3339}] ${method} ${host}${uri} ${status} ${latency_human}\n"
-
+	LoggerFormat = "%s | %3d | %13s | %-7s %s (%s) | proto=%s | ip=%s | len=%s | res=%d | err=%v\n"
 	// Application Timeouts
 	GracefulShutdownTimeout = 10 // seconds
 

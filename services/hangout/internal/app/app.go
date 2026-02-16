@@ -18,6 +18,7 @@ import (
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/handlers"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/response"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/http/validator"
+	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/logger"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/middlewares"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/otel"
 	"github.com/Ernestgio/Hangout-Planner/services/hangout/internal/repository"
@@ -153,7 +154,9 @@ func NewApp(ctx context.Context, cfg *config.Config) (app *App, err error) {
 	e.Validator = validator.NewValidator()
 
 	// middleware
-	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{Format: constants.LoggerFormat}))
+	e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
+		LogValuesFunc: logger.LoggerFunc,
+	}))
 	e.Use(middleware.Decompress())
 	e.Use(middlewares.TracingMiddleware(cfg.AppName))
 	e.Use(middlewares.MetricsMiddleware(metricsRecorder))

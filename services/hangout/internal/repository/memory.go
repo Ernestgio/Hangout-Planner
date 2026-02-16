@@ -51,7 +51,7 @@ func (r *memoryRepository) CreateMemory(ctx context.Context, memory *domain.Memo
 	r.metrics.RecordDBOperation(ctx, "insert", "memories", time.Since(start), 1)
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -73,7 +73,7 @@ func (r *memoryRepository) CreateMemoriesBatch(ctx context.Context, memories []*
 	r.metrics.RecordDBOperation(ctx, "insert", "memories", time.Since(start), len(memories))
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 	} else {
 		span.SetStatusOk()
 	}
@@ -112,7 +112,7 @@ func (r *memoryRepository) UpdateFileIDs(ctx context.Context, updates map[uuid.U
 	r.metrics.RecordDBOperation(ctx, "update", "memories", time.Since(start), len(updates))
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 	} else {
 		span.SetStatusOk()
 	}
@@ -146,7 +146,7 @@ func (r *memoryRepository) GetMemoryByID(ctx context.Context, id uuid.UUID, user
 	r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), 1)
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -170,7 +170,7 @@ func (r *memoryRepository) GetMemoriesByIDs(ctx context.Context, ids []uuid.UUID
 	r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), len(memories))
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -219,7 +219,7 @@ func (r *memoryRepository) GetMemoriesByHangoutID(ctx context.Context, hangoutID
 
 	if err := query.Find(&memories).Error; err != nil {
 		r.metrics.RecordDBOperation(ctx, "select", "memories", time.Since(start), 0)
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -242,7 +242,7 @@ func (r *memoryRepository) DeleteMemory(ctx context.Context, id uuid.UUID) error
 	r.metrics.RecordDBOperation(ctx, "delete", "memories", time.Since(start), 1)
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 	} else {
 		span.SetStatusOk()
 	}

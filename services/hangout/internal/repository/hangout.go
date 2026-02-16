@@ -52,7 +52,7 @@ func (r *hangoutRepository) CreateHangout(ctx context.Context, hangout *domain.H
 	r.metrics.RecordDBOperation(ctx, "insert", "hangouts", time.Since(start), 1)
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -77,7 +77,7 @@ func (r *hangoutRepository) GetHangoutByID(ctx context.Context, id uuid.UUID, us
 	r.metrics.RecordDBOperation(ctx, "select", "hangouts", time.Since(start), 1)
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -101,7 +101,7 @@ func (r *hangoutRepository) UpdateHangout(ctx context.Context, hangout *domain.H
 	r.metrics.RecordDBOperation(ctx, "update", "hangouts", time.Since(start), 1)
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -121,21 +121,21 @@ func (r *hangoutRepository) DeleteHangout(ctx context.Context, id uuid.UUID) err
 	tx := r.db.WithContext(ctx).Begin()
 	if tx.Error != nil {
 		r.metrics.RecordDBOperation(ctx, "delete", "hangouts", time.Since(start), 0)
-		span.RecordErrorWithStatus(tx.Error)
+		_ = span.RecordErrorWithStatus(tx.Error)
 		return tx.Error
 	}
 
 	if err := tx.Exec("DELETE FROM `hangout_activities` WHERE `hangout_id` = ?", id).Error; err != nil {
 		tx.Rollback()
 		r.metrics.RecordDBOperation(ctx, "delete", "hangouts", time.Since(start), 0)
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return err
 	}
 
 	if err := tx.Delete(&domain.Hangout{}, "id = ?", id).Error; err != nil {
 		tx.Rollback()
 		r.metrics.RecordDBOperation(ctx, "delete", "hangouts", time.Since(start), 0)
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return err
 	}
 
@@ -143,7 +143,7 @@ func (r *hangoutRepository) DeleteHangout(ctx context.Context, id uuid.UUID) err
 	r.metrics.RecordDBOperation(ctx, "delete", "hangouts", time.Since(start), 1)
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 	} else {
 		span.SetStatusOk()
 	}
@@ -196,7 +196,7 @@ func (r *hangoutRepository) GetHangoutsByUserID(ctx context.Context, userID uuid
 	r.metrics.RecordDBOperation(ctx, "select", "hangouts", time.Since(start), len(hangouts))
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return nil, err
 	}
 
@@ -223,7 +223,7 @@ func (r *hangoutRepository) GetHangoutActivityIDs(ctx context.Context, hangoutID
 	r.metrics.RecordDBOperation(ctx, "select", "hangout_activities", time.Since(start), len(ids))
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 		return ids, err
 	}
 
@@ -259,7 +259,7 @@ func (r *hangoutRepository) AddHangoutActivities(ctx context.Context, hangoutID 
 	r.metrics.RecordDBOperation(ctx, "insert", "hangout_activities", time.Since(start), len(activityIDs))
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 	} else {
 		span.SetStatusOk()
 	}
@@ -288,7 +288,7 @@ func (r *hangoutRepository) RemoveHangoutActivities(ctx context.Context, hangout
 	r.metrics.RecordDBOperation(ctx, "delete", "hangout_activities", time.Since(start), len(activityIDs))
 
 	if err != nil {
-		span.RecordErrorWithStatus(err)
+		_ = span.RecordErrorWithStatus(err)
 	} else {
 		span.SetStatusOk()
 	}
